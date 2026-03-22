@@ -8,6 +8,7 @@ import yaml
 
 from postmule.core.config import load_config
 from postmule.pipeline import (
+    Providers,
     _run_bill_matching,
     _save_bill_matches,
     _store_processed_mail,
@@ -56,7 +57,7 @@ def credentials():
 
 
 def _make_all_providers():
-    """Return mocked (gmail, drive, sheets, llm, safety_agent, folder_ids)."""
+    """Return a mocked Providers dataclass instance."""
     gmail = MagicMock()
     gmail.list_unprocessed_emails.return_value = []
     drive = MagicMock()
@@ -73,7 +74,14 @@ def _make_all_providers():
         "root": "r", "inbox": "inbox", "bills": "bills",
         "needs_review": "review", "duplicates": "dupes",
     }
-    return gmail, drive, sheets, llm, safety_agent, folder_ids
+    return Providers(
+        gmail=gmail,
+        drive=drive,
+        sheets=sheets,
+        llm=llm,
+        safety_agent=safety_agent,
+        folder_ids=folder_ids,
+    )
 
 
 class TestRunDailyPipelineDryRun:
@@ -106,7 +114,8 @@ class TestRunDailyPipelineProviderFailure:
 
 class TestRunDailyPipelineWithEmails:
     def test_processes_email_pdfs(self, minimal_config, credentials, tmp_path):
-        gmail, drive, sheets, llm, safety_agent, folder_ids = _make_all_providers()
+        providers = _make_all_providers()
+        gmail, drive, llm = providers.gmail, providers.drive, providers.llm
 
         # Set up a fake email with a PDF
         from postmule.agents.email_ingestion import IngestedPDF
@@ -138,7 +147,7 @@ class TestRunDailyPipelineWithEmails:
             tokens_used=100,
         )
 
-        with patch("postmule.pipeline._build_providers", return_value=(gmail, drive, sheets, llm, safety_agent, folder_ids)):
+        with patch("postmule.pipeline._build_providers", return_value=providers):
             with patch("postmule.agents.email_ingestion.run_ingestion", return_value=ingestion_result):
                 with patch("postmule.agents.classification.classify_pdf") as mock_classify:
                     mock_classify.return_value = ProcessedMail(

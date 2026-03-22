@@ -6,23 +6,23 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from postmule.providers.storage.google_drive import DriveProvider, _sha256_file
+from postmule.providers.storage.google_drive import DriveProvider, _md5_file
 
 
-class TestSha256File:
+class TestMd5File:
     def test_computes_correct_hash(self, tmp_path):
         f = tmp_path / "test.bin"
         data = b"hello world"
         f.write_bytes(data)
-        expected = hashlib.sha256(data).hexdigest()
-        assert _sha256_file(f) == expected
+        expected = hashlib.md5(data).hexdigest()
+        assert _md5_file(f) == expected
 
     def test_larger_file(self, tmp_path):
         f = tmp_path / "large.bin"
         data = b"x" * 200000
         f.write_bytes(data)
-        expected = hashlib.sha256(data).hexdigest()
-        assert _sha256_file(f) == expected
+        expected = hashlib.md5(data).hexdigest()
+        assert _md5_file(f) == expected
 
 
 class TestDriveProviderInit:
@@ -202,14 +202,17 @@ class TestVerifyUpload:
     def test_passes_when_hashes_match(self, tmp_path):
         provider = DriveProvider({})
         data = b"%PDF content"
-        sha = hashlib.sha256(data).hexdigest()
-
-        with patch.object(provider, "download_file", return_value=data):
-            # Should not raise
-            provider._verify_upload("file-id", sha, "test.pdf")
+        md5 = hashlib.md5(data).hexdigest()
+        svc = MagicMock()
+        svc.files().get().execute.return_value = {"md5Checksum": md5}
+        provider._service = svc
+        # Should not raise
+        provider._verify_upload("file-id", md5, "test.pdf")
 
     def test_raises_when_hashes_differ(self, tmp_path):
         provider = DriveProvider({})
-        with patch.object(provider, "download_file", return_value=b"different content"):
-            with pytest.raises(RuntimeError, match="verification FAILED"):
-                provider._verify_upload("file-id", "wrong-hash", "test.pdf")
+        svc = MagicMock()
+        svc.files().get().execute.return_value = {"md5Checksum": "actual-md5"}
+        provider._service = svc
+        with pytest.raises(RuntimeError, match="verification FAILED"):
+            provider._verify_upload("file-id", "wrong-hash", "test.pdf")

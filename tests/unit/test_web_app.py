@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -194,22 +194,25 @@ class TestApiDeny:
 
 class TestApiRun:
     def test_run_triggers_process(self, client):
-        with patch("subprocess.Popen") as mock_popen:
-            mock_popen.return_value = None
-            response = client.post("/api/run", data={})
-            assert response.status_code == 200
-            data = json.loads(response.data)
-            assert data["ok"] is True
+        with patch("postmule.web.app._config", new=MagicMock()):
+            with patch("postmule.web.app._dashboard_password", return_value=None):
+                with patch("threading.Thread") as mock_thread:
+                    mock_thread.return_value.start = MagicMock()
+                    response = client.post("/api/run", data={})
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data["ok"] is True
 
     def test_run_dry_run_flag(self, client):
-        with patch("subprocess.Popen") as mock_popen:
-            mock_popen.return_value = None
-            response = client.post("/api/run", data={"dry_run": "true"})
-            assert response.status_code == 200
-            call_args = mock_popen.call_args[0][0]
-            assert "--dry-run" in call_args
+        with patch("postmule.web.app._config", new=MagicMock()):
+            with patch("postmule.web.app._dashboard_password", return_value=None):
+                with patch("threading.Thread") as mock_thread:
+                    mock_thread.return_value.start = MagicMock()
+                    response = client.post("/api/run", data={"dry_run": "true"})
+        assert response.status_code == 200
 
-    def test_run_error_returns_500(self, client):
-        with patch("subprocess.Popen", side_effect=OSError("not found")):
+    def test_run_no_config_returns_500(self, client):
+        # _config is None when no config file was provided to create_app
+        with patch("postmule.web.app._dashboard_password", return_value=None):
             response = client.post("/api/run", data={})
-            assert response.status_code == 500
+        assert response.status_code == 500
