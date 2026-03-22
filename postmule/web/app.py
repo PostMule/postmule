@@ -42,6 +42,7 @@ from postmule.data import entities as entity_data
 from postmule.data import forward_to_me as ftm_data
 from postmule.data import notices as notices_data
 from postmule.data import run_log as run_log_data
+from postmule.data._io import recent_years
 
 log = logging.getLogger("postmule.web")
 
@@ -724,6 +725,36 @@ def api_run():
 @app.route("/api/run/status", methods=["GET"])
 def api_run_status():
     return jsonify({"running": _pipeline_running})
+
+
+# ------------------------------------------------------------------
+# PDF viewer
+# ------------------------------------------------------------------
+
+def _find_mail_item(mail_id: str) -> dict | None:
+    """Find any mail item by ID across bills, notices, and forward-to-me records."""
+    for year in recent_years():
+        for bill in bills_data.load_bills(_data_dir, year):
+            if bill.get("id") == mail_id:
+                return bill
+        for notice in notices_data.load_notices(_data_dir, year):
+            if notice.get("id") == mail_id:
+                return notice
+    for ftm in ftm_data.load_forward_to_me(_data_dir):
+        if ftm.get("id") == mail_id:
+            return ftm
+    return None
+
+
+@app.route("/pdf/<mail_id>")
+def view_pdf(mail_id: str):
+    item = _find_mail_item(mail_id)
+    if not item:
+        return "Mail item not found", 404
+    drive_file_id = item.get("drive_file_id")
+    if not drive_file_id:
+        return "No PDF stored for this item", 404
+    return redirect(f"https://drive.google.com/file/d/{drive_file_id}/view")
 
 
 # ------------------------------------------------------------------

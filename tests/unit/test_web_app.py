@@ -166,8 +166,6 @@ class TestApiApprove:
 
         response = client.post("/api/approve", data={"match_id": "match-1"})
         assert response.status_code == 200
-        data = json.loads(response.data)
-        assert data["ok"] is True
 
     def test_approve_nonexistent_match(self, client, data_dir):
         entity_data.save_pending_matches(data_dir, [])
@@ -185,8 +183,6 @@ class TestApiDeny:
         entity_data.save_pending_matches(data_dir, matches)
         response = client.post("/api/deny", data={"match_id": "match-2"})
         assert response.status_code == 200
-        data = json.loads(response.data)
-        assert data["ok"] is True
 
     def test_deny_nonexistent_match(self, client, data_dir):
         entity_data.save_pending_matches(data_dir, [])

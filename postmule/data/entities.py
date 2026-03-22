@@ -19,7 +19,9 @@ Pending match schema:
   "similarity": 0.92,
   "proposed_date": "YYYY-MM-DD",
   "auto_approve_after": "YYYY-MM-DD",
-  "status": "pending" | "approved" | "denied"
+  "status": "pending" | "approved" | "denied",
+  "source_mail_id": "uuid",    # ID of the mail item that triggered this match (optional)
+  "source_mail_type": "Bill"   # "Bill" | "Notice" | "ForwardToMe" (optional)
 }
 """
 
@@ -99,6 +101,8 @@ def propose_alias_match(
     entity_id: str,
     similarity: float,
     auto_approve_days: int = 7,
+    source_mail_id: str | None = None,
+    source_mail_type: str | None = None,
 ) -> dict[str, Any]:
     """Add a pending alias match for human review."""
     pending = load_pending_matches(data_dir)
@@ -117,6 +121,8 @@ def propose_alias_match(
         "proposed_date": date.today().isoformat(),
         "auto_approve_after": auto_approve_after,
         "status": "pending",
+        "source_mail_id": source_mail_id,
+        "source_mail_type": source_mail_type,
     }
     pending.append(match)
     save_pending_matches(data_dir, pending)

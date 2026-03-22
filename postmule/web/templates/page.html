@@ -112,7 +112,10 @@
           <div class="mail-date">{{ item.get('date_received','') }}</div>
         </div>
         <div class="mail-summary">{{ item.get('summary','') }}</div>
-        <span class="badge {{ badge_class.get(item._type, 'badge--junk') }}">{{ item._type.upper() }}</span>
+        <div class="mail-footer">
+          <span class="badge {{ badge_class.get(item._type, 'badge--junk') }}">{{ item._type.upper() }}</span>
+          {% if item.get('drive_file_id') %}<a href="/pdf/{{ item.get('id') }}" target="_blank" class="pdf-link">View PDF</a>{% endif %}
+        </div>
       </div>
     </div>
     {% else %}
@@ -154,6 +157,7 @@
         <div class="match-name">"{{ match.proposed_name }}"</div>
         <div class="match-detail">Looks like: {{ match.match_entity_id }} &mdash; similarity {{ '%.0f'|format(match.similarity * 100) }}%</div>
         <div class="match-auto">Auto-approves: {{ match.auto_approve_after }}</div>
+        {% if match.get('source_mail_id') %}<a href="/pdf/{{ match.source_mail_id }}" target="_blank" class="pdf-link">View source PDF</a>{% endif %}
       </div>
       <button class="btn btn-primary btn-sm"
               hx-post="/api/approve"

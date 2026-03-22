@@ -172,6 +172,17 @@ nav { display: flex; gap: 4px; flex: 1; }
 .mail-sender--read  { font-size: 13px; font-weight: 400; color: #8A9BB0; }
 .mail-date   { font-size: 11px; color: #B8C8D8; }
 .mail-summary { font-size: 13px; color: #5A7090; margin-top: 3px; }
+.mail-footer { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+
+/* ── PDF link ──────────────────────────────────────────────────── */
+.pdf-link {
+  font-size: 11px;
+  font-weight: 500;
+  color: #2563EB;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.pdf-link:hover { text-decoration: underline; }
 
 /* ── Badges ────────────────────────────────────────────────────── */
 .badge {
