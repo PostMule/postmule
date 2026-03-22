@@ -130,6 +130,15 @@ nav { display: flex; gap: 4px; flex: 1; }
   padding: 20px;
   color: #E65100;
 }
+.banner-success {
+  background: #E8F5E9;
+  border: 1px solid #C8E6C9;
+  border-radius: 8px;
+  padding: 14px 18px;
+  color: #2E7D32;
+  margin-bottom: 20px;
+  max-width: 480px;
+}
 
 /* ── Home — stats ──────────────────────────────────────────────── */
 .stat-grid {
@@ -452,30 +461,64 @@ nav { display: flex; gap: 4px; flex: 1; }
   overflow-y: auto;
 }
 
-/* ── Setup / OAuth ─────────────────────────────────────────────── */
-.setup-wrap { max-width: 480px; }
-.oauth-success-icon {
-  width: 36px;
-  height: 36px;
-  background: #2E7D32;
-  border-radius: 50%;
-  color: white;
-  font-size: 18px;
+/* ── Connections page ───────────────────────────────────────────── */
+.conn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  max-width: 1000px;
+}
+.conn-card {
+  background: #fff;
+  border: 1px solid #DDE3EC;
+  border-radius: 8px;
+  padding: 20px;
+}
+.conn-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.conn-service-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
 }
-.oauth-connected-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-.oauth-title   { font-size: 15px; font-weight: 600; color: #0F2044; }
-.oauth-subtitle { font-size: 13px; color: #2E7D32; margin-top: 2px; }
-.oauth-desc    { color: #5A7090; font-size: 13px; margin: 0 0 20px; }
-.connect-title { font-size: 15px; font-weight: 600; color: #0F2044; margin-bottom: 6px; }
-.connect-desc  { color: #5A7090; font-size: 13px; margin: 0; line-height: 1.6; }
+.conn-icon-google  { background: #E8F0FE; color: #1A73E8; }
+.conn-icon-mail    { background: #FFF3E0; color: #E65100; font-size: 18px; }
+.conn-icon-ai      { background: #F3E5F5; color: #7B1FA2; font-size: 11px; }
+.conn-service-name { font-size: 14px; font-weight: 600; color: #0F2044; }
+.conn-service-desc { font-size: 12px; color: #5A7090; margin-top: 2px; }
+.conn-status {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+.conn-status--ok  { background: #E8F5E9; color: #2E7D32; }
+.conn-status--off { background: #F5F5F5; color: #9E9E9E; }
+.conn-note {
+  font-size: 13px;
+  color: #5A7090;
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+.conn-note:last-child { margin-bottom: 0; }
+.conn-note a { color: #2356C3; }
 .google-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 11px 22px;
+  padding: 10px 20px;
   background: #0F2044;
   color: white;
   border-radius: 6px;

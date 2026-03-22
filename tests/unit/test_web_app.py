@@ -133,14 +133,19 @@ class TestLogsRoute:
         assert b"No log file found" in response.data or response.status_code == 200
 
 
-class TestSetupRoute:
-    def test_setup_returns_200(self, client):
-        response = client.get("/setup")
+class TestConnectionsRoute:
+    def test_connections_returns_200(self, client):
+        response = client.get("/connections")
         assert response.status_code == 200
 
-    def test_setup_shows_instructions(self, client):
+    def test_connections_shows_page(self, client):
+        response = client.get("/connections")
+        assert b"Connections" in response.data
+
+    def test_setup_redirects_to_connections(self, client):
         response = client.get("/setup")
-        assert b"postmule" in response.data or b"Setup" in response.data
+        assert response.status_code == 302
+        assert "/connections" in response.headers["Location"]
 
 
 class TestApiApprove:

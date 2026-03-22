@@ -10,7 +10,7 @@ Routes:
   GET  /entities       Entity list
   GET  /settings       Config editor
   GET  /logs           Log viewer
-  GET  /setup                        First-run setup wizard (single button: Connect Google Account)
+  GET  /connections                  Service connection status and management
   GET  /setup/oauth/google           Start Google OAuth flow (uses baked-in client credentials)
   GET  /setup/oauth/google/callback  OAuth callback — saves refresh token to system keychain
   POST /api/approve                 Approve a pending match
@@ -80,7 +80,7 @@ _NAV_ITEMS = [
     ("entities", "/entities", "Entities"),
     ("settings", "/settings", "Settings"),
     ("logs", "/logs", "Logs"),
-    ("setup", "/setup", "Setup"),
+    ("connections", "/connections", "Connections"),
 ]
 
 
@@ -347,20 +347,48 @@ def logs():
     )
 
 
-@app.route("/setup")
-def setup():
-    google_ok = bool(session.get("setup_google_ok"))
+def _connection_status() -> dict:
+    """Return live connection status for each service category."""
+    from postmule.core.credentials import google_credentials_available
+    google_ok = google_credentials_available()
+    cfg = _config_raw
+    mbox_type = ""
+    mbox_providers = cfg.get("mailbox", {}).get("providers", [])
+    if mbox_providers:
+        mbox_type = mbox_providers[0].get("type", "")
+    llm_type = ""
+    llm_providers = cfg.get("llm", {}).get("providers", [])
+    if llm_providers:
+        llm_type = llm_providers[0].get("type", "")
+    return {
+        "google": google_ok,
+        "vpm": mbox_type == "vpm",
+        "anthropic": llm_type == "anthropic",
+        "mbox_type": mbox_type,
+        "llm_type": llm_type,
+    }
+
+
+@app.route("/connections")
+def connections():
+    status = _connection_status()
     return render_template(
         "page.html",
-        page="setup",
-        title="Setup",
+        page="connections",
+        title="Connections",
         today=date.today().isoformat(),
-        google_ok=google_ok,
+        conn=status,
     )
 
 
+# /setup redirects to /connections so old bookmarks still work
+@app.route("/setup")
+def setup():
+    return redirect(url_for("connections"))
+
+
 # ------------------------------------------------------------------
-# Setup wizard — Google OAuth flow
+# Connections — Google OAuth flow
 # ------------------------------------------------------------------
 
 from postmule.core.constants import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_SCOPES
@@ -410,7 +438,7 @@ def setup_oauth_google_callback():
 
     state = session.get("setup_google_oauth_state")
     if not state:
-        return redirect(url_for("setup") + "?error=session_expired")
+        return redirect(url_for("connections") + "?error=session_expired")
 
     client_config = {
         "web": {
@@ -432,23 +460,23 @@ def setup_oauth_google_callback():
         flow.fetch_token(authorization_response=request.url)
     except Exception as exc:
         log.error(f"Google OAuth token exchange failed: {exc}")
-        return redirect(url_for("setup") + "?error=oauth_failed")
+        return redirect(url_for("connections") + "?error=oauth_failed")
 
     creds = flow.credentials
     if not creds.refresh_token:
-        return redirect(url_for("setup") + "?error=no_refresh_token")
+        return redirect(url_for("connections") + "?error=no_refresh_token")
 
     try:
         from postmule.core.credentials import save_google_refresh_token
         save_google_refresh_token(creds.refresh_token)
     except Exception as exc:
         log.error(f"Failed to save Google refresh token: {exc}")
-        return redirect(url_for("setup") + "?error=keychain_save_failed")
+        return redirect(url_for("connections") + "?error=keychain_save_failed")
 
     log.info("Google OAuth refresh token saved to system keychain")
     session.pop("setup_google_oauth_state", None)
 
-    return redirect(url_for("setup") + "?google_ok=1")
+    return redirect(url_for("connections") + "?google_ok=1")
 
 
 @app.route("/settings")
