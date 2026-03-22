@@ -1,5 +1,5 @@
 """
-PostMule web dashboard — Flask + HTMX + Tailwind CSS.
+PostMule web dashboard — Flask + HTMX + Alpine.js.
 
 Routes:
   GET  /              Home / status dashboard
@@ -668,7 +668,7 @@ def api_approve():
                     break
             entity_data.save_pending_matches(_data_dir, pending)
             entity_data.save_entities(_data_dir, entities)
-            return jsonify({"ok": True})
+            return ("", 200)
 
     return jsonify({"error": "match not found"}), 404
 
@@ -684,7 +684,7 @@ def api_deny():
         if match["id"] == match_id:
             match["status"] = "denied"
             entity_data.save_pending_matches(_data_dir, pending)
-            return jsonify({"ok": True})
+            return ("", 200)
 
     return jsonify({"error": "match not found"}), 404
 
