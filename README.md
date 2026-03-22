@@ -38,7 +38,7 @@ cost (free tiers) and ease of setup.
 
 ```powershell
 # Clone and install
-git clone https://github.com/PostMule/postmule.git
+git clone https://github.com/PostMule/app.git
 cd postmule
 python -m venv .venv
 .venv\Scripts\activate

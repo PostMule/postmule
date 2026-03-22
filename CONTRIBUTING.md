@@ -3,7 +3,7 @@
 ## Development Setup
 
 ```powershell
-git clone https://github.com/PostMule/postmule.git
+git clone https://github.com/PostMule/app.git
 cd postmule
 python -m venv .venv
 .venv\Scripts\activate
@@ -94,7 +94,7 @@ service, check whether a provider interface already exists.
 
 ## Reporting Issues
 
-Open an issue at https://github.com/PostMule/postmule/issues. Include:
+Open an issue at https://github.com/PostMule/app/issues. Include:
 
 - What you were doing
 - What you expected to happen

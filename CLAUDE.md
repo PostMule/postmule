@@ -46,7 +46,7 @@ to classify and extract data, manages bills, sends alerts, and reconciles with b
 transactions. Runs on Windows 11.
 
 - **License:** MIT
-- **Repo:** https://github.com/PostMule/postmule
+- **Repo:** https://github.com/PostMule/app
 - **Local path:** C:\ClaudeCodeFiles\ClaudeCode\PostMule\
 - **Owner GitHub:** github.com/openclaw0123
 - **Domain:** postmule.com (not yet registered as of 2026-03-21)
