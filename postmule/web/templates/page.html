@@ -176,19 +176,206 @@
 
     {% elif page == 'entities' %}
     <h1 class="page-title">Entities</h1>
-    {% for entity in entities %}
-    <div class="entity-row">
-      <div class="entity-header">
-        <span class="entity-name">{{ entity.canonical_name }}</span>
-        <span class="entity-type">{{ entity.type }}</span>
-      </div>
-      {% if entity.aliases | length > 1 %}
-      <div class="entity-aliases">Aliases: {{ entity.aliases | join(', ') }}</div>
-      {% endif %}
-    </div>
-    {% else %}
+
+    {% if not entities %}
     <div class="text-muted">No entities found. Run PostMule to discover entities from your mail.</div>
-    {% endfor %}
+    {% else %}
+    <table class="entity-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Aliases</th>
+          <th>Accounts</th>
+          <th>Last Seen</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entity in entities %}
+        <tr x-data="{ open: false, editing: false }" class="entity-tr">
+          <td class="entity-name-cell">{{ entity.canonical_name }}</td>
+          <td><span class="entity-badge entity-badge--{{ entity.get('category','biller') }}">{{ entity.get('category','biller') }}</span></td>
+          <td class="entity-aliases-cell">{{ entity.aliases | join(', ') }}</td>
+          <td class="entity-accounts-cell">{{ entity.get('account_numbers', []) | length }}</td>
+          <td class="entity-lastseen-cell">
+            {% if entity.get('last_seen_in_mail_id') %}
+            <a href="/pdf/{{ entity.last_seen_in_mail_id }}" target="_blank" class="pdf-link">View</a>
+            {% else %}&mdash;{% endif %}
+          </td>
+          <td><button class="entity-expand-btn" @click="open = !open" :aria-expanded="open">
+            <span x-text="open ? '▲' : '▼'"></span>
+          </button></td>
+        </tr>
+        <tr x-show="open" x-cloak class="entity-detail-tr">
+          <td colspan="6">
+            <div class="entity-detail">
+              <!-- Contact & profile -->
+              <div class="entity-detail-grid">
+                <div class="entity-field" x-data="{ editing: false }">
+                  <div class="entity-field-label">Phone
+                    {% if 'phone' in entity.get('user_verified_fields', []) %}<span class="verified-badge" title="User verified">✓</span>{% endif %}
+                  </div>
+                  <div x-show="!editing" class="entity-field-value">
+                    {{ entity.get('phone') or '—' }}
+                    <button class="edit-btn" @click="editing = true">Edit</button>
+                  </div>
+                  <form x-show="editing" class="entity-inline-form"
+                        hx-post="/api/entity/{{ entity.id }}"
+                        hx-swap="none"
+                        @htmx:after-request="editing = false">
+                    <input type="hidden" name="field" value="phone">
+                    <input class="entity-input" type="text" name="value" value="{{ entity.get('phone') or '' }}" placeholder="e.g. 1-800-555-0100">
+                    <button class="save-btn" type="submit">Save</button>
+                    <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
+                  </form>
+                </div>
+
+                <div class="entity-field" x-data="{ editing: false }">
+                  <div class="entity-field-label">Website
+                    {% if 'website' in entity.get('user_verified_fields', []) %}<span class="verified-badge">✓</span>{% endif %}
+                  </div>
+                  <div x-show="!editing" class="entity-field-value">
+                    {% if entity.get('website') %}<a href="{{ entity.website }}" target="_blank" class="pdf-link">{{ entity.website }}</a>{% else %}—{% endif %}
+                    <button class="edit-btn" @click="editing = true">Edit</button>
+                  </div>
+                  <form x-show="editing" class="entity-inline-form"
+                        hx-post="/api/entity/{{ entity.id }}"
+                        hx-swap="none"
+                        @htmx:after-request="editing = false">
+                    <input type="hidden" name="field" value="website">
+                    <input class="entity-input" type="text" name="value" value="{{ entity.get('website') or '' }}" placeholder="e.g. https://att.com">
+                    <button class="save-btn" type="submit">Save</button>
+                    <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
+                  </form>
+                </div>
+
+                <div class="entity-field" x-data="{ editing: false }">
+                  <div class="entity-field-label">Email
+                    {% if 'email' in entity.get('user_verified_fields', []) %}<span class="verified-badge">✓</span>{% endif %}
+                  </div>
+                  <div x-show="!editing" class="entity-field-value">
+                    {{ entity.get('email') or '—' }}
+                    <button class="edit-btn" @click="editing = true">Edit</button>
+                  </div>
+                  <form x-show="editing" class="entity-inline-form"
+                        hx-post="/api/entity/{{ entity.id }}"
+                        hx-swap="none"
+                        @htmx:after-request="editing = false">
+                    <input type="hidden" name="field" value="email">
+                    <input class="entity-input" type="email" name="value" value="{{ entity.get('email') or '' }}" placeholder="e.g. billing@att.com">
+                    <button class="save-btn" type="submit">Save</button>
+                    <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
+                  </form>
+                </div>
+
+                <div class="entity-field" x-data="{ editing: false }">
+                  <div class="entity-field-label">Category
+                    {% if 'category' in entity.get('user_verified_fields', []) %}<span class="verified-badge">✓</span>{% endif %}
+                  </div>
+                  <div x-show="!editing" class="entity-field-value">
+                    {{ entity.get('category') or '—' }}
+                    <button class="edit-btn" @click="editing = true">Edit</button>
+                  </div>
+                  <form x-show="editing" class="entity-inline-form"
+                        hx-post="/api/entity/{{ entity.id }}"
+                        hx-swap="none"
+                        @htmx:after-request="editing = false">
+                    <input type="hidden" name="field" value="category">
+                    <select class="entity-input" name="value">
+                      {% for cat in entity_categories %}
+                      <option value="{{ cat }}" {% if cat == entity.get('category') %}selected{% endif %}>{{ cat }}</option>
+                      {% endfor %}
+                    </select>
+                    <button class="save-btn" type="submit">Save</button>
+                    <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Address -->
+              <div class="entity-field entity-field--wide" x-data="{ editing: false }">
+                <div class="entity-field-label">Address
+                  {% if 'address' in entity.get('user_verified_fields', []) %}<span class="verified-badge">✓</span>{% endif %}
+                </div>
+                {% set addr = entity.get('address') or {} %}
+                <div x-show="!editing" class="entity-field-value">
+                  {% if addr.get('street') or addr.get('city') %}
+                  {{ [addr.get('street'), addr.get('city'), addr.get('state'), addr.get('zip'), addr.get('country')] | select | join(', ') }}
+                  {% else %}—{% endif %}
+                  <button class="edit-btn" @click="editing = true">Edit</button>
+                </div>
+                <form x-show="editing" class="entity-inline-form entity-address-form"
+                      hx-post="/api/entity/{{ entity.id }}"
+                      hx-swap="none"
+                      @htmx:after-request="editing = false">
+                  <input type="hidden" name="field" value="address">
+                  <input class="entity-input" type="text" name="address_street" value="{{ addr.get('street') or '' }}" placeholder="Street">
+                  <input class="entity-input" type="text" name="address_city" value="{{ addr.get('city') or '' }}" placeholder="City">
+                  <input class="entity-input entity-input--sm" type="text" name="address_state" value="{{ addr.get('state') or '' }}" placeholder="State">
+                  <input class="entity-input entity-input--sm" type="text" name="address_zip" value="{{ addr.get('zip') or '' }}" placeholder="ZIP">
+                  <input class="entity-input entity-input--sm" type="text" name="address_country" value="{{ addr.get('country') or '' }}" placeholder="Country">
+                  <button class="save-btn" type="submit">Save</button>
+                  <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
+                </form>
+              </div>
+
+              <!-- Account numbers -->
+              <div class="entity-field entity-field--wide" x-data="{ adding: false }">
+                <div class="entity-field-label">Account Numbers</div>
+                <div class="entity-field-value">
+                  {% for acct in entity.get('account_numbers', []) %}
+                  <span class="acct-chip">{{ acct }}</span>
+                  {% else %}
+                  <span class="text-muted">None on file</span>
+                  {% endfor %}
+                  <button class="edit-btn" @click="adding = !adding">+ Add</button>
+                </div>
+                <form x-show="adding" class="entity-inline-form"
+                      hx-post="/api/entity/{{ entity.id }}/add-account"
+                      hx-swap="none"
+                      @htmx:after-request="adding = false">
+                  <input class="entity-input" type="text" name="account" placeholder="Account number">
+                  <button class="save-btn" type="submit">Add</button>
+                  <button class="cancel-btn" type="button" @click="adding = false">Cancel</button>
+                </form>
+              </div>
+
+              <!-- Notes -->
+              <div class="entity-field entity-field--wide" x-data="{ editing: false }">
+                <div class="entity-field-label">Notes
+                  {% if 'notes' in entity.get('user_verified_fields', []) %}<span class="verified-badge">✓</span>{% endif %}
+                </div>
+                <div x-show="!editing" class="entity-field-value entity-notes-value">
+                  {{ entity.get('notes') or '—' }}
+                  <button class="edit-btn" @click="editing = true">Edit</button>
+                </div>
+                <form x-show="editing" class="entity-inline-form"
+                      hx-post="/api/entity/{{ entity.id }}"
+                      hx-swap="none"
+                      @htmx:after-request="editing = false">
+                  <input type="hidden" name="field" value="notes">
+                  <textarea class="entity-textarea" name="value" placeholder="Free-form notes...">{{ entity.get('notes') or '' }}</textarea>
+                  <button class="save-btn" type="submit">Save</button>
+                  <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
+                </form>
+              </div>
+
+              <!-- Meta -->
+              <div class="entity-meta">
+                <span>Created: {{ entity.get('created_date', '') }}</span>
+                {% if entity.get('auto_populated_at') %}
+                <span>Auto-enriched: {{ entity.auto_populated_at[:10] }}</span>
+                {% endif %}
+                <span>ID: {{ entity.id }}</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
 
     {% elif page == 'forward' %}
     <h1 class="page-title">Forward To Me</h1>

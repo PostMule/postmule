@@ -1,13 +1,28 @@
 """
 Entity data layer — reads/writes entities.json and pending/entity_matches.json.
 
-Entity record schema:
+Entity record schema (version-locked — field additions require an app update + migration):
 {
   "id": "uuid",
-  "canonical_name": "Alice Smith",
-  "type": "Person",          # Person | LLC | Trust | Corporation | Partnership | Other
-  "aliases": ["Alice", "A. Smith"],
-  "denied_aliases": ["Al"],
+  "canonical_name": "AT&T",
+  "aliases": ["AT T", "ATT"],
+  "denied_aliases": [],
+  "category": "biller",          # biller | sender | vendor | government | personal
+  "address": {                   # all sub-fields nullable
+    "street": null,
+    "city": null,
+    "state": null,
+    "zip": null,
+    "country": null
+  },
+  "account_numbers": [],         # list of known account number strings
+  "phone": null,
+  "website": null,
+  "email": null,
+  "notes": null,                 # free-text, human-editable
+  "auto_populated_at": null,     # ISO datetime of last LLM enrichment
+  "last_seen_in_mail_id": null,  # provenance: last mail that referenced this entity
+  "user_verified_fields": [],    # field names that have been manually verified
   "created_date": "YYYY-MM-DD"
 }
 
@@ -29,11 +44,21 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from postmule.data._io import atomic_write
+
+# Schema version — bump when fields are added so migrate_entity() can be extended
+SCHEMA_VERSION = 2
+
+# Valid categories
+CATEGORIES = ("biller", "sender", "vendor", "government", "personal")
+
+_EMPTY_ADDRESS: dict[str, str | None] = {
+    "street": None, "city": None, "state": None, "zip": None, "country": None,
+}
 
 
 def _entities_file(data_dir: Path) -> Path:
@@ -44,13 +69,6 @@ def _pending_file(data_dir: Path) -> Path:
     pending_dir = data_dir / "pending"
     pending_dir.mkdir(parents=True, exist_ok=True)
     return pending_dir / "entity_matches.json"
-
-
-def load_entities(data_dir: Path) -> list[dict[str, Any]]:
-    path = _entities_file(data_dir)
-    if not path.exists():
-        return []
-    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def save_entities(data_dir: Path, entities: list[dict[str, Any]]) -> None:
@@ -70,19 +88,139 @@ def save_pending_matches(data_dir: Path, matches: list[dict[str, Any]]) -> None:
     atomic_write(path, json.dumps(matches, indent=2, ensure_ascii=False))
 
 
-def add_entity(data_dir: Path, name: str, entity_type: str = "Person") -> dict[str, Any]:
+def migrate_entity(entity: dict[str, Any]) -> dict[str, Any]:
+    """Upgrade an old-schema entity record to the current schema in place. Returns the entity."""
+    # v1 → v2: replace 'type' with 'category', add structured fields
+    if "type" in entity and "category" not in entity:
+        old_type = entity.pop("type", "")
+        # Map old Person/Corporation/etc types to new categories
+        _type_map = {
+            "person": "personal",
+            "llc": "vendor",
+            "trust": "personal",
+            "corporation": "biller",
+            "partnership": "vendor",
+        }
+        entity["category"] = _type_map.get(old_type.lower(), "biller")
+
+    entity.setdefault("aliases", [entity["canonical_name"]])
+    entity.setdefault("denied_aliases", [])
+    entity.setdefault("category", "biller")
+    entity.setdefault("address", dict(_EMPTY_ADDRESS))
+    entity.setdefault("account_numbers", [])
+    entity.setdefault("phone", None)
+    entity.setdefault("website", None)
+    entity.setdefault("email", None)
+    entity.setdefault("notes", None)
+    entity.setdefault("auto_populated_at", None)
+    entity.setdefault("last_seen_in_mail_id", None)
+    entity.setdefault("user_verified_fields", [])
+    return entity
+
+
+def load_entities(data_dir: Path) -> list[dict[str, Any]]:
+    path = _entities_file(data_dir)
+    if not path.exists():
+        return []
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    needs_migration = any("type" in e or "category" not in e for e in raw)
+    entities = [migrate_entity(e) for e in raw]
+    if needs_migration:
+        save_entities(data_dir, entities)
+    return entities
+
+
+def add_entity(data_dir: Path, name: str, category: str = "biller") -> dict[str, Any]:
     entities = load_entities(data_dir)
-    entity = {
+    entity: dict[str, Any] = {
         "id": str(uuid.uuid4()),
         "canonical_name": name,
-        "type": entity_type,
         "aliases": [name],
         "denied_aliases": [],
+        "category": category if category in CATEGORIES else "biller",
+        "address": dict(_EMPTY_ADDRESS),
+        "account_numbers": [],
+        "phone": None,
+        "website": None,
+        "email": None,
+        "notes": None,
+        "auto_populated_at": None,
+        "last_seen_in_mail_id": None,
+        "user_verified_fields": [],
         "created_date": date.today().isoformat(),
     }
     entities.append(entity)
     save_entities(data_dir, entities)
     return entity
+
+
+def enrich_entity(
+    data_dir: Path,
+    entity_id: str,
+    fields: dict[str, Any],
+    source_mail_id: str | None = None,
+) -> dict[str, Any] | None:
+    """
+    Fill null fields on an entity with LLM-extracted data.
+    Fields in entity['user_verified_fields'] are never overwritten.
+    Returns the updated entity or None if not found.
+    """
+    entities = load_entities(data_dir)
+    for entity in entities:
+        if entity["id"] != entity_id:
+            continue
+        verified = set(entity.get("user_verified_fields", []))
+        for key, value in fields.items():
+            if key in ("id", "canonical_name", "aliases", "denied_aliases",
+                       "user_verified_fields", "created_date"):
+                continue
+            if key in verified:
+                continue
+            if key == "address" and isinstance(value, dict):
+                addr = entity.setdefault("address", dict(_EMPTY_ADDRESS))
+                for sub, sub_val in value.items():
+                    if sub not in verified and sub_val is not None:
+                        addr[sub] = sub_val
+            elif value is not None:
+                entity[key] = value
+        entity["auto_populated_at"] = datetime.now(timezone.utc).isoformat()
+        if source_mail_id:
+            entity["last_seen_in_mail_id"] = source_mail_id
+        save_entities(data_dir, entities)
+        return entity
+    return None
+
+
+def update_entity_field(
+    data_dir: Path,
+    entity_id: str,
+    field: str,
+    value: Any,
+    mark_verified: bool = True,
+) -> dict[str, Any] | None:
+    """
+    Update a single field on an entity (user edit).
+    By default marks the field as user_verified to protect it from LLM overwrites.
+    Returns the updated entity or None if not found.
+    """
+    entities = load_entities(data_dir)
+    for entity in entities:
+        if entity["id"] != entity_id:
+            continue
+        if field == "address" and isinstance(value, dict):
+            addr = entity.setdefault("address", dict(_EMPTY_ADDRESS))
+            addr.update(value)
+        elif field == "account_numbers" and isinstance(value, list):
+            entity["account_numbers"] = value
+        else:
+            entity[field] = value
+        if mark_verified and field not in ("id", "created_date"):
+            verified = entity.setdefault("user_verified_fields", [])
+            if field not in verified:
+                verified.append(field)
+        save_entities(data_dir, entities)
+        return entity
+    return None
 
 
 def get_all_known_names(data_dir: Path) -> list[str]:
@@ -174,14 +312,31 @@ def is_denied(data_dir: Path, proposed_name: str, entity_id: str) -> bool:
 
 
 def to_sheet_rows(entities: list[dict[str, Any]]) -> list[list[Any]]:
-    headers = ["ID", "Canonical Name", "Type", "Aliases", "Created Date"]
+    headers = [
+        "ID", "Canonical Name", "Category", "Aliases",
+        "Phone", "Website", "Email", "Account Numbers",
+        "Address", "Last Seen Mail ID", "Created Date",
+    ]
     rows = [headers]
     for e in entities:
+        addr = e.get("address") or {}
+        addr_str = ", ".join(
+            v for v in [
+                addr.get("street"), addr.get("city"), addr.get("state"),
+                addr.get("zip"), addr.get("country"),
+            ] if v
+        )
         rows.append([
             e.get("id", ""),
             e.get("canonical_name", ""),
-            e.get("type", ""),
+            e.get("category", ""),
             ", ".join(e.get("aliases", [])),
+            e.get("phone", "") or "",
+            e.get("website", "") or "",
+            e.get("email", "") or "",
+            ", ".join(e.get("account_numbers", [])),
+            addr_str,
+            e.get("last_seen_in_mail_id", "") or "",
             e.get("created_date", ""),
         ])
     return rows

@@ -121,5 +121,5 @@ def seed_known_entities(data_dir: Path, known_names: list[str]) -> None:
 
     for name in known_names:
         if name.lower() not in existing:
-            entity_data.add_entity(data_dir, name, "Person")
+            entity_data.add_entity(data_dir, name, "personal")
             log.info(f"Seeded entity: {name}")

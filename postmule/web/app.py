@@ -13,10 +13,12 @@ Routes:
   GET  /setup                        First-run setup wizard (single button: Connect Google Account)
   GET  /setup/oauth/google           Start Google OAuth flow (uses baked-in client credentials)
   GET  /setup/oauth/google/callback  OAuth callback — saves refresh token to system keychain
-  POST /api/approve    Approve a pending match
-  POST /api/deny       Deny a pending match
-  POST /api/run        Trigger a manual run
-  GET  /api/run/status Check whether a run is in progress
+  POST /api/approve                 Approve a pending match
+  POST /api/deny                    Deny a pending match
+  POST /api/entity/<id>             Update a single entity field (marks user_verified)
+  POST /api/entity/<id>/add-account Append an account number to an entity
+  POST /api/run                     Trigger a manual run
+  GET  /api/run/status              Check whether a run is in progress
 """
 
 from __future__ import annotations
@@ -31,6 +33,7 @@ import time
 from collections import defaultdict
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -285,8 +288,51 @@ def entities():
         page="entities",
         title="Entities",
         entities=all_entities,
+        entity_categories=entity_data.CATEGORIES,
         today=date.today().isoformat(),
     )
+
+
+@app.route("/api/entity/<entity_id>", methods=["POST"])
+def api_entity_update(entity_id: str):
+    """Update a single field on an entity (user edit — marks field as user_verified)."""
+    field = request.form.get("field")
+    value = request.form.get("value", "")
+    if not field:
+        return "field is required", 400
+
+    # Coerce types for specific fields
+    if field == "account_numbers":
+        parsed_value: Any = [v.strip() for v in value.split(",") if v.strip()]
+    elif field == "address":
+        # Expect sub-field as address_street, address_city, etc.
+        parsed_value = {
+            k.removeprefix("address_"): request.form.get(k, "") or None
+            for k in request.form if k.startswith("address_")
+        }
+    else:
+        parsed_value = value or None
+
+    updated = entity_data.update_entity_field(_data_dir, entity_id, field, parsed_value)
+    if updated is None:
+        return "Entity not found", 404
+    return ("", 200)
+
+
+@app.route("/api/entity/<entity_id>/add-account", methods=["POST"])
+def api_entity_add_account(entity_id: str):
+    """Append a single account number to an entity."""
+    account = request.form.get("account", "").strip()
+    if not account:
+        return "account is required", 400
+    entities = entity_data.load_entities(_data_dir)
+    for e in entities:
+        if e["id"] == entity_id:
+            if account not in e["account_numbers"]:
+                e["account_numbers"].append(account)
+            entity_data.save_entities(_data_dir, entities)
+            return ("", 200)
+    return "Entity not found", 404
 
 
 @app.route("/logs")
