@@ -1,0 +1,264 @@
+# PostMule configuration template
+# Copy this to config.yaml and adjust values for your setup.
+# config.yaml is in .gitignore (it contains your email address and local paths).
+# All sensitive secrets live in credentials.yaml (encrypted to credentials.enc).
+
+# ---------------------------------------------------------------------------
+# app
+# ---------------------------------------------------------------------------
+app:
+  name: PostMule
+  version: "0.1.0"
+  install_dir: "C:\\ProgramData\\PostMule"
+  dry_run: false                  # true = simulate all actions, no writes
+
+# ---------------------------------------------------------------------------
+# schedule
+# ---------------------------------------------------------------------------
+schedule:
+  # Windows Task Scheduler — set by installer, not run manually.
+  run_time: "02:00"               # Daily run time (24h, local time)
+  timezone: "America/Los_Angeles"
+
+# ---------------------------------------------------------------------------
+# logging
+# ---------------------------------------------------------------------------
+logging:
+  verbose_days: 7                 # Rolling days of verbose logs to keep
+  processing_years: 3             # Years of annual processing logs to keep
+  level: INFO                     # DEBUG | INFO | WARNING | ERROR
+
+# ---------------------------------------------------------------------------
+# notifications
+# ---------------------------------------------------------------------------
+notifications:
+  # Primary notification method for daily summary and alerts.
+  # Multiple providers supported — list in priority order.
+  providers:
+    - type: email
+      enabled: true
+  alert_email: ""                 # Where to send alerts (your personal email)
+  forward_to_me_urgent: true      # Send immediate alert (not just daily summary)
+                                  # when ForwardToMe mail is detected
+  bill_due_alert_days: 7          # Send proactive alert when a bill is due within N days
+
+# ---------------------------------------------------------------------------
+# mailbox  (physical mail provider)
+# Each provider type carries its own connection/filter settings.
+# ---------------------------------------------------------------------------
+mailbox:
+  providers:
+    - type: vpm                   # vpm | earth_class | traveling_mailbox | postscan
+      enabled: true
+      # VPM sends scan notification emails from this address and subject prefix.
+      # Update these if using a different mailbox provider.
+      scan_sender: "noreply@virtualpostmail.com"
+      scan_subject_prefix: "[Scan Request]"
+
+# ---------------------------------------------------------------------------
+# email  (ingestion email accounts)
+# Each provider entry has a `role`:
+#   mailbox_notifications — monitors for VPM (or other physical mailbox) scan emails
+#   bill_intake           — monitors a dedicated inbox for PDF bills emailed directly
+#                           by billers (e.g. ATT, utilities). Phase 23.
+# Both roles feed the same downstream pipeline once PDFs land in storage /Inbox.
+# ---------------------------------------------------------------------------
+email:
+  providers:
+    - type: gmail                 # gmail | outlook | imap
+      enabled: true
+      role: mailbox_notifications # This account receives VPM scan notification emails
+      address: ""                 # e.g. YourMailManagement@gmail.com
+      label: "PostMule"           # Label applied to processed emails
+
+    # Optional: dedicated inbox for biller-sent PDF attachments (Phase 23)
+    # Create a separate address (e.g. bills@yourdomain.com) and give billers that address.
+    # PostMule will pull PDF attachments from this inbox and process them identically to
+    # physical mail scans. Enable this after Phase 23 is implemented.
+    - type: gmail
+      enabled: false
+      role: bill_intake
+      address: ""                 # e.g. bills@gmail.com or bills@yourdomain.com
+      label: "PostMule-Bills"
+
+# ---------------------------------------------------------------------------
+# storage  (file storage provider — where PDFs and JSON data are stored)
+# Cloud storage is intentional: PDFs and JSON data survive local PC failure, and
+# reinstalling PostMule on any machine immediately picks up where you left off.
+# ---------------------------------------------------------------------------
+storage:
+  providers:
+    - type: google_drive          # google_drive | s3 | dropbox | onedrive
+      enabled: true
+      root_folder: "PostMule"     # Top-level folder name in your storage provider
+      # Sub-folders created automatically on first run.
+      folders:
+        inbox: "Inbox"
+        bills: "Bills"
+        notices: "Notices"
+        forward_to_me: "ForwardToMe"
+        personal: "Personal"
+        junk: "Junk"
+        needs_review: "NeedsReview"
+        duplicates: "Duplicates"
+        archive: "Archive"
+        system: "_System"
+
+# ---------------------------------------------------------------------------
+# spreadsheet  (view layer — generated from JSON, never source of truth)
+# ---------------------------------------------------------------------------
+spreadsheet:
+  providers:
+    - type: google_sheets         # google_sheets | excel_online | airtable | none
+      enabled: true
+      workbook_name: "PostMule"
+      # Sheets are generated views — rebuilt from JSON on demand.
+      sheets:
+        - Bills
+        - Notices
+        - ForwardToMe
+        - Entities
+        - SenderDirectory
+        - BankTransactions
+        - PendingEntityMatches
+        - PendingBillMatches
+        - RunLog
+        - APIUsage
+
+# ---------------------------------------------------------------------------
+# llm  (AI classification provider)
+# ---------------------------------------------------------------------------
+llm:
+  providers:
+    - type: gemini                # gemini | openai | anthropic | ollama
+      enabled: true
+      model: "gemini-1.5-flash"
+  classification_confidence_threshold: 0.80  # Below this → NeedsReview
+
+# ---------------------------------------------------------------------------
+# api_safety  (applied to the active LLM provider)
+# ---------------------------------------------------------------------------
+api_safety:
+  daily_request_limit: 1400     # Hard stop; default matches Gemini free tier (1500/day)
+  daily_token_limit: 900000     # Hard stop; default matches Gemini free tier (1M/day)
+  warn_at_percent: 80           # Warn when 80% of any limit is used
+  monthly_cost_budget_usd: 0.00 # $0 = free tier only; raise for paid tiers
+
+# ---------------------------------------------------------------------------
+# classification
+# ---------------------------------------------------------------------------
+classification:
+  categories:
+    - Bill
+    - Notice
+    - ForwardToMe
+    - Personal
+    - Junk
+    - NeedsReview
+  # Items that always trigger ForwardToMe regardless of LLM classification.
+  forward_to_me_keywords:
+    - "credit card"
+    - "debit card"
+    - "check"
+    - "cheque"
+    - "gift card"
+    - "ticket"
+    - "passport"
+    - "key"
+
+# ---------------------------------------------------------------------------
+# ocr
+# ---------------------------------------------------------------------------
+ocr:
+  # pdfplumber is tried first (fast, lossless). Falls back to tesseract if no text found.
+  primary: pdfplumber
+  fallback: tesseract
+  tesseract_dpi: 300
+  tesseract_lang: "eng"
+
+# ---------------------------------------------------------------------------
+# file_naming
+# ---------------------------------------------------------------------------
+file_naming:
+  # Pattern: {date}_{recipients}_{sender}_{category}.pdf
+  # Example: 2025-11-15_Alice_ATT_Bill.pdf
+  date_format: "%Y-%m-%d"
+  max_sender_length: 30
+  max_recipient_length: 30
+
+# ---------------------------------------------------------------------------
+# entities
+# ---------------------------------------------------------------------------
+entities:
+  # Known entities auto-populated from mail OCR.
+  # Add known names here to seed entity discovery.
+  known_names: []
+  fuzzy_match_threshold: 0.85     # Similarity score to propose alias match
+  auto_approve_after_days: 7      # Auto-approve pending matches after N days
+  types:
+    - Person
+    - LLC
+    - Trust
+    - Corporation
+    - Partnership
+    - Other
+
+# ---------------------------------------------------------------------------
+# finance  (bank transaction sync)
+# ---------------------------------------------------------------------------
+finance:
+  providers:
+    - type: simplifi              # simplifi | ynab | monarch | tiller
+      enabled: false              # Enable after finance provider credentials are set
+  bill_matching:
+    require_manual_approval: true # true = human approves each match in dashboard
+    amount_tolerance_cents: 0     # Exact amount match required (0 = no tolerance)
+
+# ---------------------------------------------------------------------------
+# data_protection
+# ---------------------------------------------------------------------------
+data_protection:
+  soft_deletes_only: true         # NEVER permanently delete anything automatically
+  trash_retention_days: 90        # Days before trash is flagged for manual review
+  max_files_moved_per_run: 50     # Safety cap — alert and stop if exceeded
+  write_verification: true        # Read back + hash every write (3-layer redundancy)
+
+# ---------------------------------------------------------------------------
+# backups
+# ---------------------------------------------------------------------------
+backups:
+  enabled: true
+  retain_days: 180                # 6 months of daily encrypted backups
+  destination: google_drive       # Matches the active storage provider type
+
+# ---------------------------------------------------------------------------
+# integrity
+# ---------------------------------------------------------------------------
+integrity:
+  run_monitor: true               # Alert if a daily run is missed
+  gap_detector:
+    enabled: true
+    run_day: "sunday"             # Day of week for weekly gap scan
+  integrity_verifier:
+    enabled: true
+    run_day: "sunday"
+  duplicate_detector:
+    enabled: true                 # Runs daily
+
+# ---------------------------------------------------------------------------
+# credentials
+# ---------------------------------------------------------------------------
+credentials:
+  # Path to encrypted credentials file.
+  enc_file: "credentials.enc"
+  # Master password is stored in the system keyring (Windows: DPAPI, macOS: Keychain,
+  # Linux: Secret Service). Set it once with: postmule set-master-password
+  credential_manager_target: "PostMule/MasterPassword"
+
+# ---------------------------------------------------------------------------
+# deployment
+# ---------------------------------------------------------------------------
+deployment:
+  dashboard_port: 5000
+  tailscale_enabled: false        # true = dashboard accessible via Tailscale
+  task_scheduler_task_name: "PostMule Daily Run"
