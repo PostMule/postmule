@@ -118,7 +118,7 @@ Multiple providers per module supported simultaneously with priority ordering.
 
 ### Provider Categories
 - **Physical mailbox:** VPM (VirtualPostMail.com, default), Earth Class Mail, Traveling Mailbox, PostScan, Anytime Mailbox, US Global Mail
-- **Email:** Gmail, Outlook, ProtonMail, Yahoo, iCloud, Fastmail, Zoho, Tuta, HEY, IMAP generic
+- **Email:** Gmail, Outlook.com, Proton Mail, Yahoo, iCloud, Fastmail, Zoho, Tuta, HEY, IMAP generic
   - Each email provider entry has a `role` field: `mailbox_notifications` (receives VPM scan
     notification emails) or `bill_intake` (dedicated inbox for biller-sent PDF attachments)
   - Multiple providers per role are supported; pipeline runs each role independently

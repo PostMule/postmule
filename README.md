@@ -67,7 +67,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup.
 | Category | Default | Alternatives |
 |---|---|---|
 | Virtual mailbox | VirtualPostMail | Earth Class Mail, Traveling Mailbox, PostScan |
-| Email | Gmail | Outlook, any IMAP |
+| Email | Gmail | Outlook.com, Proton Mail, any IMAP |
 | Storage | Google Drive | Dropbox, OneDrive, S3 |
 | Spreadsheet | Google Sheets | Excel Online, Airtable |
 | LLM | Gemini 1.5 Flash | OpenAI, Anthropic, Ollama |
