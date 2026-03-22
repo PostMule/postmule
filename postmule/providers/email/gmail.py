@@ -29,11 +29,11 @@ class GmailProvider:
     Gmail API provider using OAuth2 credentials.
 
     Args:
-        credentials: Dict from decrypted credentials.yaml (google section).
+        credentials: google.oauth2.credentials.Credentials object (from build_google_credentials()).
         label_name:  Gmail label to apply to processed emails (default: "PostMule").
     """
 
-    def __init__(self, credentials: dict[str, Any], label_name: str = "PostMule") -> None:
+    def __init__(self, credentials: Any, label_name: str = "PostMule") -> None:
         self.credentials = credentials
         self.label_name = label_name
         self._service = None
@@ -41,18 +41,8 @@ class GmailProvider:
 
     def _get_service(self):
         if self._service is None:
-            from google.oauth2.credentials import Credentials  # type: ignore[import]
             from googleapiclient.discovery import build  # type: ignore[import]
-
-            creds = Credentials(
-                token=None,
-                refresh_token=self.credentials.get("refresh_token"),
-                client_id=self.credentials.get("client_id"),
-                client_secret=self.credentials.get("client_secret"),
-                token_uri="https://oauth2.googleapis.com/token",
-                scopes=_SCOPES,
-            )
-            self._service = build("gmail", "v1", credentials=creds)
+            self._service = build("gmail", "v1", credentials=self.credentials)
         return self._service
 
     def list_unprocessed_emails(

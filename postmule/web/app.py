@@ -10,22 +10,31 @@ Routes:
   GET  /entities       Entity list
   GET  /settings       Config editor
   GET  /logs           Log viewer
-  GET  /setup          First-run setup wizard
+  GET  /setup                        First-run setup wizard (single button: Connect Google Account)
+  GET  /setup/oauth/google           Start Google OAuth flow (uses baked-in client credentials)
+  GET  /setup/oauth/google/callback  OAuth callback — saves refresh token to system keychain
   POST /api/approve    Approve a pending match
   POST /api/deny       Deny a pending match
   POST /api/run        Trigger a manual run
+  GET  /api/run/status Check whether a run is in progress
 """
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import logging
 import os
 import threading
+import time
+from collections import defaultdict
 from datetime import date
 from pathlib import Path
 
-from flask import Flask, jsonify, redirect, render_template_string, request, session, url_for
+import yaml
+
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 
 from postmule.core.config import ConfigError, load_config
 from postmule.data import bills as bills_data
@@ -41,8 +50,39 @@ app.config["JSON_SORT_KEYS"] = False
 
 # Config and data dir are set at startup
 _config = None
+_config_raw: dict = {}
+_config_path: Path | None = None
 _data_dir: Path = Path("data")
 _enc_path: Path = Path("credentials.enc")
+
+# Pipeline concurrency guard
+_pipeline_lock = threading.Lock()
+_pipeline_running = False
+
+
+_MAX_LOGIN_ATTEMPTS = 5
+_LOCKOUT_SECONDS = 15 * 60  # 15 minutes
+_SESSION_TIMEOUT = 8 * 3600  # 8 hours
+
+# In-memory failed attempt tracking: {ip: [unix_timestamp, ...]}
+_failed_attempts: dict[str, list[float]] = defaultdict(list)
+
+_NAV_ITEMS = [
+    ("home", "/", "Home"),
+    ("mail", "/mail", "Mail"),
+    ("bills", "/bills", "Bills"),
+    ("forward", "/forward", "Forward To Me"),
+    ("pending", "/pending", "Pending"),
+    ("entities", "/entities", "Entities"),
+    ("settings", "/settings", "Settings"),
+    ("logs", "/logs", "Logs"),
+    ("setup", "/setup", "Setup"),
+]
+
+
+@app.context_processor
+def inject_nav():
+    return {"nav_items": _NAV_ITEMS}
 
 
 def create_app(
@@ -50,17 +90,20 @@ def create_app(
     data_dir: Path | None = None,
     enc_path: Path | None = None,
 ) -> Flask:
-    global _config, _data_dir, _enc_path
+    global _config, _config_raw, _config_path, _data_dir, _enc_path
     if config_path:
+        _config_path = config_path
         try:
             _config = load_config(config_path)
-        except ConfigError:
+            with open(config_path, encoding="utf-8") as f:
+                _config_raw = yaml.safe_load(f) or {}
+        except (ConfigError, Exception):
             pass
     if data_dir:
         _data_dir = data_dir
     if enc_path:
         _enc_path = enc_path
-    app.secret_key = os.urandom(24)
+    app.secret_key = _derive_secret_key()
     return app
 
 
@@ -73,12 +116,47 @@ def _dashboard_password() -> str | None:
     return _config and _config.get("dashboard", "password") or None
 
 
+def _derive_secret_key() -> bytes:
+    """Derive a stable Flask secret key from the configured password.
+
+    Using a password-derived key means sessions survive app restarts and
+    invalidate automatically when the password changes — both correct behaviors.
+    Falls back to a random key when no password is configured (auth disabled).
+    """
+    pw = _dashboard_password()
+    if pw:
+        return hashlib.sha256(f"postmule-dashboard:{pw}".encode()).digest()
+    return os.urandom(24)
+
+
+def _is_locked_out(ip: str) -> bool:
+    """Return True if the IP has exceeded the failed-attempt limit."""
+    now = time.time()
+    recent = [t for t in _failed_attempts[ip] if now - t < _LOCKOUT_SECONDS]
+    _failed_attempts[ip] = recent
+    return len(recent) >= _MAX_LOGIN_ATTEMPTS
+
+
+def _record_failed_attempt(ip: str) -> None:
+    _failed_attempts[ip].append(time.time())
+
+
+def _clear_attempts(ip: str) -> None:
+    _failed_attempts.pop(ip, None)
+
+
 @app.before_request
 def require_auth():
-    if request.endpoint in ("login", "logout", "static"):
+    if request.endpoint in ("login", "logout", "static", "setup_oauth_google_callback"):
         return
     pw = _dashboard_password()
-    if pw and not session.get("authenticated"):
+    if not pw:
+        return
+    if not session.get("authenticated"):
+        return redirect(url_for("login"))
+    # Enforce session timeout
+    if time.time() - session.get("auth_time", 0) > _SESSION_TIMEOUT:
+        session.clear()
         return redirect(url_for("login"))
 
 
@@ -86,12 +164,21 @@ def require_auth():
 def login():
     error = None
     if request.method == "POST":
-        pw = _dashboard_password()
-        if request.form.get("password") == pw:
-            session["authenticated"] = True
-            return redirect(url_for("home"))
-        error = "Incorrect password"
-    return render_template_string(_LOGIN_TEMPLATE, error=error)
+        ip = request.remote_addr or "unknown"
+        if _is_locked_out(ip):
+            error = "Too many failed attempts. Try again in 15 minutes."
+        else:
+            pw = _dashboard_password()
+            submitted = request.form.get("password", "")
+            # Constant-time comparison to prevent timing attacks
+            if pw and hmac.compare_digest(submitted.encode(), pw.encode()):
+                _clear_attempts(ip)
+                session["authenticated"] = True
+                session["auth_time"] = time.time()
+                return redirect(url_for("home"))
+            _record_failed_attempt(ip)
+            error = "Incorrect password"
+    return render_template("login.html", error=error)
 
 
 @app.route("/logout")
@@ -111,8 +198,8 @@ def home():
     bills_this_year = bills_data.load_bills(_data_dir)
     pending_bills = [b for b in bills_this_year if b.get("status") == "pending"]
 
-    return render_template_string(
-        _PAGE_TEMPLATE,
+    return render_template(
+        "page.html",
         page="home",
         title="Home",
         last_run=last_run,
@@ -136,8 +223,8 @@ def mail():
     )
     items.sort(key=lambda x: x.get("date_received", ""), reverse=True)
 
-    return render_template_string(
-        _PAGE_TEMPLATE,
+    return render_template(
+        "page.html",
         page="mail",
         title="Mail",
         items=items,
@@ -151,8 +238,8 @@ def bills():
     year = request.args.get("year", date.today().year, type=int)
     all_bills = bills_data.load_bills(_data_dir, year)
     pending = [b for b in all_bills if b.get("status") == "pending"]
-    return render_template_string(
-        _PAGE_TEMPLATE,
+    return render_template(
+        "page.html",
         page="bills",
         title="Bills",
         bills=all_bills,
@@ -166,8 +253,8 @@ def bills():
 def forward():
     items = ftm_data.load_forward_to_me(_data_dir)
     pending = [i for i in items if i.get("forwarding_status") == "pending"]
-    return render_template_string(
-        _PAGE_TEMPLATE,
+    return render_template(
+        "page.html",
         page="forward",
         title="Forward To Me",
         items=items,
@@ -180,8 +267,8 @@ def forward():
 def pending():
     pending_matches = entity_data.load_pending_matches(_data_dir)
     pending_only = [m for m in pending_matches if m.get("status") == "pending"]
-    return render_template_string(
-        _PAGE_TEMPLATE,
+    return render_template(
+        "page.html",
         page="pending",
         title="Pending Reviews",
         pending_matches=pending_only,
@@ -192,8 +279,8 @@ def pending():
 @app.route("/entities")
 def entities():
     all_entities = entity_data.load_entities(_data_dir)
-    return render_template_string(
-        _PAGE_TEMPLATE,
+    return render_template(
+        "page.html",
         page="entities",
         title="Entities",
         entities=all_entities,
@@ -204,8 +291,8 @@ def entities():
 @app.route("/logs")
 def logs():
     lines = _read_log_tail(50)
-    return render_template_string(
-        _PAGE_TEMPLATE,
+    return render_template(
+        "page.html",
         page="logs",
         title="Logs",
         log_lines=lines,
@@ -215,12 +302,347 @@ def logs():
 
 @app.route("/setup")
 def setup():
-    return render_template_string(
-        _PAGE_TEMPLATE,
+    google_ok = bool(session.get("setup_google_ok"))
+    return render_template(
+        "page.html",
         page="setup",
         title="Setup",
         today=date.today().isoformat(),
+        google_ok=google_ok,
     )
+
+
+# ------------------------------------------------------------------
+# Setup wizard — Google OAuth flow
+# ------------------------------------------------------------------
+
+from postmule.core.constants import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_SCOPES
+
+
+@app.route("/setup/oauth/google")
+def setup_oauth_google():
+    """Redirect the user to Google's consent screen using baked-in client credentials."""
+    try:
+        from google_auth_oauthlib.flow import Flow  # type: ignore[import]
+    except ImportError:
+        return jsonify({"error": "google-auth-oauthlib not installed"}), 500
+
+    if not GOOGLE_CLIENT_ID:
+        return jsonify({"error": "GOOGLE_CLIENT_ID not configured — run scripts/dev_setup.sh"}), 500
+
+    client_config = {
+        "web": {
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "redirect_uris": [url_for("setup_oauth_google_callback", _external=True)],
+        }
+    }
+    flow = Flow.from_client_config(
+        client_config,
+        scopes=GOOGLE_SCOPES,
+        redirect_uri=url_for("setup_oauth_google_callback", _external=True),
+    )
+    auth_url, state = flow.authorization_url(
+        access_type="offline",
+        prompt="consent",
+        include_granted_scopes="true",
+    )
+    session["setup_google_oauth_state"] = state
+    return redirect(auth_url)
+
+
+@app.route("/setup/oauth/google/callback")
+def setup_oauth_google_callback():
+    """Receive the authorization code from Google, exchange for tokens, save refresh token to keychain."""
+    try:
+        from google_auth_oauthlib.flow import Flow  # type: ignore[import]
+    except ImportError:
+        return "google-auth-oauthlib not installed", 500
+
+    state = session.get("setup_google_oauth_state")
+    if not state:
+        return redirect(url_for("setup") + "?error=session_expired")
+
+    client_config = {
+        "web": {
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "redirect_uris": [url_for("setup_oauth_google_callback", _external=True)],
+        }
+    }
+    flow = Flow.from_client_config(
+        client_config,
+        scopes=GOOGLE_SCOPES,
+        state=state,
+        redirect_uri=url_for("setup_oauth_google_callback", _external=True),
+    )
+
+    try:
+        flow.fetch_token(authorization_response=request.url)
+    except Exception as exc:
+        log.error(f"Google OAuth token exchange failed: {exc}")
+        return redirect(url_for("setup") + "?error=oauth_failed")
+
+    creds = flow.credentials
+    if not creds.refresh_token:
+        return redirect(url_for("setup") + "?error=no_refresh_token")
+
+    try:
+        from postmule.core.credentials import save_google_refresh_token
+        save_google_refresh_token(creds.refresh_token)
+    except Exception as exc:
+        log.error(f"Failed to save Google refresh token: {exc}")
+        return redirect(url_for("setup") + "?error=keychain_save_failed")
+
+    log.info("Google OAuth refresh token saved to system keychain")
+    session.pop("setup_google_oauth_state", None)
+
+    return redirect(url_for("setup") + "?google_ok=1")
+
+
+@app.route("/settings")
+def settings():
+    saved = request.args.get("saved") == "1"
+    cfg = _config_raw
+
+    # Pre-flatten provider lists so the template stays simple
+    finance_by_type = {p["type"]: p for p in cfg.get("finance", {}).get("providers", [])}
+    email_by_role = {p.get("role", ""): p for p in cfg.get("email", {}).get("providers", [])}
+    storage_providers = cfg.get("storage", {}).get("providers", [{}])
+    sheet_providers = cfg.get("spreadsheet", {}).get("providers", [{}])
+    llm_providers = cfg.get("llm", {}).get("providers", [{}])
+    mbox_providers = cfg.get("mailbox", {}).get("providers", [{}])
+
+    return render_template(
+        "page.html",
+        page="settings",
+        title="Settings",
+        cfg=cfg,
+        finance_by_type=finance_by_type,
+        email_by_role=email_by_role,
+        storage_cfg=storage_providers[0] if storage_providers else {},
+        sheet_cfg=sheet_providers[0] if sheet_providers else {},
+        llm_cfg=llm_providers[0] if llm_providers else {},
+        mbox_cfg=mbox_providers[0] if mbox_providers else {},
+        saved=saved,
+        config_missing=(_config_path is None),
+        today=date.today().isoformat(),
+    )
+
+
+@app.route("/api/settings", methods=["POST"])
+def api_settings():
+    global _config_raw
+    if _config_path is None:
+        return jsonify({"error": "No config file loaded"}), 500
+
+    form = request.form
+
+    def cb(name: str) -> bool:
+        return name in form and form[name] in ("on", "true", "1")
+
+    def intv(name: str, default: int = 0) -> int:
+        try:
+            return int(form.get(name, default))
+        except (ValueError, TypeError):
+            return default
+
+    def floatv(name: str, default: float = 0.0) -> float:
+        try:
+            return float(form.get(name, default))
+        except (ValueError, TypeError):
+            return default
+
+    existing = _config_raw
+
+    # Finance: preserve any extra fields (e.g. Plaid environment) from existing config
+    existing_finance_by_type = {
+        p["type"]: p for p in existing.get("finance", {}).get("providers", [])
+    }
+
+    def _finance_provider(ptype: str, extras: dict | None = None) -> dict:
+        base = dict(existing_finance_by_type.get(ptype, {}))
+        base["type"] = ptype
+        base["enabled"] = cb(f"finance_{ptype}_enabled")
+        if extras:
+            base.update(extras)
+        return base
+
+    new_config = {
+        "app": {
+            **existing.get("app", {}),
+            "dry_run": cb("app_dry_run"),
+        },
+        "schedule": {
+            "run_time": form.get("schedule_run_time", "02:00"),
+            "timezone": form.get("schedule_timezone", "America/Los_Angeles"),
+        },
+        "logging": {
+            "verbose_days": intv("logging_verbose_days", 7),
+            "processing_years": intv("logging_processing_years", 3),
+            "level": form.get("logging_level", "INFO"),
+        },
+        "notifications": {
+            "providers": existing.get("notifications", {}).get(
+                "providers", [{"type": "email", "enabled": True}]
+            ),
+            "alert_email": form.get("notifications_alert_email", ""),
+            "forward_to_me_urgent": cb("notifications_forward_to_me_urgent"),
+            "bill_due_alert_days": intv("notifications_bill_due_alert_days", 7),
+        },
+        "mailbox": {
+            "providers": [
+                {
+                    "type": form.get("mailbox_type", "vpm"),
+                    "enabled": cb("mailbox_enabled"),
+                    "scan_sender": form.get("mailbox_scan_sender", ""),
+                    "scan_subject_prefix": form.get("mailbox_scan_subject_prefix", ""),
+                }
+            ]
+        },
+        "email": {
+            "providers": [
+                {
+                    "type": form.get("email_mbox_type", "gmail"),
+                    "enabled": cb("email_mbox_enabled"),
+                    "role": "mailbox_notifications",
+                    "address": form.get("email_mbox_address", ""),
+                    "label": form.get("email_mbox_label", "PostMule"),
+                },
+                {
+                    "type": form.get("email_bills_type", "gmail"),
+                    "enabled": cb("email_bills_enabled"),
+                    "role": "bill_intake",
+                    "address": form.get("email_bills_address", ""),
+                    "label": form.get("email_bills_label", "PostMule-Bills"),
+                },
+            ]
+        },
+        "storage": {
+            "providers": [
+                {
+                    "type": form.get("storage_type", "google_drive"),
+                    "enabled": True,
+                    "root_folder": form.get("storage_root_folder", "PostMule"),
+                    "folders": (
+                        existing.get("storage", {}).get("providers", [{}])[0].get("folders", {})
+                    ),
+                }
+            ]
+        },
+        "spreadsheet": {
+            "providers": [
+                {
+                    "type": form.get("spreadsheet_type", "google_sheets"),
+                    "enabled": True,
+                    "workbook_name": form.get("spreadsheet_workbook_name", "PostMule"),
+                    "sheets": (
+                        existing.get("spreadsheet", {}).get("providers", [{}])[0].get("sheets", [])
+                    ),
+                }
+            ]
+        },
+        "llm": {
+            "providers": [
+                {
+                    "type": form.get("llm_type", "gemini"),
+                    "enabled": True,
+                    "model": form.get("llm_model", "gemini-1.5-flash"),
+                }
+            ],
+            "classification_confidence_threshold": floatv("llm_confidence", 0.80),
+        },
+        "api_safety": {
+            "daily_request_limit": intv("api_daily_req", 1400),
+            "daily_token_limit": intv("api_daily_tok", 900000),
+            "warn_at_percent": intv("api_warn_pct", 80),
+            "monthly_cost_budget_usd": floatv("api_monthly_usd", 0.00),
+        },
+        "classification": {
+            "categories": existing.get("classification", {}).get("categories", []),
+            "forward_to_me_keywords": [
+                kw.strip()
+                for kw in form.get("classification_keywords", "").splitlines()
+                if kw.strip()
+            ],
+        },
+        "ocr": {
+            "primary": form.get("ocr_primary", "pdfplumber"),
+            "fallback": form.get("ocr_fallback", "tesseract"),
+            "tesseract_dpi": intv("ocr_dpi", 300),
+            "tesseract_lang": form.get("ocr_lang", "eng"),
+        },
+        "file_naming": {
+            "date_format": form.get("fn_date_format", "%Y-%m-%d"),
+            "max_sender_length": intv("fn_max_sender", 30),
+            "max_recipient_length": intv("fn_max_recipient", 30),
+        },
+        "entities": {
+            "known_names": existing.get("entities", {}).get("known_names", []),
+            "fuzzy_match_threshold": floatv("ent_fuzzy", 0.85),
+            "auto_approve_after_days": intv("ent_auto_approve", 7),
+            "types": existing.get("entities", {}).get("types", []),
+        },
+        "finance": {
+            "providers": [
+                _finance_provider("ynab"),
+                _finance_provider("plaid", {"environment": form.get("finance_plaid_env", "development")}),
+                _finance_provider("simplifi"),
+                _finance_provider("monarch"),
+            ],
+            "bill_matching": {
+                "require_manual_approval": cb("finance_require_approval"),
+                "amount_tolerance_cents": intv("finance_tolerance_cents", 0),
+            },
+        },
+        "data_protection": {
+            "soft_deletes_only": cb("dp_soft_deletes"),
+            "trash_retention_days": intv("dp_trash_days", 90),
+            "max_files_moved_per_run": intv("dp_max_files", 50),
+            "write_verification": cb("dp_write_verify"),
+        },
+        "backups": {
+            "enabled": cb("backups_enabled"),
+            "retain_days": intv("backups_retain_days", 180),
+            "destination": existing.get("backups", {}).get("destination", "google_drive"),
+        },
+        "integrity": {
+            "run_monitor": cb("int_run_monitor"),
+            "gap_detector": {
+                "enabled": cb("int_gap_enabled"),
+                "run_day": form.get("int_gap_day", "sunday"),
+            },
+            "integrity_verifier": {
+                "enabled": cb("int_verifier_enabled"),
+                "run_day": form.get("int_verifier_day", "sunday"),
+            },
+            "duplicate_detector": {
+                "enabled": cb("int_dup_enabled"),
+            },
+        },
+        "credentials": existing.get("credentials", {}),
+        "deployment": {
+            "dashboard_port": intv("dep_port", 5000),
+            "tailscale_enabled": cb("dep_tailscale"),
+            "task_scheduler_task_name": form.get("dep_task_name", "PostMule Daily Run"),
+        },
+    }
+
+    _config_raw = new_config
+    with open(_config_path, "w", encoding="utf-8") as f:
+        yaml.dump(new_config, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+    # Reload parsed config so the live object reflects the saved changes
+    try:
+        _config = load_config(_config_path)
+    except Exception:
+        pass
+
+    return redirect(url_for("settings") + "?saved=1")
 
 
 # ------------------------------------------------------------------
@@ -269,11 +691,19 @@ def api_deny():
 
 @app.route("/api/run", methods=["POST"])
 def api_run():
+    global _pipeline_running
     if _config is None:
         return jsonify({"error": "No config loaded"}), 500
+
+    with _pipeline_lock:
+        if _pipeline_running:
+            return jsonify({"error": "Pipeline is already running"}), 409
+        _pipeline_running = True
+
     dry_run = request.form.get("dry_run", "false").lower() == "true"
 
     def _run():
+        global _pipeline_running
         from postmule.core.credentials import CredentialsError, load_credentials
         from postmule.pipeline import run_daily_pipeline
         try:
@@ -283,9 +713,17 @@ def api_run():
             log.error(f"Pipeline aborted — credentials error: {exc}")
         except Exception as exc:
             log.error(f"Pipeline run failed: {exc}")
+        finally:
+            with _pipeline_lock:
+                _pipeline_running = False
 
     threading.Thread(target=_run, daemon=True).start()
     return jsonify({"ok": True, "message": "Run started"})
+
+
+@app.route("/api/run/status", methods=["GET"])
+def api_run_status():
+    return jsonify({"running": _pipeline_running})
 
 
 # ------------------------------------------------------------------
@@ -306,241 +744,3 @@ def _read_log_tail(lines: int) -> list[str]:
     return [f"No log file found for {today}"]
 
 
-# ------------------------------------------------------------------
-# Minimal inline template (brand-consistent)
-# ------------------------------------------------------------------
-
-_LOGIN_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>PostMule — Login</title>
-  <style>
-    body { background: #F5F6F8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-           display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-    .card { background: white; border-radius: 10px; border: 1px solid #DDE3EC; padding: 32px; width: 320px; }
-    h1 { font-size: 20px; color: #0F2044; margin: 0 0 24px; }
-    input { width: 100%; padding: 9px 12px; border: 1px solid #DDE3EC; border-radius: 6px;
-            font-size: 14px; box-sizing: border-box; margin-bottom: 12px; }
-    button { width: 100%; padding: 10px; background: #0F2044; color: white; border: none;
-             border-radius: 6px; font-size: 14px; cursor: pointer; }
-    .error { color: #C62828; font-size: 12px; margin-bottom: 10px; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>Post<span style="color:#E8A020;">Mule</span></h1>
-    <form method="post">
-      {% if error %}<div class="error">{{ error }}</div>{% endif %}
-      <input type="password" name="password" placeholder="Dashboard password" autofocus>
-      <button type="submit">Sign in</button>
-    </form>
-  </div>
-</body>
-</html>
-"""
-
-_NAV_ITEMS = [
-    ("home", "/", "Home"),
-    ("mail", "/mail", "Mail"),
-    ("bills", "/bills", "Bills"),
-    ("forward", "/forward", "Forward To Me"),
-    ("pending", "/pending", "Pending"),
-    ("entities", "/entities", "Entities"),
-    ("logs", "/logs", "Logs"),
-    ("setup", "/setup", "Setup"),
-]
-
-_PAGE_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PostMule — {{ title }}</title>
-  <script>
-    function pmPost(url, data, onSuccess) {
-      fetch(url, {method: 'POST', body: new URLSearchParams(data)})
-        .then(r => r.json())
-        .then(j => { if (j.ok && onSuccess) onSuccess(); })
-        .catch(e => console.error(e));
-    }
-  </script>
-  <style>
-    body { background: #F5F6F8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-    .nav-link { color: #5A7CA4; font-size: 13px; padding: 6px 12px; border-radius: 4px; text-decoration: none; }
-    .nav-link:hover, .nav-link.active { background: #1a3060; color: white; }
-  </style>
-</head>
-<body>
-  <!-- Header -->
-  <div style="background:#0F2044;padding:0 24px;">
-    <div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:24px;height:52px;">
-      <a href="/" style="font-size:18px;font-weight:600;color:white;text-decoration:none;">
-        Post<span style="color:#E8A020;">Mule</span>
-      </a>
-      <nav style="display:flex;gap:4px;flex:1;">
-        {% for key, href, label in nav_items %}
-        <a href="{{ href }}" class="nav-link {% if page == key %}active{% endif %}">{{ label }}</a>
-        {% endfor %}
-      </nav>
-      <div style="color:#5A7CA4;font-size:11px;">{{ today }}</div>
-    </div>
-  </div>
-
-  <!-- Content -->
-  <div style="max-width:1100px;margin:24px auto;padding:0 24px;">
-
-    {% if page == 'home' %}
-    <h1 style="font-size:22px;font-weight:600;color:#0F2044;margin-bottom:16px;">Dashboard</h1>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;">
-      <div style="background:white;border-radius:8px;border:1px solid #DDE3EC;padding:16px;">
-        <div style="font-size:11px;color:#7A90A8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Last Run</div>
-        <div style="font-size:14px;color:#0F2044;font-weight:600;">
-          {% if last_run %}{{ last_run.get('end_time','')[:16] }} &mdash; {{ last_run.get('status','') }}{% else %}Never{% endif %}
-        </div>
-      </div>
-      <div style="background:white;border-radius:8px;border:1px solid #DDE3EC;padding:16px;">
-        <div style="font-size:11px;color:#7A90A8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Awaiting Forwarding</div>
-        <div style="font-size:22px;font-weight:600;color:{% if pending_ftm_count > 0 %}#C62828{% else %}#2E7D32{% endif %};">{{ pending_ftm_count }}</div>
-      </div>
-      <div style="background:white;border-radius:8px;border:1px solid #DDE3EC;padding:16px;">
-        <div style="font-size:11px;color:#7A90A8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Pending Bills</div>
-        <div style="font-size:22px;font-weight:600;color:#E8A020;">{{ pending_bills_count }}</div>
-      </div>
-    </div>
-    <div style="display:flex;gap:12px;">
-      <button onclick="pmPost('/api/run', {dry_run: 'false'})"
-              style="background:#0F2044;color:white;padding:10px 20px;border:none;border-radius:6px;font-size:13px;cursor:pointer;">
-        Run Now
-      </button>
-      <button onclick="pmPost('/api/run', {dry_run: 'true'})"
-              style="background:#F5F6F8;color:#0F2044;padding:10px 20px;border:1px solid #DDE3EC;border-radius:6px;font-size:13px;cursor:pointer;">
-        Dry Run
-      </button>
-    </div>
-
-    {% elif page == 'mail' %}
-    <h1 style="font-size:22px;font-weight:600;color:#0F2044;margin-bottom:16px;">Mail</h1>
-    {% for item in items %}
-    {% set bar = {'Bill':'#E8A020','Notice':'#7A9CC4','ForwardToMe':'#C62828','Personal':'#7A9CC4','Junk':'#DDE3EC','NeedsReview':'#7A9CC4'} %}
-    <div style="background:white;border-radius:8px;border:1px solid #DDE3EC;margin-bottom:8px;display:flex;overflow:hidden;">
-      <div style="width:3px;background:{{ bar.get(item._type,'#DDE3EC') }};flex-shrink:0;"></div>
-      <div style="padding:12px 16px;flex:1;">
-        <div style="display:flex;justify-content:space-between;">
-          <div style="font-weight:600;color:#0F2044;">{{ item.get('sender','Unknown') }}</div>
-          <div style="font-size:11px;color:#B8C8D8;">{{ item.get('date_received','') }}</div>
-        </div>
-        <div style="font-size:12px;color:#5A7090;margin-top:2px;">{{ item.get('summary','') }}</div>
-        <span style="display:inline-block;font-size:10px;font-weight:600;letter-spacing:0.8px;padding:2px 8px;border-radius:4px;margin-top:6px;background:#EEF3F9;color:#2C4A6E;border:1px solid #C0D0E4;">
-          {{ item._type.upper() }}
-        </span>
-      </div>
-    </div>
-    {% else %}
-    <div style="color:#7A90A8;font-size:13px;">No mail items found.</div>
-    {% endfor %}
-
-    {% elif page == 'bills' %}
-    <h1 style="font-size:22px;font-weight:600;color:#0F2044;margin-bottom:16px;">Bills</h1>
-    <table style="width:100%;border-collapse:collapse;background:white;border-radius:8px;border:1px solid #DDE3EC;overflow:hidden;">
-      <thead>
-        <tr style="background:#F5F6F8;">
-          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#5A7090;">Sender</th>
-          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#5A7090;">Amount</th>
-          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#5A7090;">Due</th>
-          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#5A7090;">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for bill in bills %}
-        <tr style="border-top:1px solid #DDE3EC;">
-          <td style="padding:10px 14px;color:#0F2044;font-weight:500;">{{ bill.get('sender','') }}</td>
-          <td style="padding:10px 14px;color:#0F2044;">${{ '%.2f'|format(bill.get('amount_due',0)) }}</td>
-          <td style="padding:10px 14px;color:#E8A020;">{{ bill.get('due_date','') }}</td>
-          <td style="padding:10px 14px;font-size:11px;">
-            <span style="background:#EEF3F9;color:#2C4A6E;padding:2px 8px;border-radius:4px;border:1px solid #C0D0E4;">{{ bill.get('status','pending').upper() }}</span>
-          </td>
-        </tr>
-      {% else %}
-        <tr><td colspan="4" style="padding:16px;text-align:center;color:#7A90A8;">No bills found.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-
-    {% elif page == 'pending' %}
-    <h1 style="font-size:22px;font-weight:600;color:#0F2044;margin-bottom:16px;">Pending Reviews</h1>
-    {% for match in pending_matches %}
-    <div data-match-row style="background:white;border-radius:8px;border:1px solid #DDE3EC;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:16px;">
-      <div style="flex:1;">
-        <div style="font-weight:600;color:#0F2044;">"{{ match.proposed_name }}"</div>
-        <div style="font-size:12px;color:#5A7090;">Looks like: {{ match.match_entity_id }} &mdash; similarity {{ '%.0f'|format(match.similarity * 100) }}%</div>
-        <div style="font-size:11px;color:#B8C8D8;">Auto-approves: {{ match.auto_approve_after }}</div>
-      </div>
-      <button onclick="pmPost('/api/approve', {match_id: '{{ match.id }}'}, () => this.closest('[data-match-row]').remove())"
-              style="background:#0F2044;color:white;padding:6px 14px;border:none;border-radius:4px;font-size:12px;cursor:pointer;">Approve</button>
-      <button onclick="pmPost('/api/deny', {match_id: '{{ match.id }}'}, () => this.closest('[data-match-row]').remove())"
-              style="background:#F5F6F8;color:#C62828;padding:6px 14px;border:1px solid #FFCDD2;border-radius:4px;font-size:12px;cursor:pointer;">Deny</button>
-    </div>
-    {% else %}
-    <div style="color:#7A90A8;font-size:13px;">No pending items.</div>
-    {% endfor %}
-
-    {% elif page == 'entities' %}
-    <h1 style="font-size:22px;font-weight:600;color:#0F2044;margin-bottom:16px;">Entities</h1>
-    {% for entity in entities %}
-    <div style="background:white;border-radius:8px;border:1px solid #DDE3EC;padding:12px 16px;margin-bottom:8px;">
-      <div style="display:flex;gap:8px;align-items:center;">
-        <span style="font-weight:600;color:#0F2044;">{{ entity.canonical_name }}</span>
-        <span style="font-size:10px;background:#EEF3F9;color:#2C4A6E;padding:2px 8px;border-radius:4px;border:1px solid #C0D0E4;">{{ entity.type }}</span>
-      </div>
-      {% if entity.aliases | length > 1 %}
-      <div style="font-size:11px;color:#7A90A8;margin-top:4px;">Aliases: {{ entity.aliases | join(', ') }}</div>
-      {% endif %}
-    </div>
-    {% else %}
-    <div style="color:#7A90A8;font-size:13px;">No entities found. Run PostMule to discover entities from your mail.</div>
-    {% endfor %}
-
-    {% elif page == 'forward' %}
-    <h1 style="font-size:22px;font-weight:600;color:#0F2044;margin-bottom:16px;">Forward To Me</h1>
-    {% for item in pending %}
-    <div style="background:white;border-radius:8px;border:1px solid #FFCDD2;padding:14px 16px;margin-bottom:8px;">
-      <div style="color:#C62828;font-weight:600;font-size:13px;margin-bottom:4px;">ACTION REQUIRED</div>
-      <div style="font-weight:600;color:#0F2044;">{{ item.get('sender','') }}</div>
-      <div style="font-size:12px;color:#5A7090;">{{ item.get('summary','') }}</div>
-      <div style="font-size:11px;color:#B8C8D8;margin-top:4px;">Received: {{ item.get('date_received','') }}</div>
-    </div>
-    {% else %}
-    <div style="color:#2E7D32;font-size:13px;">No items awaiting forwarding.</div>
-    {% endfor %}
-
-    {% elif page == 'logs' %}
-    <h1 style="font-size:22px;font-weight:600;color:#0F2044;margin-bottom:16px;">Logs</h1>
-    <div style="background:#0F2044;border-radius:8px;padding:16px;font-family:monospace;font-size:11px;color:#7A9CC4;overflow-x:auto;white-space:pre-wrap;max-height:600px;overflow-y:auto;">
-      {% for line in log_lines %}{{ line }}
-{% endfor %}
-    </div>
-
-    {% elif page == 'setup' %}
-    <h1 style="font-size:22px;font-weight:600;color:#0F2044;margin-bottom:8px;">Setup</h1>
-    <p style="color:#5A7090;margin-bottom:24px;">Complete these steps to get PostMule running.</p>
-    <div style="background:white;border-radius:8px;border:1px solid #DDE3EC;padding:20px;max-width:560px;">
-      <ol style="color:#0F2044;line-height:2;">
-        <li>Run <code style="background:#F5F6F8;padding:2px 6px;border-radius:4px;">postmule set-master-password</code> in your terminal</li>
-        <li>Fill in <code style="background:#F5F6F8;padding:2px 6px;border-radius:4px;">credentials.yaml</code> with your Google OAuth credentials</li>
-        <li>Run <code style="background:#F5F6F8;padding:2px 6px;border-radius:4px;">postmule encrypt-credentials</code></li>
-        <li>Edit <code style="background:#F5F6F8;padding:2px 6px;border-radius:4px;">config.yaml</code> — set your alert email address</li>
-        <li>Run <code style="background:#F5F6F8;padding:2px 6px;border-radius:4px;">postmule --dry-run</code> to verify everything works</li>
-      </ol>
-    </div>
-    {% endif %}
-
-  </div>
-</body>
-</html>
-""".replace(
-    "{% for key, href, label in nav_items %}",
-    "{% set nav_items = " + str(_NAV_ITEMS) + " %}{% for key, href, label in nav_items %}"
-)

@@ -29,11 +29,11 @@ class DriveProvider:
     Google Drive API provider.
 
     Args:
-        credentials: Dict from decrypted credentials.yaml (google section).
+        credentials: google.oauth2.credentials.Credentials object (from build_google_credentials()).
         root_folder:  Name of the top-level PostMule folder in Drive.
     """
 
-    def __init__(self, credentials: dict[str, Any], root_folder: str = "PostMule") -> None:
+    def __init__(self, credentials: Any, root_folder: str = "PostMule") -> None:
         self.credentials = credentials
         self.root_folder = root_folder
         self._service = None
@@ -41,18 +41,8 @@ class DriveProvider:
 
     def _get_service(self):
         if self._service is None:
-            from google.oauth2.credentials import Credentials  # type: ignore[import]
             from googleapiclient.discovery import build  # type: ignore[import]
-
-            creds = Credentials(
-                token=None,
-                refresh_token=self.credentials.get("refresh_token"),
-                client_id=self.credentials.get("client_id"),
-                client_secret=self.credentials.get("client_secret"),
-                token_uri="https://oauth2.googleapis.com/token",
-                scopes=_SCOPES,
-            )
-            self._service = build("drive", "v3", credentials=creds)
+            self._service = build("drive", "v3", credentials=self.credentials)
         return self._service
 
     # ------------------------------------------------------------------

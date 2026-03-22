@@ -194,3 +194,94 @@ def load_credentials(enc_path: Path) -> dict[str, Any]:
     """
     master_password = load_master_password()
     return decrypt_credentials(enc_path, master_password)
+
+
+# ------------------------------------------------------------------
+# Google OAuth token storage via system keyring
+# (used instead of credentials.yaml for the standard Google flow)
+# ------------------------------------------------------------------
+
+def save_google_refresh_token(refresh_token: str) -> None:
+    """
+    Store the Google OAuth refresh token in the system keychain.
+    Called once after the user completes the Google consent screen.
+    No master password required — the OS keychain handles encryption.
+    """
+    from postmule.core.constants import KEYRING_SERVICE, KEYRING_GOOGLE_REFRESH_TOKEN
+    try:
+        import keyring  # type: ignore[import]
+        keyring.set_password(KEYRING_SERVICE, KEYRING_GOOGLE_REFRESH_TOKEN, refresh_token)
+    except ImportError:
+        raise CredentialsError("keyring is not installed.\nRun: pip install keyring")
+    except Exception as exc:
+        raise CredentialsError(
+            f"Failed to save Google refresh token to system keychain:\n{exc}"
+        ) from exc
+
+
+def load_google_refresh_token() -> str:
+    """
+    Read the Google OAuth refresh token from the system keychain.
+    Raises CredentialsError if not found (setup not complete).
+    """
+    from postmule.core.constants import KEYRING_SERVICE, KEYRING_GOOGLE_REFRESH_TOKEN
+    try:
+        import keyring  # type: ignore[import]
+        value = keyring.get_password(KEYRING_SERVICE, KEYRING_GOOGLE_REFRESH_TOKEN)
+    except ImportError:
+        raise CredentialsError("keyring is not installed.\nRun: pip install keyring")
+    except Exception as exc:
+        raise CredentialsError(
+            f"Failed to read Google refresh token from system keychain:\n{exc}"
+        ) from exc
+
+    if value is None:
+        raise CredentialsError(
+            "Google account not connected.\n"
+            "Open the PostMule dashboard and click 'Connect Google Account'."
+        )
+    return value
+
+
+def google_credentials_available() -> bool:
+    """Return True if a Google refresh token exists in the system keychain."""
+    try:
+        load_google_refresh_token()
+        return True
+    except CredentialsError:
+        return False
+
+
+def build_google_credentials() -> "google.oauth2.credentials.Credentials":
+    """
+    Build a google.oauth2.credentials.Credentials object from the stored
+    refresh token and the baked-in client_id / client_secret.
+    The credentials auto-refresh when expired (no user interaction needed).
+    """
+    from postmule.core.constants import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_SCOPES
+    try:
+        from google.oauth2.credentials import Credentials  # type: ignore[import]
+        from google.auth.transport.requests import Request  # type: ignore[import]
+    except ImportError:
+        raise CredentialsError(
+            "google-auth is not installed.\nRun: pip install google-auth"
+        )
+
+    if not GOOGLE_CLIENT_ID:
+        raise CredentialsError(
+            "GOOGLE_CLIENT_ID is not set in postmule/core/constants.py.\n"
+            "Run scripts/dev_setup.sh to generate and bake in the OAuth client."
+        )
+
+    refresh_token = load_google_refresh_token()
+    creds = Credentials(
+        token=None,
+        refresh_token=refresh_token,
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=GOOGLE_CLIENT_ID,
+        client_secret=GOOGLE_CLIENT_SECRET,
+        scopes=GOOGLE_SCOPES,
+    )
+    # Eagerly refresh so callers get a valid access token immediately
+    creds.refresh(Request())
+    return creds

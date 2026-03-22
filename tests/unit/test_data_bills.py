@@ -49,5 +49,5 @@ def test_to_sheet_rows(tmp_path):
     rows = to_sheet_rows(bills)
     assert rows[0] == ["ID", "Date Received", "Date Processed", "Sender", "Recipients",
                        "Amount Due", "Due Date", "Account Number", "Summary",
-                       "Drive File ID", "Filename", "Status", "Matched Transaction ID"]
+                       "Drive File ID", "Filename", "Status", "Matched Transaction ID", "Alert Sent Date"]
     assert rows[1][3] == "ATT"

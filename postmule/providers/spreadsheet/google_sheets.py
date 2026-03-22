@@ -19,11 +19,11 @@ class SheetsProvider:
     Google Sheets API provider.
 
     Args:
-        credentials:   Dict from decrypted credentials.yaml (google section).
+        credentials:   google.oauth2.credentials.Credentials object (from build_google_credentials()).
         workbook_name: Name of the PostMule Sheets workbook.
     """
 
-    def __init__(self, credentials: dict[str, Any], workbook_name: str = "PostMule") -> None:
+    def __init__(self, credentials: Any, workbook_name: str = "PostMule") -> None:
         self.credentials = credentials
         self.workbook_name = workbook_name
         self._service = None
@@ -31,18 +31,8 @@ class SheetsProvider:
 
     def _get_service(self):
         if self._service is None:
-            from google.oauth2.credentials import Credentials  # type: ignore[import]
             from googleapiclient.discovery import build  # type: ignore[import]
-
-            creds = Credentials(
-                token=None,
-                refresh_token=self.credentials.get("refresh_token"),
-                client_id=self.credentials.get("client_id"),
-                client_secret=self.credentials.get("client_secret"),
-                token_uri="https://oauth2.googleapis.com/token",
-                scopes=_SCOPES,
-            )
-            self._service = build("sheets", "v4", credentials=creds)
+            self._service = build("sheets", "v4", credentials=self.credentials)
         return self._service
 
     def get_or_create_workbook(self, drive_folder_id: str | None = None) -> str:
@@ -58,17 +48,7 @@ class SheetsProvider:
         # Try to find existing workbook via Drive search
         try:
             from googleapiclient.discovery import build  # type: ignore[import]
-            from google.oauth2.credentials import Credentials  # type: ignore[import]
-
-            drive_creds = Credentials(
-                token=None,
-                refresh_token=self.credentials.get("refresh_token"),
-                client_id=self.credentials.get("client_id"),
-                client_secret=self.credentials.get("client_secret"),
-                token_uri="https://oauth2.googleapis.com/token",
-                scopes=["https://www.googleapis.com/auth/drive.metadata.readonly"],
-            )
-            drive_svc = build("drive", "v3", credentials=drive_creds)
+            drive_svc = build("drive", "v3", credentials=self.credentials)
             query = (
                 f"name='{self.workbook_name}' "
                 f"and mimeType='application/vnd.google-apps.spreadsheet' "

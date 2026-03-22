@@ -23,17 +23,17 @@ Schema for each bill record:
 from __future__ import annotations
 
 import json
-import os
-import tempfile
 import uuid
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
+from postmule.data._io import atomic_write, recent_years, year_from
+
 _HEADERS = [
     "ID", "Date Received", "Date Processed", "Sender", "Recipients",
     "Amount Due", "Due Date", "Account Number", "Summary",
-    "Drive File ID", "Filename", "Status", "Matched Transaction ID",
+    "Drive File ID", "Filename", "Status", "Matched Transaction ID", "Alert Sent Date",
 ]
 
 
@@ -51,12 +51,12 @@ def load_bills(data_dir: Path, year: int | None = None) -> list[dict[str, Any]]:
 
 def save_bills(data_dir: Path, bills: list[dict[str, Any]], year: int | None = None) -> None:
     path = _data_file(data_dir, year)
-    _atomic_write(path, json.dumps(bills, indent=2, ensure_ascii=False))
+    atomic_write(path, json.dumps(bills, indent=2, ensure_ascii=False))
 
 
 def add_bill(data_dir: Path, bill: dict[str, Any]) -> dict[str, Any]:
     """Add a bill record; assign a UUID if not present. Returns the saved record."""
-    year = _year_from(bill.get("date_received", ""))
+    year = year_from(bill.get("date_received", ""))
     bills = load_bills(data_dir, year)
     if "id" not in bill or not bill["id"]:
         bill["id"] = str(uuid.uuid4())
@@ -66,7 +66,7 @@ def add_bill(data_dir: Path, bill: dict[str, Any]) -> dict[str, Any]:
 
 
 def find_bill(data_dir: Path, bill_id: str) -> dict[str, Any] | None:
-    for year in _recent_years():
+    for year in recent_years():
         for bill in load_bills(data_dir, year):
             if bill.get("id") == bill_id:
                 return bill
@@ -74,7 +74,7 @@ def find_bill(data_dir: Path, bill_id: str) -> dict[str, Any] | None:
 
 
 def update_bill_status(data_dir: Path, bill_id: str, status: str, transaction_id: str | None = None) -> bool:
-    for year in _recent_years():
+    for year in recent_years():
         bills = load_bills(data_dir, year)
         for bill in bills:
             if bill.get("id") == bill_id:
@@ -89,7 +89,7 @@ def update_bill_status(data_dir: Path, bill_id: str, status: str, transaction_id
 def mark_bill_alerted(data_dir: Path, bill_id: str) -> bool:
     """Set alert_sent_date to today on a bill record. Returns True if found."""
     today = date.today().isoformat()
-    for year in _recent_years():
+    for year in recent_years():
         bills = load_bills(data_dir, year)
         for bill in bills:
             if bill.get("id") == bill_id:
@@ -116,33 +116,8 @@ def to_sheet_rows(bills: list[dict[str, Any]]) -> list[list[Any]]:
             b.get("filename", ""),
             b.get("status", "pending"),
             b.get("matched_transaction_id", ""),
+            b.get("alert_sent_date", ""),
         ])
     return rows
 
 
-def _atomic_write(path: Path, text: str) -> None:
-    """Write text to path atomically via a sibling temp file + os.replace()."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write(text)
-        os.replace(tmp, path)
-    except Exception:
-        try:
-            os.unlink(tmp)
-        except OSError:
-            pass
-        raise
-
-
-def _year_from(date_str: str) -> int:
-    try:
-        return int(date_str[:4])
-    except (ValueError, TypeError):
-        return date.today().year
-
-
-def _recent_years(n: int = 3) -> list[int]:
-    current = date.today().year
-    return list(range(current, current - n, -1))

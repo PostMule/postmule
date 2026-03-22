@@ -5,12 +5,12 @@ ForwardToMe data layer — reads/writes forward_to_me.json.
 from __future__ import annotations
 
 import json
-import os
-import tempfile
 import uuid
 from datetime import date
 from pathlib import Path
 from typing import Any
+
+from postmule.data._io import atomic_write
 
 _HEADERS = [
     "ID", "Date Received", "Date Processed", "Sender", "Recipients",
@@ -31,22 +31,7 @@ def load_forward_to_me(data_dir: Path) -> list[dict[str, Any]]:
 
 def save_forward_to_me(data_dir: Path, items: list[dict[str, Any]]) -> None:
     path = _data_file(data_dir)
-    _atomic_write(path, json.dumps(items, indent=2, ensure_ascii=False))
-
-
-def _atomic_write(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write(text)
-        os.replace(tmp, path)
-    except Exception:
-        try:
-            os.unlink(tmp)
-        except OSError:
-            pass
-        raise
+    atomic_write(path, json.dumps(items, indent=2, ensure_ascii=False))
 
 
 def add_item(data_dir: Path, item: dict[str, Any]) -> dict[str, Any]:

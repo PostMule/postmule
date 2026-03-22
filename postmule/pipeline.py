@@ -30,6 +30,18 @@ from postmule.data import run_log
 
 log = logging.getLogger("postmule.pipeline")
 
+# Map lowercase Drive folder names to config.yaml folder keys (which use underscores)
+_FOLDER_KEY_OVERRIDES = {
+    "forwardtome": "forward_to_me",
+    "needsreview": "needs_review",
+}
+
+
+def _to_folder_key(name: str) -> str:
+    """Normalize a category or Drive folder name to its config.yaml folder key."""
+    k = name.lower()
+    return _FOLDER_KEY_OVERRIDES.get(k, k)
+
 
 @dataclass
 class Providers:
@@ -152,14 +164,14 @@ def run_daily_pipeline(
                         dry_run=dry_run,
                     )
                     count += 1
-                    cat_key = result.category.lower().replace("tome", "_to_me")
+                    cat_key = _to_folder_key(result.category)
                     stats[cat_key] = stats.get(cat_key, 0) + 1
                     stats["pdfs_processed"] += 1
 
                     # Move file to correct Drive folder
                     if not dry_run and ingested.drive_file_id:
                         dest_folder_id = providers.folder_ids.get(
-                            result.destination_folder.lower(),
+                            _to_folder_key(result.destination_folder),
                             providers.folder_ids.get("needs_review", "")
                         )
                         if dest_folder_id and dest_folder_id != providers.folder_ids.get("inbox"):
@@ -327,7 +339,8 @@ def _build_providers(cfg: Config, credentials: dict, data_dir: Path):
     from postmule.providers.spreadsheet.google_sheets import SheetsProvider
     from postmule.providers.storage.google_drive import DriveProvider
 
-    google_creds = credentials.get("google", {})
+    from postmule.core.credentials import build_google_credentials
+    google_creds = build_google_credentials()
 
     storage_provider_cfg = (cfg.get("storage", "providers") or [{}])[0]
     spreadsheet_provider_cfg = (cfg.get("spreadsheet", "providers") or [{}])[0]
@@ -394,6 +407,39 @@ def _store_processed_mail(data_dir: Path, result, drive_file_id: str, received_d
         ftm_data.add_item(data_dir, {**base, "forwarding_status": "pending"})
 
 
+def _build_finance_provider(provider_type: str, cfg_entry: dict, credentials: dict):
+    """Instantiate the configured finance provider. Returns None if type is unknown."""
+    if provider_type == "simplifi":
+        from postmule.providers.finance.simplifi import SimplifiProvider
+        creds = credentials.get("simplifi", {})
+        return SimplifiProvider(creds.get("username", ""), creds.get("password", ""))
+
+    if provider_type == "ynab":
+        from postmule.providers.finance.ynab import YnabProvider
+        creds = credentials.get("ynab", {})
+        return YnabProvider(
+            access_token=creds.get("access_token", ""),
+            budget_id=creds.get("budget_id", "last-used"),
+        )
+
+    if provider_type == "plaid":
+        from postmule.providers.finance.plaid import PlaidProvider
+        creds = credentials.get("plaid", {})
+        return PlaidProvider(
+            client_id=creds.get("client_id", ""),
+            secret=creds.get("secret", ""),
+            access_token=creds.get("access_token", ""),
+            environment=cfg_entry.get("environment", "development"),
+        )
+
+    if provider_type == "monarch":
+        from postmule.providers.finance.monarch import MonarchProvider
+        creds = credentials.get("monarch", {})
+        return MonarchProvider(creds.get("username", ""), creds.get("password", ""))
+
+    return None
+
+
 def _run_bill_matching(cfg: Config, credentials: dict, data_dir: Path, dry_run: bool) -> None:
     finance_providers = cfg.get("finance", "providers") or []
     enabled = [p for p in finance_providers if p.get("enabled")]
@@ -401,25 +447,23 @@ def _run_bill_matching(cfg: Config, credentials: dict, data_dir: Path, dry_run: 
         log.debug("No finance provider enabled — skipping bill matching.")
         return
 
-    provider_type = enabled[0].get("type", "")
-    if provider_type == "simplifi":
-        from postmule.providers.finance.simplifi import SimplifiProvider, match_bills_to_transactions
-        simplifi_creds = credentials.get("simplifi", {})
-        provider = SimplifiProvider(
-            simplifi_creds.get("username", ""),
-            simplifi_creds.get("password", ""),
-        )
-        transactions = provider.get_recent_transactions(days=30)
-        from datetime import date as _d
-        _cy = _d.today().year
-        _all = bills_data.load_bills(data_dir, _cy) + bills_data.load_bills(data_dir, _cy - 1)
-        pending_bills = [b for b in _all if b.get("status") == "pending"]
-        matches = match_bills_to_transactions(pending_bills, transactions)
-        log.info(f"Bill matching: {len(matches)} potential matches (require manual approval)")
-        if matches and not dry_run:
-            _save_bill_matches(data_dir, matches)
-    else:
+    cfg_entry = enabled[0]
+    provider_type = cfg_entry.get("type", "")
+    provider = _build_finance_provider(provider_type, cfg_entry, credentials)
+    if provider is None:
         log.debug(f"Finance provider '{provider_type}' not yet implemented.")
+        return
+
+    from postmule.providers.finance.base import match_bills_to_transactions
+    transactions = provider.get_recent_transactions(days=30)
+    from datetime import date as _d
+    _cy = _d.today().year
+    _all = bills_data.load_bills(data_dir, _cy) + bills_data.load_bills(data_dir, _cy - 1)
+    pending_bills = [b for b in _all if b.get("status") == "pending"]
+    matches = match_bills_to_transactions(pending_bills, transactions)
+    log.info(f"Bill matching: {len(matches)} potential matches (require manual approval)")
+    if matches and not dry_run:
+        _save_bill_matches(data_dir, matches)
 
 
 def _save_bill_matches(data_dir: Path, matches: list) -> None:

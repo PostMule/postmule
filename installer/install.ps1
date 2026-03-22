@@ -9,17 +9,13 @@
 .PARAMETER ConfigUrl
     Optional URL to download a pre-filled config.yaml from.
 
-.PARAMETER CredentialsUrl
-    Optional URL to download a pre-filled credentials.enc from.
-
 .EXAMPLE
     .\install.ps1
     .\install.ps1 -InstallDir "D:\PostMule"
 #>
 param(
     [string]$InstallDir = "C:\ProgramData\PostMule",
-    [string]$ConfigUrl = "",
-    [string]$CredentialsUrl = ""
+    [string]$ConfigUrl  = ""
 )
 
 Set-StrictMode -Version Latest
@@ -91,34 +87,26 @@ $pip = "$InstallDir\.venv\Scripts\pip.exe"
 Write-OK "Dependencies installed."
 
 # ------------------------------------------------------------------
-# 5. Copy or download config files
+# 5. Copy or download config file
 # ------------------------------------------------------------------
-Write-Step "Setting up config files..."
+Write-Step "Setting up config file..."
 $configDest = "$InstallDir\config.yaml"
-$encDest    = "$InstallDir\credentials.enc"
 
 if ($ConfigUrl) {
     Invoke-WebRequest -Uri $ConfigUrl -OutFile $configDest -UseBasicParsing
     Write-OK "config.yaml downloaded."
 } elseif (-not (Test-Path $configDest)) {
     Copy-Item "$InstallDir\config.example.yaml" $configDest
-    Write-Warn "Edit $configDest before first run."
-}
-
-if ($CredentialsUrl) {
-    Invoke-WebRequest -Uri $CredentialsUrl -OutFile $encDest -UseBasicParsing
-    Write-OK "credentials.enc downloaded."
-} else {
-    Write-Warn "Run 'vpm encrypt-credentials' to set up credentials."
+    Write-Warn "config.yaml created from template. The setup wizard will guide you through configuration."
 }
 
 # ------------------------------------------------------------------
 # 6. Register Windows Task Scheduler task
 # ------------------------------------------------------------------
 Write-Step "Registering Windows Task Scheduler task..."
-$vpmExe  = "$InstallDir\.venv\Scripts\vpm.exe"
-$action  = New-ScheduledTaskAction -Execute $vpmExe -WorkingDirectory $InstallDir
-$trigger = New-ScheduledTaskTrigger -Daily -At $TASK_TIME
+$postmuleExe = "$InstallDir\.venv\Scripts\postmule.exe"
+$action   = New-ScheduledTaskAction -Execute $postmuleExe -WorkingDirectory $InstallDir
+$trigger  = New-ScheduledTaskTrigger -Daily -At $TASK_TIME
 $settings = New-ScheduledTaskSettingsSet `
     -ExecutionTimeLimit (New-TimeSpan -Hours 2) `
     -RestartCount 1 `
@@ -140,17 +128,35 @@ Register-ScheduledTask `
 Write-OK "Task '$TASK_NAME' scheduled daily at $TASK_TIME."
 
 # ------------------------------------------------------------------
-# 7. Add vpm to PATH for current user
+# 7. Add postmule to PATH for current user
 # ------------------------------------------------------------------
-Write-Step "Adding vpm to user PATH..."
+Write-Step "Adding postmule to user PATH..."
 $scriptsDir = "$InstallDir\.venv\Scripts"
 $userPath   = [Environment]::GetEnvironmentVariable("PATH", "User")
 if ($userPath -notlike "*$scriptsDir*") {
     [Environment]::SetEnvironmentVariable("PATH", "$userPath;$scriptsDir", "User")
-    Write-OK "Added $scriptsDir to PATH. Restart your terminal to use 'vpm'."
+    Write-OK "Added $scriptsDir to PATH."
 } else {
     Write-OK "Already in PATH."
 }
+
+# ------------------------------------------------------------------
+# 8. Launch dashboard and open setup wizard
+# ------------------------------------------------------------------
+Write-Step "Launching PostMule dashboard..."
+
+# Start the Flask server in the background
+$dashboardJob = Start-Job -ScriptBlock {
+    param($exe, $dir)
+    & $exe serve --data-dir $dir
+} -ArgumentList "$InstallDir\.venv\Scripts\postmule.exe", $InstallDir
+
+# Give the server a moment to start
+Start-Sleep -Seconds 3
+
+# Open setup wizard in the default browser
+Write-OK "Opening setup wizard in your browser..."
+Start-Process "http://localhost:5000/setup"
 
 # ------------------------------------------------------------------
 # Done
@@ -161,12 +167,16 @@ Write-Host "PostMule installed successfully!" -ForegroundColor Green
 Write-Host ("=" * 60) -ForegroundColor Green
 Write-Host @"
 
-Next steps:
-  1. Edit config:       notepad "$configDest"
-  2. Set credentials:   vpm set-master-password
-                        vpm encrypt-credentials
-  3. Test run:          vpm --dry-run
-  4. Full run:          vpm
+Your browser should now show the PostMule setup wizard.
 
+Complete setup in the browser:
+  1. Click "Connect Google Account"
+  2. Sign in and click Allow
+  3. Done — PostMule is ready
+
+The dashboard runs at: http://localhost:5000
 The daily task runs automatically at $TASK_TIME.
+
+To start the dashboard manually:
+    postmule serve
 "@

@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import tempfile
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -158,6 +160,17 @@ class APISafetyAgent:
         except Exception:
             return DayUsage(date=date.today().isoformat())
 
+    def record_additional_tokens(self, extra_tokens: int) -> None:
+        """
+        Add extra_tokens to today's recorded token count after an API call
+        returned higher actual usage than the pre-call estimate.
+        Does not re-check limits (the call already happened).
+        """
+        if extra_tokens <= 0:
+            return
+        self._usage.tokens += extra_tokens
+        self._save()
+
     def _save(self) -> None:
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
         data = {
@@ -166,7 +179,18 @@ class APISafetyAgent:
             "tokens": self._usage.tokens,
             "estimated_cost_usd": self._usage.estimated_cost_usd,
         }
-        self.state_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        content = json.dumps(data, indent=2)
+        fd, tmp = tempfile.mkstemp(dir=self.state_file.parent, suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(content)
+            os.replace(tmp, self.state_file)
+        except Exception:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise
 
     def _maybe_reset_for_new_day(self) -> None:
         today = date.today().isoformat()

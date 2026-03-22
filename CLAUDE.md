@@ -104,8 +104,8 @@ Brand voice: short, declarative. "Bill arrived. $94 due Apr 5." "16 days remaini
 | Storage | JSON files (primary) + configurable spreadsheet view (default: Google Sheets) |
 | Files | Configurable storage provider (default: Google Drive) |
 | Email | Configurable email provider (default: Gmail API / OAuth2) |
-| Dashboard | Flask + HTMX + Tailwind CSS (localhost:5000) |
-| Finance sync | Playwright web automation (Simplifi) or YNAB API |
+| Dashboard | Flask + vanilla JS (fetch API) + custom inline CSS (localhost:5000) |
+| Finance sync | YNAB API (recommended), Plaid API, Monarch (Playwright scraping, experimental) |
 | Encryption | Fernet (credentials) + system keyring (master password) |
 | Testing | pytest, 80%+ coverage, GitHub Actions CI |
 | CLI | `postmule` command (click-based) |
@@ -241,10 +241,11 @@ PendingEntityMatches, PendingBillMatches, RunLog, APIUsage
 ---
 
 ## Web Dashboard (v1)
-- Flask + HTMX + Tailwind CSS
+- Flask + vanilla JS (fetch API) + custom inline CSS
 - localhost:5000 (optional Tailscale for anywhere access)
 - Setup wizard IS the web UI (first run opens browser to /setup)
-- Pages: Home, Mail, Bills, ForwardToMe, Pending, Entities, Senders, Settings, Logs, Setup
+- Pages: Home, Mail, Bills, ForwardToMe, Pending, Entities, Settings, Logs, Setup
+- Templates: `postmule/web/templates/login.html` and `page.html` (base layout with injected content)
 
 ---
 
@@ -293,7 +294,7 @@ Example: `2025-11-15_Alice_ATT_Bill.pdf`
 - Statement date (Phase 21) stored separately from `date_received` and `due_date` — needed for tax records and billing cycle matching
 - Manual approval mode (default: true) — configurable
 - When approved: updates finance provider transaction name to correct company name
-- Finance providers: **Simplifi** (Playwright scraping, experimental), **YNAB** (real API, recommended default), **Plaid** (Phase 22, real API, development tier)
+- Finance providers: **YNAB** (real API, recommended default), **Plaid** (real API, development tier), **Simplifi** (Playwright scraping, experimental), **Monarch** (Playwright scraping, experimental)
 - Simplifi labeled experimental — Playwright scraping is fragile; YNAB is preferred
 
 ---
@@ -334,22 +335,27 @@ Example: `2025-11-15_Alice_ATT_Bill.pdf`
 | 15 | Integrity agents (4) | ✅ Done |
 | 16 | Retroactive processing | ✅ Done |
 | 17 | Simplifi sync agent | ✅ Done |
-| 18 | Unit + integration tests | ✅ Done (312 tests passing, 84% coverage) |
+| 18 | Unit + integration tests | ✅ Done (481 tests passing) |
 | 19 | Web dashboard (Flask) | ✅ Done |
 | 20 | Documentation | ✅ Done (CLAUDE.md, README, CONTRIBUTING.md, config/credentials examples) |
 | 21 | Statement date + ACH descriptor fields | Planned (small — schema + extraction) |
-| 22 | Plaid finance provider | Planned (medium — real API, development tier) |
+| 22 | Finance providers (YNAB, Plaid, Monarch) | ✅ Done (base.py shared types, factory in pipeline, full test coverage) |
 | 23 | Online bill email intake (bill_intake role) | Planned (large — second intake pipeline) |
 | 24 | SQLite storage layer | Planned (deferred — after core validated in production) |
 
 ### Priority Gaps (fix before first real-world run)
 - **CLI rename:** ~~`vpm`~~ renamed to `postmule` (was colliding with VirtualPostMail brand) ✓
-- **Dashboard auth:** `localhost:5000` has no login — minimum single configurable password
-- **Notification deduplication:** `send_bill_due_alert` filters paid/matched bills but does not track
-  "alert already sent" — a pending bill triggers a daily alert email. Fix: add `alert_sent_date`
-  field to bill schema; only re-alert after a meaningful interval (e.g. 3 days)
+- **Dashboard auth:** Single configurable password, rate limiting, 15-min lockout, 8-hour session timeout — fully implemented in `web/app.py` ✓
+- **Notification deduplication:** `alert_sent_date` field implemented in bill schema; `send_bill_due_alert` skips already-alerted bills ✓
 - **End-to-end validation:** Run actual pipeline against real Gmail/VPM/Gemini/Drive before
   further feature work
+
+## Key Module Notes
+
+- `postmule/core/constants.py` — shared string constants (category names, status values, etc.)
+- `postmule/data/_io.py` — shared I/O utilities (`atomic_write`, `year_from`, `recent_years`) imported by all data modules; do not add domain-specific logic here
+- `postmule/web/templates/` — Flask HTML templates (`login.html`, `page.html`); embedded HTML strings were removed from `web/app.py`
+- `postmule/providers/finance/` — base protocol + YNAB, Plaid, Simplifi, Monarch implementations
 
 ## Pipeline Orchestrator
 `postmule/pipeline.py` — ties all agents together for the daily run.

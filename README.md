@@ -71,7 +71,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup.
 | Storage | Google Drive | Dropbox, OneDrive, S3 |
 | Spreadsheet | Google Sheets | Excel Online, Airtable |
 | LLM | Gemini 1.5 Flash | OpenAI, Anthropic, Ollama |
-| Finance | — | Simplifi (experimental), YNAB |
+| Finance | — | YNAB, Plaid, Simplifi (experimental), Monarch (experimental) |
 
 ## License
 

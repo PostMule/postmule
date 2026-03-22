@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PostMule — {{ title }}</title>
+  <script>
+    function pmPost(url, data, onSuccess) {
+      fetch(url, {method: 'POST', body: new URLSearchParams(data)})
+        .then(r => r.json())
+        .then(j => { if (j.ok && onSuccess) onSuccess(); })
+        .catch(e => console.error(e));
+    }
+  </script>
+  <style>
+    body { background: #F5F6F8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .nav-link { color: #5A7CA4; font-size: 13px; padding: 6px 12px; border-radius: 4px; text-decoration: none; }
+    .nav-link:hover, .nav-link.active { background: #1a3060; color: white; }
+    .s-tabs { display:flex; gap:2px; border-bottom:2px solid #DDE3EC; margin-bottom:20px; }
+    .s-tab { padding:8px 16px; border:none; background:none; cursor:pointer; font-size:13px; color:#5A7090;
+             border-bottom:2px solid transparent; margin-bottom:-2px; font-family:inherit; }
+    .s-tab.active { color:#0F2044; font-weight:600; border-bottom-color:#0F2044; }
+    .s-pane { display:none; } .s-pane.active { display:block; }
+    .s-card { background:white; border-radius:8px; border:1px solid #DDE3EC; padding:20px; margin-bottom:16px; }
+    .s-card h3 { font-size:13px; font-weight:700; color:#0F2044; margin:0 0 16px; padding-bottom:10px;
+                 border-bottom:1px solid #EEF3F9; text-transform:uppercase; letter-spacing:0.5px; }
+    .s-row { display:grid; grid-template-columns:220px 1fr; gap:16px; align-items:start; margin-bottom:14px; }
+    .s-row:last-child { margin-bottom:0; }
+    .s-label { font-size:13px; font-weight:500; color:#2C4A6E; padding-top:7px; }
+    .s-help { font-size:11px; color:#7A90A8; margin-top:3px; line-height:1.4; }
+    .s-input { padding:7px 10px; border:1px solid #DDE3EC; border-radius:6px; font-size:13px;
+               width:100%; box-sizing:border-box; background:white; }
+    .s-input:focus { outline:none; border-color:#5A7CA4; box-shadow:0 0 0 2px rgba(90,124,164,0.15); }
+    .s-select { padding:7px 10px; border:1px solid #DDE3EC; border-radius:6px; font-size:13px; background:white; }
+    .s-select:focus { outline:none; border-color:#5A7CA4; }
+    .s-check { display:flex; align-items:center; gap:8px; padding-top:6px; }
+    .s-check input[type=checkbox] { width:16px; height:16px; accent-color:#0F2044; }
+    .s-provider { border:1px solid #EEF3F9; border-radius:6px; padding:12px 16px; margin-bottom:8px; background:#FAFBFD; }
+    .s-provider-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; font-weight:600; font-size:13px; color:#0F2044; }
+    .s-badge { font-size:10px; padding:2px 7px; border-radius:4px; font-weight:600; letter-spacing:0.5px; }
+    .s-badge-api { background:#E3F2FD; color:#1565C0; border:1px solid #BBDEFB; }
+    .s-badge-exp { background:#FFF3E0; color:#E65100; border:1px solid #FFE0B2; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div style="background:#0F2044;padding:0 24px;">
+    <div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:16px;height:60px;">
+      <a href="/" style="display:flex;align-items:center;gap:12px;text-decoration:none;flex-shrink:0;">
+        <svg width="32" height="38" viewBox="0 0 80 96" fill="none" aria-hidden="true">
+          <rect x="14" y="0" width="12" height="48" rx="6" fill="#7A9CC4"/>
+          <rect x="17" y="4" width="6" height="38" rx="3" fill="#E8A020"/>
+          <rect x="54" y="0" width="12" height="48" rx="6" fill="#7A9CC4"/>
+          <rect x="57" y="4" width="6" height="38" rx="3" fill="#E8A020"/>
+          <rect x="8" y="36" width="64" height="48" rx="8" fill="#7A9CC4"/>
+          <line x1="14" y1="52" x2="66" y2="52" stroke="#5A7CA4" stroke-width="1"/>
+          <line x1="14" y1="59" x2="66" y2="59" stroke="#5A7CA4" stroke-width="1"/>
+          <line x1="14" y1="66" x2="66" y2="66" stroke="#5A7CA4" stroke-width="1"/>
+          <circle cx="24" cy="54" r="7" fill="#F5F6F8"/>
+          <circle cx="25" cy="54" r="4" fill="#0F2044"/>
+          <circle cx="23.5" cy="52.5" r="1.5" fill="#E8A020" opacity="0.8"/>
+          <circle cx="56" cy="54" r="7" fill="#F5F6F8"/>
+          <circle cx="57" cy="54" r="4" fill="#0F2044"/>
+          <circle cx="55.5" cy="52.5" r="1.5" fill="#E8A020" opacity="0.8"/>
+          <rect x="16" y="68" width="48" height="14" rx="6" fill="#5A7CA4"/>
+          <circle cx="28" cy="75" r="3.5" fill="#0F2044"/>
+          <circle cx="52" cy="75" r="3.5" fill="#0F2044"/>
+          <rect x="28" y="80" width="24" height="3" rx="1.5" fill="#E8A020" opacity="0.5"/>
+        </svg>
+        <div style="line-height:1;">
+          <div style="font-size:18px;font-weight:600;color:white;letter-spacing:-0.3px;">
+            Post<span style="color:#E8A020;">Mule</span>
+          </div>
+          <div style="font-size:11px;color:#5A7CA4;letter-spacing:2px;text-transform:uppercase;margin-top:3px;">
+            Smart mail management
+          </div>
+        </div>
+      </a>
+      <nav style="display:flex;gap:4px;flex:1;">
+        {% for key, href, label in nav_items %}
+        <a href="{{ href }}" class="nav-link {% if page == key %}active{% endif %}">{{ label }}</a>
+        {% endfor %}
+      </nav>
+      <div style="color:#5A7CA4;font-size:11px;">{{ today }}</div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div style="max-width:1100px;margin:24px auto;padding:0 24px;">
+
+    {% if page == 'home' %}
+    <h1 style="font-size:20px;font-weight:600;color:#0F2044;letter-spacing:-0.3px;margin-bottom:16px;">Dashboard</h1>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;">
+      <div style="background:white;border-radius:8px;border:1px solid #DDE3EC;padding:16px;">
+        <div style="font-size:11px;color:#7A90A8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Last Run</div>
+        <div style="font-size:14px;color:#0F2044;font-weight:600;">
+          {% if last_run %}{{ last_run.get('end_time','')[:16] }} &mdash; {{ last_run.get('status','') }}{% else %}Never{% endif %}
+        </div>
+      </div>
+      <div style="background:white;border-radius:8px;border:1px solid #DDE3EC;padding:16px;">
+        <div style="font-size:11px;color:#7A90A8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Awaiting Forwarding</div>
+        <div style="font-size:22px;font-weight:600;color:{% if pending_ftm_count > 0 %}#C62828{% else %}#2E7D32{% endif %};">{{ pending_ftm_count }}</div>
+      </div>
+      <div style="background:white;border-radius:8px;border:1px solid #DDE3EC;padding:16px;">
+        <div style="font-size:11px;color:#7A90A8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Pending Bills</div>
+        <div style="font-size:22px;font-weight:600;color:#E8A020;">{{ pending_bills_count }}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;">
+      <button onclick="pmPost('/api/run', {dry_run: 'false'})"
+              style="background:#0F2044;color:white;padding:10px 20px;border:none;border-radius:6px;font-size:13px;cursor:pointer;">
+        Run Now
+      </button>
+      <button onclick="pmPost('/api/run', {dry_run: 'true'})"
+              style="background:#F5F6F8;color:#0F2044;padding:10px 20px;border:1px solid #DDE3EC;border-radius:6px;font-size:13px;cursor:pointer;">
+        Dry Run
+      </button>
+    </div>
+
+    {% elif page == 'mail' %}
+    <h1 style="font-size:20px;font-weight:600;color:#0F2044;letter-spacing:-0.3px;margin-bottom:16px;">Mail</h1>
+    {% for item in items %}
+    {% set bar = {'Bill':'#E8A020','Notice':'#7A9CC4','ForwardToMe':'#C62828','Personal':'#DDE3EC','Junk':'#DDE3EC','NeedsReview':'#DDE3EC'} %}
+    {% set badge_style = {
+      'Bill':         'background:#FDF3E0;color:#7A4C08;border:1px solid #E8A020;',
+      'ForwardToMe':  'background:#FEECEC;color:#8A1010;border:1px solid #C62828;',
+      'Notice':       'background:#EEF3F9;color:#2C4A6E;border:1px solid #C0D0E4;',
+      'Personal':     'background:#EEF3F9;color:#2C4A6E;border:1px solid #C0D0E4;',
+      'Junk':         'background:#F5F6F8;color:#7A90A8;border:1px solid #DDE3EC;',
+      'NeedsReview':  'background:#FFF8E1;color:#6D4C00;border:1px solid #FFD54F;'
+    } %}
+    {% set is_read = item._type in ('Junk', 'Personal') %}
+    <div style="background:white;border-radius:8px;border:1px solid #DDE3EC;margin-bottom:8px;display:flex;overflow:hidden;">
+      <div style="width:3px;background:{{ bar.get(item._type,'#DDE3EC') }};flex-shrink:0;"></div>
+      <div style="padding:12px 16px;flex:1;">
+        <div style="display:flex;justify-content:space-between;">
+          <div style="font-size:13px;{% if is_read %}font-weight:400;color:#8A9BB0;{% else %}font-weight:600;color:#0F2044;{% endif %}">{{ item.get('sender','Unknown') }}</div>
+          <div style="font-size:11px;color:#B8C8D8;">{{ item.get('date_received','') }}</div>
+        </div>
+        <div style="font-size:13px;color:#5A7090;margin-top:3px;">{{ item.get('summary','') }}</div>
+        <span style="display:inline-block;font-size:10px;font-weight:600;letter-spacing:1px;padding:2px 8px;border-radius:4px;margin-top:6px;{{ badge_style.get(item._type,'background:#F5F6F8;color:#7A90A8;border:1px solid #DDE3EC;') }}">
+          {{ item._type.upper() }}
+        </span>
+      </div>
+    </div>
+    {% else %}
+    <div style="color:#7A90A8;font-size:13px;">No mail items found.</div>
+    {% endfor %}
+
+    {% elif page == 'bills' %}
+    <h1 style="font-size:20px;font-weight:600;color:#0F2044;letter-spacing:-0.3px;margin-bottom:16px;">Bills</h1>
+    <table style="width:100%;border-collapse:collapse;background:white;border-radius:8px;border:1px solid #DDE3EC;overflow:hidden;">
+      <thead>
+        <tr style="background:#F5F6F8;">
+          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#5A7090;">Sender</th>
+          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#5A7090;">Amount</th>
+          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#5A7090;">Due</th>
+          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#5A7090;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for bill in bills %}
+        <tr style="border-top:1px solid #DDE3EC;">
+          <td style="padding:10px 14px;color:#0F2044;font-weight:500;">{{ bill.get('sender','') }}</td>
+          <td style="padding:10px 14px;color:#0F2044;">${{ '%.2f'|format(bill.get('amount_due',0)) }}</td>
+          <td style="padding:10px 14px;color:#E8A020;">{{ bill.get('due_date','') }}</td>
+          <td style="padding:10px 14px;font-size:11px;">
+            <span style="background:#EEF3F9;color:#2C4A6E;padding:2px 8px;border-radius:4px;border:1px solid #C0D0E4;">{{ bill.get('status','pending').upper() }}</span>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4" style="padding:16px;text-align:center;color:#7A90A8;">No bills found.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    {% elif page == 'pending' %}
+    <h1 style="font-size:20px;font-weight:600;color:#0F2044;letter-spacing:-0.3px;margin-bottom:16px;">Pending Reviews</h1>
+    {% for match in pending_matches %}
+    <div data-match-row style="background:white;border-radius:8px;border:1px solid #DDE3EC;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:16px;">
+      <div style="flex:1;">
+        <div style="font-weight:600;color:#0F2044;">"{{ match.proposed_name }}"</div>
+        <div style="font-size:12px;color:#5A7090;">Looks like: {{ match.match_entity_id }} &mdash; similarity {{ '%.0f'|format(match.similarity * 100) }}%</div>
+        <div style="font-size:11px;color:#B8C8D8;">Auto-approves: {{ match.auto_approve_after }}</div>
+      </div>
+      <button onclick="pmPost('/api/approve', {match_id: '{{ match.id }}'}, () => this.closest('[data-match-row]').remove())"
+              style="background:#0F2044;color:white;padding:6px 14px;border:none;border-radius:4px;font-size:12px;cursor:pointer;">Approve</button>
+      <button onclick="pmPost('/api/deny', {match_id: '{{ match.id }}'}, () => this.closest('[data-match-row]').remove())"
+              style="background:#F5F6F8;color:#C62828;padding:6px 14px;border:1px solid #FFCDD2;border-radius:4px;font-size:12px;cursor:pointer;">Deny</button>
+    </div>
+    {% else %}
+    <div style="color:#7A90A8;font-size:13px;">No pending items.</div>
+    {% endfor %}
+
+    {% elif page == 'entities' %}
+    <h1 style="font-size:20px;font-weight:600;color:#0F2044;letter-spacing:-0.3px;margin-bottom:16px;">Entities</h1>
+    {% for entity in entities %}
+    <div style="background:white;border-radius:8px;border:1px solid #DDE3EC;padding:12px 16px;margin-bottom:8px;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span style="font-weight:600;color:#0F2044;">{{ entity.canonical_name }}</span>
+        <span style="font-size:10px;background:#EEF3F9;color:#2C4A6E;padding:2px 8px;border-radius:4px;border:1px solid #C0D0E4;">{{ entity.type }}</span>
+      </div>
+      {% if entity.aliases | length > 1 %}
+      <div style="font-size:11px;color:#7A90A8;margin-top:4px;">Aliases: {{ entity.aliases | join(', ') }}</div>
+      {% endif %}
+    </div>
+    {% else %}
+    <div style="color:#7A90A8;font-size:13px;">No entities found. Run PostMule to discover entities from your mail.</div>
+    {% endfor %}
+
+    {% elif page == 'forward' %}
+    <h1 style="font-size:20px;font-weight:600;color:#0F2044;letter-spacing:-0.3px;margin-bottom:16px;">Forward To Me</h1>
+    {% for item in pending %}
+    <div style="background:white;border-radius:8px;border:1px solid #FFCDD2;padding:14px 16px;margin-bottom:8px;">
+      <div style="color:#C62828;font-weight:600;font-size:13px;margin-bottom:4px;">ACTION REQUIRED</div>
+      <div style="font-weight:600;color:#0F2044;">{{ item.get('sender','') }}</div>
+      <div style="font-size:12px;color:#5A7090;">{{ item.get('summary','') }}</div>
+      <div style="font-size:11px;color:#B8C8D8;margin-top:4px;">Received: {{ item.get('date_received','') }}</div>
+    </div>
+    {% else %}
+    <div style="color:#2E7D32;font-size:13px;">No items awaiting forwarding.</div>
+    {% endfor %}
+
+    {% elif page == 'logs' %}
+    <h1 style="font-size:20px;font-weight:600;color:#0F2044;letter-spacing:-0.3px;margin-bottom:16px;">Logs</h1>
+    <div style="background:#0F2044;border-radius:8px;padding:16px;font-family:monospace;font-size:11px;color:#7A9CC4;overflow-x:auto;white-space:pre-wrap;max-height:600px;overflow-y:auto;">
+      {% for line in log_lines %}{{ line }}
+{% endfor %}
+    </div>
+
+    {% elif page == 'setup' %}
+    <h1 style="font-size:20px;font-weight:600;color:#0F2044;letter-spacing:-0.3px;margin-bottom:8px;">Setup</h1>
+    <p style="color:#5A7090;margin-bottom:24px;">Connect your Google account to get PostMule running.</p>
+
+    {% if request.args.get('error') %}
+    <div style="background:#FFEBEE;border:1px solid #FFCDD2;border-radius:8px;padding:14px 18px;color:#C62828;margin-bottom:20px;max-width:480px;">
+      Error: {{ request.args.get('error')|replace('_',' ') }}. Please try again.
+    </div>
+    {% endif %}
+
+    <div style="max-width:480px;">
+
+    <!-- Connect Google Account -->
+    <div style="background:white;border-radius:8px;border:1px solid #DDE3EC;padding:28px;">
+      {% if google_ok %}
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:36px;height:36px;background:#2E7D32;border-radius:50%;color:white;font-size:18px;display:flex;align-items:center;justify-content:center;">&#10003;</div>
+        <div>
+          <div style="font-size:15px;font-weight:600;color:#0F2044;">Google Account Connected</div>
+          <div style="font-size:13px;color:#2E7D32;margin-top:2px;">Gmail, Drive, Sheets, and Gemini are authorized.</div>
+        </div>
+      </div>
+      <p style="color:#5A7090;font-size:13px;margin:0 0 20px;">Your refresh token is stored in Windows Credential Manager. PostMule is ready.</p>
+      <button type="button" onclick="pmPost('/api/run', {dry_run:'true'}, function(){ window.location='/logs'; })"
+              style="padding:10px 20px;background:#E8A020;color:#0F2044;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
+        Run Dry Run &rarr; Logs
+      </button>
+      {% else %}
+      <div style="margin-bottom:20px;">
+        <div style="font-size:15px;font-weight:600;color:#0F2044;margin-bottom:6px;">Connect Google Account</div>
+        <p style="color:#5A7090;font-size:13px;margin:0;line-height:1.6;">
+          Click below to sign in with Google and grant PostMule access to Gmail, Drive, Sheets, and Gemini.
+          This is a one-time step — PostMule runs automatically after this.
+        </p>
+      </div>
+      <a href="/setup/oauth/google"
+         style="display:inline-flex;align-items:center;gap:8px;padding:11px 22px;background:#0F2044;color:white;border-radius:6px;font-size:14px;font-weight:600;text-decoration:none;">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+          <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+        </svg>
+        Connect Google Account
+      </a>
+      {% endif %}
+    </div>
+
+    </div>
+
+    {% elif page == 'settings' %}
+    {% if config_missing %}
+    <div style="background:#FFF3E0;border:1px solid #FFE0B2;border-radius:8px;padding:20px;color:#E65100;">
+      No config.yaml loaded. Start PostMule with a valid <code>--config</code> path to use the settings editor.
+    </div>
+    {% else %}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <h1 style="font-size:20px;font-weight:600;color:#0F2044;letter-spacing:-0.3px;margin:0;">Settings</h1>
+      {% if saved %}<div style="background:#E8F5E9;border:1px solid #A5D6A7;color:#1B5E20;padding:8px 16px;border-radius:6px;font-size:13px;">&#10003; Saved successfully.</div>{% endif %}
+    </div>
+    <p style="color:#7A90A8;font-size:12px;margin:0 0 18px;">Saved to <code style="background:#F5F6F8;padding:1px 5px;border-radius:3px;font-size:11px;">config.yaml</code>. API keys and passwords live in the encrypted credentials file and are not shown here.</p>
+
+    <form method="post" action="/api/settings">
+    <div class="s-tabs">
+      <button type="button" class="s-tab active" onclick="sTab('general',this)">General</button>
+      <button type="button" class="s-tab" onclick="sTab('notifications',this)">Notifications</button>
+      <button type="button" class="s-tab" onclick="sTab('mail',this)">Mail Intake</button>
+      <button type="button" class="s-tab" onclick="sTab('finance',this)">Finance</button>
+      <button type="button" class="s-tab" onclick="sTab('ai',this)">AI &amp; OCR</button>
+      <button type="button" class="s-tab" onclick="sTab('storage',this)">Storage</button>
+      <button type="button" class="s-tab" onclick="sTab('system',this)">System</button>
+    </div>
+
+    <!-- ── TAB: General ─────────────────────────────────── -->
+    <div id="stab-general" class="s-pane active">
+      <div class="s-card">
+        <h3>Application</h3>
+        <div class="s-row">
+          <div class="s-label">Dry Run
+            <div class="s-help">Simulate all actions — no files moved, no emails sent. Safe for testing.</div>
+          </div>
+          <div class="s-check">
+            <input type="checkbox" name="app_dry_run" {% if cfg.get('app',{}).get('dry_run',False) %}checked{% endif %}>
+            <span style="font-size:13px;color:#0F2044;">Enable dry run mode</span>
+          </div>
+        </div>
+      </div>
+      <div class="s-card">
+        <h3>Schedule</h3>
+        <div class="s-row">
+          <div class="s-label">Daily Run Time
+            <div class="s-help">24-hour time for the automatic daily run. Configured in Windows Task Scheduler.</div>
+          </div>
+          <input class="s-input" style="width:120px;" type="time" name="schedule_run_time"
+                 value="{{ cfg.get('schedule',{}).get('run_time','02:00') }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Timezone
+            <div class="s-help">Your local timezone. Used for scheduling and log timestamps.</div>
+          </div>
+          <select class="s-select" name="schedule_timezone">
+            {% set tz = cfg.get('schedule',{}).get('timezone','America/Los_Angeles') %}
+            {% for t in ['America/Los_Angeles','America/Denver','America/Chicago','America/New_York','America/Anchorage','Pacific/Honolulu','America/Phoenix','Europe/London','Europe/Paris','Europe/Berlin','Asia/Tokyo','Asia/Singapore','Australia/Sydney','UTC'] %}
+            <option value="{{ t }}" {% if tz == t %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="s-card">
+        <h3>Logging</h3>
+        <div class="s-row">
+          <div class="s-label">Log Level
+            <div class="s-help">Verbosity of log output. INFO is recommended for normal use.</div>
+          </div>
+          <select class="s-select" name="logging_level">
+            {% set lvl = cfg.get('logging',{}).get('level','INFO') %}
+            {% for l in ['DEBUG','INFO','WARNING','ERROR'] %}
+            <option value="{{ l }}" {% if lvl == l %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Verbose Log Retention
+            <div class="s-help">Number of days of detailed daily logs to keep.</div>
+          </div>
+          <input class="s-input" style="width:80px;" type="number" name="logging_verbose_days" min="1" max="365"
+                 value="{{ cfg.get('logging',{}).get('verbose_days',7) }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Processing Log Years
+            <div class="s-help">Years of annual processing summaries to retain.</div>
+          </div>
+          <input class="s-input" style="width:80px;" type="number" name="logging_processing_years" min="1" max="10"
+                 value="{{ cfg.get('logging',{}).get('processing_years',3) }}">
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: Notifications ───────────────────────────── -->
+    <div id="stab-notifications" class="s-pane">
+      <div class="s-card">
+        <h3>Alerts</h3>
+        <div class="s-row">
+          <div class="s-label">Alert Email
+            <div class="s-help">Where PostMule sends the daily summary and urgent alerts.</div>
+          </div>
+          <input class="s-input" type="email" name="notifications_alert_email"
+                 placeholder="you@example.com"
+                 value="{{ cfg.get('notifications',{}).get('alert_email','') }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Urgent Forward-To-Me Alert
+            <div class="s-help">Send an immediate alert (not just the daily summary) when physical mail requires forwarding.</div>
+          </div>
+          <div class="s-check">
+            <input type="checkbox" name="notifications_forward_to_me_urgent"
+                   {% if cfg.get('notifications',{}).get('forward_to_me_urgent',True) %}checked{% endif %}>
+            <span style="font-size:13px;color:#0F2044;">Send immediate alert</span>
+          </div>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Bill Due Alert Days
+            <div class="s-help">Send a proactive alert when a bill is due within this many days.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input class="s-input" style="width:80px;" type="number" name="notifications_bill_due_alert_days" min="1" max="30"
+                   value="{{ cfg.get('notifications',{}).get('bill_due_alert_days',7) }}">
+            <span style="font-size:12px;color:#7A90A8;">days</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: Mail Intake ──────────────────────────────── -->
+    <div id="stab-mail" class="s-pane">
+      <div class="s-card">
+        <h3>Physical Mailbox Provider</h3>
+        <div class="s-row">
+          <div class="s-label">Provider Type
+            <div class="s-help">Your virtual mailbox service.</div>
+          </div>
+          <select class="s-select" name="mailbox_type">
+            {% set mbt = mbox_cfg.get('type','vpm') %}
+            {% for t,l in [('vpm','VirtualPostMail'),('earth_class','Earth Class Mail'),('traveling_mailbox','Traveling Mailbox'),('postscan','PostScan Mail')] %}
+            <option value="{{ t }}" {% if mbt == t %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Enabled
+            <div class="s-help">Uncheck to skip mailbox scanning.</div>
+          </div>
+          <div class="s-check">
+            <input type="checkbox" name="mailbox_enabled" {% if mbox_cfg.get('enabled',True) %}checked{% endif %}>
+          </div>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Scan Notification Sender
+            <div class="s-help">Email address your mailbox provider uses for scan notifications.</div>
+          </div>
+          <input class="s-input" type="email" name="mailbox_scan_sender"
+                 value="{{ mbox_cfg.get('scan_sender','noreply@virtualpostmail.com') }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Scan Subject Prefix
+            <div class="s-help">Subject line prefix used to identify scan notification emails.</div>
+          </div>
+          <input class="s-input" type="text" name="mailbox_scan_subject_prefix"
+                 value="{{ mbox_cfg.get('scan_subject_prefix','[Scan Request]') }}">
+        </div>
+      </div>
+      <div class="s-card">
+        <h3>Email — Mailbox Notifications Account</h3>
+        {% set embox = email_by_role.get('mailbox_notifications', {}) %}
+        <div class="s-row">
+          <div class="s-label">Provider Type</div>
+          <select class="s-select" name="email_mbox_type">
+            {% set emt = embox.get('type','gmail') %}
+            {% for t,l in [('gmail','Gmail'),('outlook','Outlook / Microsoft 365'),('imap','Generic IMAP')] %}
+            <option value="{{ t }}" {% if emt == t %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Enabled</div>
+          <div class="s-check">
+            <input type="checkbox" name="email_mbox_enabled" {% if embox.get('enabled',True) %}checked{% endif %}>
+          </div>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Email Address
+            <div class="s-help">The Gmail/Outlook account that receives mailbox scan notifications.</div>
+          </div>
+          <input class="s-input" type="email" name="email_mbox_address" placeholder="YourMailManagement@gmail.com"
+                 value="{{ embox.get('address','') }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Label
+            <div class="s-help">Gmail label applied to processed scan notification emails.</div>
+          </div>
+          <input class="s-input" style="width:200px;" type="text" name="email_mbox_label"
+                 value="{{ embox.get('label','PostMule') }}">
+        </div>
+      </div>
+      <div class="s-card">
+        <h3>Email — Bill Intake Account <span style="font-size:11px;font-weight:400;color:#7A90A8;">(Phase 23 — optional)</span></h3>
+        {% set ebills = email_by_role.get('bill_intake', {}) %}
+        <div class="s-row">
+          <div class="s-label">Provider Type</div>
+          <select class="s-select" name="email_bills_type">
+            {% set ebt = ebills.get('type','gmail') %}
+            {% for t,l in [('gmail','Gmail'),('outlook','Outlook / Microsoft 365'),('imap','Generic IMAP')] %}
+            <option value="{{ t }}" {% if ebt == t %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Enabled
+            <div class="s-help">Enable once you have a dedicated bills inbox and billers sending PDFs directly.</div>
+          </div>
+          <div class="s-check">
+            <input type="checkbox" name="email_bills_enabled" {% if ebills.get('enabled',False) %}checked{% endif %}>
+          </div>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Email Address
+            <div class="s-help">Dedicated inbox for biller-sent PDF attachments, e.g. bills@yourdomain.com.</div>
+          </div>
+          <input class="s-input" type="email" name="email_bills_address" placeholder="bills@yourdomain.com"
+                 value="{{ ebills.get('address','') }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Label</div>
+          <input class="s-input" style="width:200px;" type="text" name="email_bills_label"
+                 value="{{ ebills.get('label','PostMule-Bills') }}">
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: Finance ──────────────────────────────────── -->
+    <div id="stab-finance" class="s-pane">
+      <div class="s-card">
+        <h3>Finance Providers</h3>
+        <p style="font-size:12px;color:#7A90A8;margin:0 0 16px;">Enable the provider(s) you use. Credentials (access tokens, API keys) are configured in the encrypted credentials file — not here.</p>
+
+        {% set ynab = finance_by_type.get('ynab', {}) %}
+        <div class="s-provider">
+          <div class="s-provider-header">
+            <input type="checkbox" name="finance_ynab_enabled" {% if ynab.get('enabled',False) %}checked{% endif %}>
+            YNAB <span class="s-badge s-badge-api">Real API</span>
+            <span style="font-size:11px;font-weight:400;color:#2E7D32;">Recommended</span>
+          </div>
+          <div style="font-size:12px;color:#5A7090;">You Need A Budget — free Personal Access Token. Get one at app.ynab.com → Account Settings → Developer Settings.</div>
+        </div>
+
+        {% set plaid = finance_by_type.get('plaid', {}) %}
+        <div class="s-provider">
+          <div class="s-provider-header">
+            <input type="checkbox" name="finance_plaid_enabled" {% if plaid.get('enabled',False) %}checked{% endif %}>
+            Plaid <span class="s-badge s-badge-api">Real API</span>
+          </div>
+          <div style="font-size:12px;color:#5A7090;margin-bottom:10px;">Development tier is free (up to 100 institutions). Requires running the Plaid Link flow once per bank.</div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+            <label style="color:#2C4A6E;font-weight:500;white-space:nowrap;">Environment</label>
+            <select class="s-select" name="finance_plaid_env">
+              {% set pe = plaid.get('environment','development') %}
+              {% for e in ['sandbox','development','production'] %}
+              <option value="{{ e }}" {% if pe == e %}selected{% endif %}>{{ e }}</option>
+              {% endfor %}
+            </select>
+            <span style="font-size:11px;color:#7A90A8;">Use sandbox for testing, development for real bank data (free).</span>
+          </div>
+        </div>
+
+        {% set simplifi = finance_by_type.get('simplifi', {}) %}
+        <div class="s-provider">
+          <div class="s-provider-header">
+            <input type="checkbox" name="finance_simplifi_enabled" {% if simplifi.get('enabled',False) %}checked{% endif %}>
+            Simplifi by Quicken <span class="s-badge s-badge-exp">Experimental</span>
+          </div>
+          <div style="font-size:12px;color:#5A7090;">Browser automation — may break without notice if Simplifi updates their UI.</div>
+        </div>
+
+        {% set monarch = finance_by_type.get('monarch', {}) %}
+        <div class="s-provider">
+          <div class="s-provider-header">
+            <input type="checkbox" name="finance_monarch_enabled" {% if monarch.get('enabled',False) %}checked{% endif %}>
+            Monarch Money <span class="s-badge s-badge-exp">Experimental</span>
+          </div>
+          <div style="font-size:12px;color:#5A7090;">Browser automation — no public API. May break without notice.</div>
+        </div>
+      </div>
+
+      <div class="s-card">
+        <h3>Bill Matching</h3>
+        {% set bm = cfg.get('finance',{}).get('bill_matching',{}) %}
+        <div class="s-row">
+          <div class="s-label">Require Manual Approval
+            <div class="s-help">When a bill is matched to a bank transaction, require you to approve it in the Pending tab before marking as paid.</div>
+          </div>
+          <div class="s-check">
+            <input type="checkbox" name="finance_require_approval"
+                   {% if bm.get('require_manual_approval',True) %}checked{% endif %}>
+            <span style="font-size:13px;color:#0F2044;">Require approval</span>
+          </div>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Amount Tolerance
+            <div class="s-help">Allow bill and transaction amounts to differ by up to this many cents. 0 = exact match required.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input class="s-input" style="width:80px;" type="number" name="finance_tolerance_cents" min="0" max="500"
+                   value="{{ bm.get('amount_tolerance_cents',0) }}">
+            <span style="font-size:12px;color:#7A90A8;">cents</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: AI & OCR ────────────────────────────────── -->
+    <div id="stab-ai" class="s-pane">
+      <div class="s-card">
+        <h3>AI / LLM Provider</h3>
+        <div class="s-row">
+          <div class="s-label">Provider
+            <div class="s-help">AI service used to classify mail. API keys go in the credentials file.</div>
+          </div>
+          <select class="s-select" name="llm_type">
+            {% set lt = llm_cfg.get('type','gemini') %}
+            {% for t,l in [('gemini','Google Gemini (free tier: 1500 req/day)'),('openai','OpenAI'),('anthropic','Anthropic'),('ollama','Ollama (local)')] %}
+            <option value="{{ t }}" {% if lt == t %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Model
+            <div class="s-help">Gemini: gemini-1.5-flash. OpenAI: gpt-4o-mini. Anthropic: claude-haiku-4-5-20251001.</div>
+          </div>
+          <input class="s-input" type="text" name="llm_model"
+                 value="{{ llm_cfg.get('model','gemini-1.5-flash') }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Confidence Threshold
+            <div class="s-help">Items classified below this confidence score go to NeedsReview instead of their category. Range 0.0–1.0.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input class="s-input" style="width:90px;" type="number" name="llm_confidence" min="0.5" max="1.0" step="0.01"
+                   value="{{ cfg.get('llm',{}).get('classification_confidence_threshold',0.80) }}">
+            <span style="font-size:12px;color:#7A90A8;">0.80 recommended</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-card">
+        <h3>API Safety Limits</h3>
+        <div class="s-row">
+          <div class="s-label">Daily Request Limit
+            <div class="s-help">Hard stop — PostMule will not make more API calls than this per day. Gemini free tier: 1500/day.</div>
+          </div>
+          <input class="s-input" style="width:120px;" type="number" name="api_daily_req" min="1"
+                 value="{{ cfg.get('api_safety',{}).get('daily_request_limit',1400) }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Daily Token Limit
+            <div class="s-help">Hard stop on tokens per day. Gemini free tier: 1,000,000/day.</div>
+          </div>
+          <input class="s-input" style="width:120px;" type="number" name="api_daily_tok" min="1000"
+                 value="{{ cfg.get('api_safety',{}).get('daily_token_limit',900000) }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Warn at %
+            <div class="s-help">Send a warning alert when this percentage of any limit is reached.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input class="s-input" style="width:80px;" type="number" name="api_warn_pct" min="10" max="99"
+                   value="{{ cfg.get('api_safety',{}).get('warn_at_percent',80) }}">
+            <span style="font-size:12px;color:#7A90A8;">%</span>
+          </div>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Monthly Cost Budget
+            <div class="s-help">$0.00 = free tier only. Raise this if using a paid plan.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:13px;color:#5A7090;">$</span>
+            <input class="s-input" style="width:100px;" type="number" name="api_monthly_usd" min="0" step="0.01"
+                   value="{{ cfg.get('api_safety',{}).get('monthly_cost_budget_usd',0.00) }}">
+          </div>
+        </div>
+      </div>
+
+      <div class="s-card">
+        <h3>OCR</h3>
+        <div class="s-row">
+          <div class="s-label">Primary Engine
+            <div class="s-help">Tried first. pdfplumber is fast and lossless for text-layer PDFs.</div>
+          </div>
+          <select class="s-select" name="ocr_primary">
+            {% set op = cfg.get('ocr',{}).get('primary','pdfplumber') %}
+            {% for t,l in [('pdfplumber','pdfplumber (recommended)'),('tesseract','Tesseract')] %}
+            <option value="{{ t }}" {% if op == t %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Fallback Engine
+            <div class="s-help">Used when the primary engine finds no text (e.g. scanned image PDFs).</div>
+          </div>
+          <select class="s-select" name="ocr_fallback">
+            {% set of = cfg.get('ocr',{}).get('fallback','tesseract') %}
+            {% for t,l in [('tesseract','Tesseract'),('pdfplumber','pdfplumber')] %}
+            <option value="{{ t }}" {% if of == t %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Tesseract DPI
+            <div class="s-help">Resolution for Tesseract rendering. 300 is standard for documents.</div>
+          </div>
+          <input class="s-input" style="width:90px;" type="number" name="ocr_dpi" min="72" max="600"
+                 value="{{ cfg.get('ocr',{}).get('tesseract_dpi',300) }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Tesseract Language
+            <div class="s-help">Tesseract language code. eng = English. Install additional language packs as needed.</div>
+          </div>
+          <input class="s-input" style="width:90px;" type="text" name="ocr_lang"
+                 value="{{ cfg.get('ocr',{}).get('tesseract_lang','eng') }}">
+        </div>
+      </div>
+
+      <div class="s-card">
+        <h3>Classification — Forward-To-Me Keywords</h3>
+        <div style="font-size:12px;color:#5A7090;margin-bottom:12px;">Items matching these keywords are always classified as ForwardToMe regardless of AI confidence. One keyword per line.</div>
+        <textarea class="s-input" name="classification_keywords" rows="8"
+                  style="font-family:monospace;font-size:12px;resize:vertical;">{{ cfg.get('classification',{}).get('forward_to_me_keywords',[]) | join('\n') }}</textarea>
+      </div>
+    </div>
+
+    <!-- ── TAB: Storage ──────────────────────────────────── -->
+    <div id="stab-storage" class="s-pane">
+      <div class="s-card">
+        <h3>File Storage</h3>
+        <div class="s-row">
+          <div class="s-label">Provider
+            <div class="s-help">Where PostMule stores PDFs and JSON data. Cloud storage is strongly recommended — files survive PC failure.</div>
+          </div>
+          <select class="s-select" name="storage_type">
+            {% set st = storage_cfg.get('type','google_drive') %}
+            {% for t,l in [('google_drive','Google Drive'),('dropbox','Dropbox'),('onedrive','OneDrive'),('s3','Amazon S3'),('box','Box')] %}
+            <option value="{{ t }}" {% if st == t %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Root Folder Name
+            <div class="s-help">Top-level folder created in your storage provider. Sub-folders are created automatically on first run.</div>
+          </div>
+          <input class="s-input" style="width:200px;" type="text" name="storage_root_folder"
+                 value="{{ storage_cfg.get('root_folder','PostMule') }}">
+        </div>
+      </div>
+
+      <div class="s-card">
+        <h3>Spreadsheet (Dashboard View)</h3>
+        <p style="font-size:12px;color:#7A90A8;margin:0 0 14px;">The spreadsheet is a generated view only — it is rebuilt from JSON data and is never the source of truth.</p>
+        <div class="s-row">
+          <div class="s-label">Provider</div>
+          <select class="s-select" name="spreadsheet_type">
+            {% set spt = sheet_cfg.get('type','google_sheets') %}
+            {% for t,l in [('google_sheets','Google Sheets'),('excel_online','Excel Online'),('airtable','Airtable'),('none','None (disable)')] %}
+            <option value="{{ t }}" {% if spt == t %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Workbook / File Name</div>
+          <input class="s-input" style="width:200px;" type="text" name="spreadsheet_workbook_name"
+                 value="{{ sheet_cfg.get('workbook_name','PostMule') }}">
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: System ───────────────────────────────────── -->
+    <div id="stab-system" class="s-pane">
+      <div class="s-card">
+        <h3>File Naming</h3>
+        <div class="s-row">
+          <div class="s-label">Date Format
+            <div class="s-help">strftime format for dates in file names. Default: <code>%Y-%m-%d</code> → 2025-03-15.</div>
+          </div>
+          <input class="s-input" style="width:160px;" type="text" name="fn_date_format"
+                 value="{{ cfg.get('file_naming',{}).get('date_format','%Y-%m-%d') }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Max Sender Name Length</div>
+          <input class="s-input" style="width:80px;" type="number" name="fn_max_sender" min="5" max="80"
+                 value="{{ cfg.get('file_naming',{}).get('max_sender_length',30) }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Max Recipient Name Length</div>
+          <input class="s-input" style="width:80px;" type="number" name="fn_max_recipient" min="5" max="80"
+                 value="{{ cfg.get('file_naming',{}).get('max_recipient_length',30) }}">
+        </div>
+      </div>
+
+      <div class="s-card">
+        <h3>Entity Matching</h3>
+        <div class="s-row">
+          <div class="s-label">Fuzzy Match Threshold
+            <div class="s-help">Minimum similarity score (0.0–1.0) to propose an alias match. 0.85 = 85% similar.</div>
+          </div>
+          <input class="s-input" style="width:90px;" type="number" name="ent_fuzzy" min="0.5" max="1.0" step="0.01"
+                 value="{{ cfg.get('entities',{}).get('fuzzy_match_threshold',0.85) }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Auto-Approve After Days
+            <div class="s-help">Automatically approve pending entity matches after this many days without action.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input class="s-input" style="width:80px;" type="number" name="ent_auto_approve" min="0" max="90"
+                   value="{{ cfg.get('entities',{}).get('auto_approve_after_days',7) }}">
+            <span style="font-size:12px;color:#7A90A8;">days</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-card">
+        <h3>Data Protection</h3>
+        <div class="s-row">
+          <div class="s-label">Soft Deletes Only
+            <div class="s-help">Never permanently delete files automatically. Items are moved to Trash and flagged for manual review. Strongly recommended.</div>
+          </div>
+          <div class="s-check">
+            <input type="checkbox" name="dp_soft_deletes"
+                   {% if cfg.get('data_protection',{}).get('soft_deletes_only',True) %}checked{% endif %}>
+            <span style="font-size:13px;color:#0F2044;">Enabled (recommended)</span>
+          </div>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Trash Retention
+            <div class="s-help">Days before trashed items are flagged for manual review.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input class="s-input" style="width:80px;" type="number" name="dp_trash_days" min="7" max="365"
+                   value="{{ cfg.get('data_protection',{}).get('trash_retention_days',90) }}">
+            <span style="font-size:12px;color:#7A90A8;">days</span>
+          </div>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Max Files Moved per Run
+            <div class="s-help">Safety cap — alert and stop if more than this many files would be moved in one run.</div>
+          </div>
+          <input class="s-input" style="width:80px;" type="number" name="dp_max_files" min="1" max="500"
+                 value="{{ cfg.get('data_protection',{}).get('max_files_moved_per_run',50) }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Write Verification
+            <div class="s-help">Read back and hash-verify every file write. Adds a small overhead but catches storage corruption immediately.</div>
+          </div>
+          <div class="s-check">
+            <input type="checkbox" name="dp_write_verify"
+                   {% if cfg.get('data_protection',{}).get('write_verification',True) %}checked{% endif %}>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-card">
+        <h3>Backups</h3>
+        <div class="s-row">
+          <div class="s-label">Backups Enabled</div>
+          <div class="s-check">
+            <input type="checkbox" name="backups_enabled"
+                   {% if cfg.get('backups',{}).get('enabled',True) %}checked{% endif %}>
+          </div>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Retain Backups For
+            <div class="s-help">Days of daily encrypted backups to keep. 180 = 6 months.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input class="s-input" style="width:80px;" type="number" name="backups_retain_days" min="7" max="3650"
+                   value="{{ cfg.get('backups',{}).get('retain_days',180) }}">
+            <span style="font-size:12px;color:#7A90A8;">days</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-card">
+        <h3>Integrity Checks</h3>
+        {% set ic = cfg.get('integrity',{}) %}
+        <div class="s-row">
+          <div class="s-label">Run Monitor
+            <div class="s-help">Alert if a scheduled daily run is missed.</div>
+          </div>
+          <div class="s-check">
+            <input type="checkbox" name="int_run_monitor"
+                   {% if ic.get('run_monitor',True) %}checked{% endif %}>
+          </div>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Gap Detector
+            <div class="s-help">Weekly scan for missing or unexpected items in storage.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="s-check">
+              <input type="checkbox" name="int_gap_enabled"
+                     {% if ic.get('gap_detector',{}).get('enabled',True) %}checked{% endif %}>
+            </div>
+            <select class="s-select" name="int_gap_day">
+              {% set gd = ic.get('gap_detector',{}).get('run_day','sunday') %}
+              {% for d in ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] %}
+              <option value="{{ d }}" {% if gd == d %}selected{% endif %}>{{ d|capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Integrity Verifier
+            <div class="s-help">Weekly hash verification of all stored files.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="s-check">
+              <input type="checkbox" name="int_verifier_enabled"
+                     {% if ic.get('integrity_verifier',{}).get('enabled',True) %}checked{% endif %}>
+            </div>
+            <select class="s-select" name="int_verifier_day">
+              {% set vd = ic.get('integrity_verifier',{}).get('run_day','sunday') %}
+              {% for d in ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] %}
+              <option value="{{ d }}" {% if vd == d %}selected{% endif %}>{{ d|capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Duplicate Detector
+            <div class="s-help">Daily scan for duplicate files (by hash).</div>
+          </div>
+          <div class="s-check">
+            <input type="checkbox" name="int_dup_enabled"
+                   {% if ic.get('duplicate_detector',{}).get('enabled',True) %}checked{% endif %}>
+          </div>
+        </div>
+      </div>
+
+      <div class="s-card">
+        <h3>Deployment</h3>
+        <div class="s-row">
+          <div class="s-label">Dashboard Port
+            <div class="s-help">Local port the web dashboard listens on. Default: 5000.</div>
+          </div>
+          <input class="s-input" style="width:100px;" type="number" name="dep_port" min="1024" max="65535"
+                 value="{{ cfg.get('deployment',{}).get('dashboard_port',5000) }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Tailscale
+            <div class="s-help">Make the dashboard accessible via Tailscale VPN (requires Tailscale installed and configured).</div>
+          </div>
+          <div class="s-check">
+            <input type="checkbox" name="dep_tailscale"
+                   {% if cfg.get('deployment',{}).get('tailscale_enabled',False) %}checked{% endif %}>
+            <span style="font-size:13px;color:#0F2044;">Enable Tailscale access</span>
+          </div>
+        </div>
+        <div class="s-row">
+          <div class="s-label">Task Scheduler Task Name
+            <div class="s-help">Name of the Windows Task Scheduler entry for the daily run.</div>
+          </div>
+          <input class="s-input" type="text" name="dep_task_name"
+                 value="{{ cfg.get('deployment',{}).get('task_scheduler_task_name','PostMule Daily Run') }}">
+        </div>
+      </div>
+    </div>
+
+    <!-- Save button -->
+    <div style="position:sticky;bottom:0;background:rgba(245,246,248,0.95);padding:16px 0;border-top:1px solid #DDE3EC;margin-top:8px;display:flex;gap:12px;align-items:center;">
+      <button type="submit"
+              style="background:#0F2044;color:white;padding:10px 28px;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">
+        Save Settings
+      </button>
+      <span style="font-size:12px;color:#7A90A8;">Saving rewrites config.yaml — YAML comments will be removed. Keep a backup if your comments are important.</span>
+    </div>
+    </form>
+
+    <script>
+    function sTab(name, btn) {
+      document.querySelectorAll('.s-pane').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.s-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('stab-' + name).classList.add('active');
+      btn.classList.add('active');
+    }
+    </script>
+    {% endif %}
+
+    {% endif %}
+
+  </div>
+</body>
+</html>

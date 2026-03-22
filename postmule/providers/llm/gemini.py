@@ -139,6 +139,10 @@ class GeminiProvider:
                 "Check your API key and network connection."
             ) from exc
 
+        # Correct the token count if actual usage exceeded the pre-call estimate
+        if self.safety_agent and tokens_used > estimated_tokens:
+            self.safety_agent.record_additional_tokens(tokens_used - estimated_tokens)
+
         return self._parse_response(raw, tokens_used)
 
     def _parse_response(self, raw: str, tokens_used: int) -> ClassificationResult:

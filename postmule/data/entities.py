@@ -26,12 +26,12 @@ Pending match schema:
 from __future__ import annotations
 
 import json
-import os
-import tempfile
 import uuid
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
+
+from postmule.data._io import atomic_write
 
 
 def _entities_file(data_dir: Path) -> Path:
@@ -53,7 +53,7 @@ def load_entities(data_dir: Path) -> list[dict[str, Any]]:
 
 def save_entities(data_dir: Path, entities: list[dict[str, Any]]) -> None:
     path = _entities_file(data_dir)
-    _atomic_write(path, json.dumps(entities, indent=2, ensure_ascii=False))
+    atomic_write(path, json.dumps(entities, indent=2, ensure_ascii=False))
 
 
 def load_pending_matches(data_dir: Path) -> list[dict[str, Any]]:
@@ -65,22 +65,7 @@ def load_pending_matches(data_dir: Path) -> list[dict[str, Any]]:
 
 def save_pending_matches(data_dir: Path, matches: list[dict[str, Any]]) -> None:
     path = _pending_file(data_dir)
-    _atomic_write(path, json.dumps(matches, indent=2, ensure_ascii=False))
-
-
-def _atomic_write(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write(text)
-        os.replace(tmp, path)
-    except Exception:
-        try:
-            os.unlink(tmp)
-        except OSError:
-            pass
-        raise
+    atomic_write(path, json.dumps(matches, indent=2, ensure_ascii=False))
 
 
 def add_entity(data_dir: Path, name: str, entity_type: str = "Person") -> dict[str, Any]:

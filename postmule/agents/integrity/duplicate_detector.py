@@ -10,6 +10,8 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -29,7 +31,18 @@ def load_hashes(data_dir: Path) -> dict[str, str]:
 def save_hashes(data_dir: Path, hashes: dict[str, str]) -> None:
     path = data_dir / _HASHES_FILE
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(hashes, indent=2, ensure_ascii=False), encoding="utf-8")
+    content = json.dumps(hashes, indent=2, ensure_ascii=False)
+    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(content)
+        os.replace(tmp, path)
+    except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def register_file_hash(data_dir: Path, sha256: str, drive_file_id: str) -> None:

@@ -208,8 +208,30 @@ entities:
 # ---------------------------------------------------------------------------
 finance:
   providers:
-    - type: simplifi              # simplifi | ynab | monarch | tiller
-      enabled: false              # Enable after finance provider credentials are set
+    # Uncomment and configure exactly ONE of the following providers.
+    #
+    # YNAB (recommended) — real REST API, free Personal Access Token
+    #   Get token: app.ynab.com → Account Settings → Developer Settings
+    - type: ynab                  # ynab | plaid | simplifi | monarch
+      enabled: false
+      # budget_id defaults to "last-used" (your most recently opened budget).
+      # Override with a specific UUID if you have multiple budgets.
+      # budget_id: "last-used"
+    #
+    # Plaid — real REST API, development tier free (up to 100 institutions)
+    #   Requires running Plaid Link once per bank to obtain an access_token.
+    #   See: https://plaid.com/docs/link/
+    # - type: plaid
+    #   enabled: false
+    #   environment: development  # sandbox | development | production
+    #
+    # Simplifi by Quicken — browser automation (EXPERIMENTAL, may break on DOM changes)
+    # - type: simplifi
+    #   enabled: false
+    #
+    # Monarch Money — browser automation (EXPERIMENTAL, no public API)
+    # - type: monarch
+    #   enabled: false
   bill_matching:
     require_manual_approval: true # true = human approves each match in dashboard
     amount_tolerance_cents: 0     # Exact amount match required (0 = no tolerance)

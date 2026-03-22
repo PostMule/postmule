@@ -92,9 +92,11 @@ def run_retroactive(
 
         if not dry_run:
             # Upload to Drive
-            dest_folder_key = result.destination_folder.lower().replace("tome", "_to_me")
+            # Normalize Drive folder name to config.yaml folder key (underscored form)
+            _key_overrides = {"forwardtome": "forward_to_me", "needsreview": "needs_review"}
+            _dest_key = result.destination_folder.lower()
             dest_folder_id = folder_ids.get(
-                result.destination_folder.lower(),
+                _key_overrides.get(_dest_key, _dest_key),
                 folder_ids.get("needs_review", ""),
             )
 

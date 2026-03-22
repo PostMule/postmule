@@ -1,11 +1,13 @@
 """Unit tests for postmule.web.app."""
 
 import json
+import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+import postmule.web.app as web_app
 from postmule.web.app import app, create_app
 from postmule.data import bills as bills_data
 from postmule.data import entities as entity_data
@@ -192,7 +194,86 @@ class TestApiDeny:
         assert response.status_code == 404
 
 
+class TestAuth:
+    @pytest.fixture
+    def auth_client(self, data_dir):
+        """Client with a password configured."""
+        test_app = create_app(data_dir=data_dir)
+        test_app.config["TESTING"] = True
+        with patch("postmule.web.app._dashboard_password", return_value="secret"):
+            test_app.secret_key = b"test-key"
+            with test_app.test_client() as c:
+                yield c
+
+    def test_login_page_accessible(self, auth_client):
+        with patch("postmule.web.app._dashboard_password", return_value="secret"):
+            response = auth_client.get("/login")
+        assert response.status_code == 200
+
+    def test_correct_password_grants_access(self, auth_client):
+        with patch("postmule.web.app._dashboard_password", return_value="secret"):
+            response = auth_client.post("/login", data={"password": "secret"})
+        assert response.status_code == 302  # redirect to home
+
+    def test_wrong_password_denied(self, auth_client):
+        with patch("postmule.web.app._dashboard_password", return_value="secret"):
+            response = auth_client.post("/login", data={"password": "wrong"})
+        assert response.status_code == 200
+        assert b"Incorrect password" in response.data
+
+    def test_lockout_after_max_attempts(self, auth_client):
+        web_app._failed_attempts.clear()
+        with patch("postmule.web.app._dashboard_password", return_value="secret"):
+            for _ in range(web_app._MAX_LOGIN_ATTEMPTS):
+                auth_client.post("/login", data={"password": "wrong"})
+            response = auth_client.post("/login", data={"password": "wrong"})
+        assert b"Too many failed attempts" in response.data
+        web_app._failed_attempts.clear()
+
+    def test_lockout_clears_on_success(self, auth_client):
+        web_app._failed_attempts.clear()
+        ip = "127.0.0.1"
+        # Simulate some failed attempts (below lockout)
+        web_app._failed_attempts[ip] = [time.time()] * 2
+        with patch("postmule.web.app._dashboard_password", return_value="secret"):
+            auth_client.post("/login", data={"password": "secret"})
+        assert ip not in web_app._failed_attempts
+        web_app._failed_attempts.clear()
+
+    def test_session_timeout_redirects(self, auth_client):
+        with patch("postmule.web.app._dashboard_password", return_value="secret"):
+            # Log in
+            auth_client.post("/login", data={"password": "secret"})
+            # Manually expire the session auth_time
+            with auth_client.session_transaction() as sess:
+                sess["auth_time"] = time.time() - web_app._SESSION_TIMEOUT - 1
+            response = auth_client.get("/")
+        assert response.status_code == 302
+
+    def test_no_auth_when_no_password(self, client):
+        """When no password is configured, all pages accessible without login."""
+        response = client.get("/")
+        assert response.status_code == 200
+
+    def test_derive_secret_key_stable_with_password(self):
+        with patch("postmule.web.app._dashboard_password", return_value="mypassword"):
+            key1 = web_app._derive_secret_key()
+            key2 = web_app._derive_secret_key()
+        assert key1 == key2
+        assert len(key1) == 32  # SHA-256 output
+
+    def test_derive_secret_key_changes_with_password(self):
+        with patch("postmule.web.app._dashboard_password", return_value="pass1"):
+            key1 = web_app._derive_secret_key()
+        with patch("postmule.web.app._dashboard_password", return_value="pass2"):
+            key2 = web_app._derive_secret_key()
+        assert key1 != key2
+
+
 class TestApiRun:
+    def setup_method(self):
+        web_app._pipeline_running = False
+
     def test_run_triggers_process(self, client):
         with patch("postmule.web.app._config", new=MagicMock()):
             with patch("postmule.web.app._dashboard_password", return_value=None):

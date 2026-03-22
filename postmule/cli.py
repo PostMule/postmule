@@ -111,9 +111,9 @@ def _run_full_pipeline(cfg) -> None:
 
     try:
         credentials = load_credentials(enc_path)
-    except CredentialsError as exc:
-        click.echo(f"\nCredentials error:\n\n{exc}\n", err=True)
-        sys.exit(1)
+    except CredentialsError:
+        credentials = {}
+        click.echo("[WARNING] credentials.enc not found — smtp/finance/llm credentials unavailable.")
 
     click.echo("PostMule daily run starting...")
     stats = run_daily_pipeline(cfg, credentials, data_dir, dry_run=cfg.dry_run)

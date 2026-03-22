@@ -11,32 +11,17 @@ YNAB is the preferred alternative if you use it (real REST API, no scraping).
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
 from datetime import date, timedelta
 from typing import Any
 
+# Shared types live in base; re-exported here for backward compatibility.
+from postmule.providers.finance.base import (  # noqa: F401
+    BankTransaction,
+    BillMatchResult,
+    match_bills_to_transactions,
+)
+
 log = logging.getLogger("postmule.finance.simplifi")
-
-
-@dataclass
-class BankTransaction:
-    transaction_id: str
-    date: str            # YYYY-MM-DD
-    amount: float        # negative = expense
-    payee: str
-    account: str
-    category: str = ""
-    memo: str = ""
-
-
-@dataclass
-class BillMatchResult:
-    bill_id: str
-    transaction_id: str
-    amount: float
-    date: str
-    confidence: str      # "exact" | "amount_only"
-    approved: bool = False
 
 
 class SimplifiProvider:
@@ -155,64 +140,9 @@ class SimplifiProvider:
         Returns:
             True if successful.
         """
-        log.info(f"Would update Simplifi transaction {transaction_id} -> '{new_name}' (not yet implemented)")
+        log.warning(
+            f"Simplifi update_transaction_name is not implemented — "
+            f"transaction {transaction_id} payee was NOT renamed to '{new_name}'. "
+            "Use YNAB for automatic payee correction."
+        )
         return False
-
-
-def match_bills_to_transactions(
-    bills: list[dict[str, Any]],
-    transactions: list[BankTransaction],
-    amount_tolerance: float = 0.0,
-) -> list[BillMatchResult]:
-    """
-    Match pending bills to bank transactions by exact amount + date proximity.
-
-    Matching rules (per design spec):
-      - Exact amount match required (or within tolerance)
-      - Transaction date within 7 days of bill due date
-      - Payee name NOT used (Simplifi overwrites with wrong names)
-
-    Args:
-        bills:             List of pending bill dicts from bills_YYYY.json.
-        transactions:      List of BankTransaction from Simplifi.
-        amount_tolerance:  Maximum cent difference (0 = exact match).
-
-    Returns:
-        List of BillMatchResult candidates for human approval.
-    """
-    matches = []
-    pending_bills = [b for b in bills if b.get("status") == "pending"]
-
-    for bill in pending_bills:
-        bill_amount = bill.get("amount_due")
-        bill_due = bill.get("due_date", "")
-        if bill_amount is None or not bill_due:
-            continue
-
-        for txn in transactions:
-            # Amount must match (debit = negative amount in Simplifi)
-            txn_amount = abs(txn.amount)
-            if abs(txn_amount - bill_amount) > amount_tolerance:
-                continue
-
-            # Date must be within 7 days of due date
-            try:
-                from datetime import date as date_type
-                due = date_type.fromisoformat(bill_due)
-                txn_date = date_type.fromisoformat(txn.date)
-                if abs((txn_date - due).days) > 7:
-                    continue
-            except ValueError:
-                continue
-
-            matches.append(BillMatchResult(
-                bill_id=bill["id"],
-                transaction_id=txn.transaction_id,
-                amount=bill_amount,
-                date=txn.date,
-                confidence="exact" if abs(txn_amount - bill_amount) == 0 else "amount_only",
-            ))
-            break  # one match per bill
-
-    log.info(f"Bill matching: {len(matches)} matches found from {len(pending_bills)} pending bills")
-    return matches

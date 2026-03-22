@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PostMule — Dashboard Mock-up</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #F5F6F8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+    /* ── Header / Nav ── */
+    .header { background: #0F2044; padding: 0 24px; }
+    .header-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center; gap: 20px; height: 60px;
+    }
+    /* Logo SVG is inline — see HTML below */
+    .wordmark { display: flex; flex-direction: column; line-height: 1; }
+    .wordmark-text {
+      font-size: 18px; font-weight: 600; color: white; letter-spacing: -0.3px;
+      text-decoration: none;
+    }
+    .wordmark-text span { color: #E8A020; }
+    .wordmark-tag {
+      font-size: 11px; color: #5A7CA4; letter-spacing: 2px;
+      text-transform: uppercase; margin-top: 3px;
+    }
+    nav { display: flex; gap: 4px; flex: 1; }
+    .nav-link {
+      color: #5A7CA4; font-size: 13px; padding: 6px 12px;
+      border-radius: 4px; text-decoration: none;
+    }
+    .nav-link:hover { background: #1a3060; color: white; }
+    .nav-link.active { background: #1a3060; color: white; }
+    .header-date { color: #5A7CA4; font-size: 11px; white-space: nowrap; }
+
+    /* ── Page layout ── */
+    .page { max-width: 1100px; margin: 24px auto; padding: 0 24px; }
+    .page-title {
+      font-size: 20px; font-weight: 600; color: #0F2044;
+      letter-spacing: -0.3px; margin-bottom: 16px;
+    }
+
+    /* ── Stat cards (dashboard) ── */
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+    .stat-card { background: white; border-radius: 8px; border: 1px solid #DDE3EC; padding: 16px; }
+    .stat-label {
+      font-size: 10px; font-weight: 600; color: #7A90A8;
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+    }
+    .stat-value { font-size: 22px; font-weight: 600; }
+
+    /* ── Action buttons ── */
+    .btn-primary {
+      background: #0F2044; color: white; border: none; padding: 10px 20px;
+      border-radius: 6px; font-size: 13px; cursor: pointer;
+    }
+    .btn-secondary {
+      background: #F5F6F8; color: #0F2044; border: 1px solid #DDE3EC;
+      padding: 10px 20px; border-radius: 6px; font-size: 13px; cursor: pointer;
+    }
+    .btn-row { display: flex; gap: 8px; margin-bottom: 24px; }
+
+    /* ── Mail cards ── */
+    .mail-card {
+      background: white; border-radius: 8px; border: 1px solid #DDE3EC;
+      margin-bottom: 8px; display: flex; overflow: hidden;
+    }
+    .mail-bar { width: 3px; flex-shrink: 0; }
+    .mail-body { padding: 12px 16px; flex: 1; }
+    .mail-row { display: flex; justify-content: space-between; align-items: flex-start; }
+    .mail-sender { font-size: 13px; font-weight: 600; color: #0F2044; }
+    .mail-sender-read { font-size: 13px; font-weight: 400; color: #8A9BB0; }
+    .mail-date { font-size: 11px; color: #B8C8D8; }
+    .mail-summary { font-size: 13px; color: #5A7090; margin-top: 3px; }
+    .badge {
+      display: inline-block; font-size: 10px; font-weight: 600;
+      letter-spacing: 1px; padding: 2px 8px; border-radius: 4px; margin-top: 6px;
+    }
+    /* badge variants */
+    .badge-bill    { background: #FDF3E0; color: #7A4C08; border: 1px solid #E8A020; }
+    .badge-overdue { background: #FEECEC; color: #8A1010; border: 1px solid #FFCDD2; }
+    .badge-ftm     { background: #FEECEC; color: #8A1010; border: 1px solid #C62828; }
+    .badge-notice  { background: #EEF3F9; color: #2C4A6E; border: 1px solid #C0D0E4; }
+    .badge-junk    { background: #F5F6F8; color: #7A90A8; border: 1px solid #DDE3EC; }
+    .badge-review  { background: #FFF8E1; color: #6D4C00; border: 1px solid #FFD54F; }
+
+    /* ── Toast alert ── */
+    .toast {
+      background: #0F2044; color: white; border-radius: 8px;
+      padding: 12px 16px; font-size: 13px; display: flex; align-items: center;
+      gap: 10px; margin-bottom: 24px;
+    }
+    .toast-dot { width: 7px; height: 7px; border-radius: 50%; background: #E8A020; flex-shrink: 0; }
+
+    /* ── Bills table ── */
+    .table-wrap {
+      background: white; border-radius: 8px; border: 1px solid #DDE3EC;
+      overflow: hidden; margin-bottom: 24px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      padding: 10px 14px; text-align: left; font-size: 10px; font-weight: 600;
+      color: #5A7090; text-transform: uppercase; letter-spacing: 0.5px;
+      background: #F5F6F8; border-bottom: 1px solid #DDE3EC;
+    }
+    td { padding: 10px 14px; font-size: 13px; border-top: 1px solid #DDE3EC; }
+    td.sender { color: #0F2044; font-weight: 500; }
+    td.amount { color: #0F2044; }
+    td.due    { color: #E8A020; }
+    td.overdue-due { color: #C62828; font-weight: 600; }
+
+    /* ── Section divider / label ── */
+    .section-label {
+      font-size: 10px; font-weight: 600; color: #7A90A8;
+      text-transform: uppercase; letter-spacing: 2px; margin: 0 0 10px;
+    }
+
+    /* ── Annotation boxes (mock-up only) ── */
+    .note {
+      background: #0F2044; color: #7A9CC4; font-size: 11px; border-radius: 6px;
+      padding: 8px 12px; margin-bottom: 16px; border-left: 3px solid #E8A020;
+    }
+    .note strong { color: #E8A020; }
+    .gap {
+      background: #FEECEC; color: #8A1010; font-size: 11px; border-radius: 6px;
+      padding: 8px 12px; margin-bottom: 16px; border-left: 3px solid #C62828;
+    }
+    .gap strong { color: #C62828; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     HEADER — with full SVG logo (currently missing in app.py)
+════════════════════════════════════════════════════════════════ -->
+<div class="header">
+  <div class="header-inner">
+
+    <!-- SVG Mule mark — ears (navy rect + brass stripe), head (steel blue),
+         eyes (white circle → navy circle → brass highlight),
+         muzzle bar (steel blue), nostrils (navy), chin detail (brass) -->
+    <svg width="36" height="44" viewBox="0 0 80 96" fill="none" aria-hidden="true">
+      <!-- Ears -->
+      <rect x="14" y="0" width="12" height="48" rx="6" fill="#7A9CC4"/>
+      <rect x="17" y="4" width="6" height="38" rx="3" fill="#E8A020"/>
+      <rect x="54" y="0" width="12" height="48" rx="6" fill="#7A9CC4"/>
+      <rect x="57" y="4" width="6" height="38" rx="3" fill="#E8A020"/>
+      <!-- Head -->
+      <rect x="8" y="36" width="64" height="48" rx="8" fill="#7A9CC4"/>
+      <!-- Forehead lines -->
+      <line x1="14" y1="52" x2="66" y2="52" stroke="#5A7CA4" stroke-width="1"/>
+      <line x1="14" y1="59" x2="66" y2="59" stroke="#5A7CA4" stroke-width="1"/>
+      <line x1="14" y1="66" x2="66" y2="66" stroke="#5A7CA4" stroke-width="1"/>
+      <!-- Left eye -->
+      <circle cx="24" cy="54" r="7" fill="#F5F6F8"/>
+      <circle cx="25" cy="54" r="4" fill="#0F2044"/>
+      <circle cx="23.5" cy="52.5" r="1.5" fill="#E8A020" opacity="0.8"/>
+      <!-- Right eye -->
+      <circle cx="56" cy="54" r="7" fill="#F5F6F8"/>
+      <circle cx="57" cy="54" r="4" fill="#0F2044"/>
+      <circle cx="55.5" cy="52.5" r="1.5" fill="#E8A020" opacity="0.8"/>
+      <!-- Muzzle bar -->
+      <rect x="16" y="68" width="48" height="14" rx="6" fill="#5A7CA4"/>
+      <!-- Nostrils -->
+      <circle cx="28" cy="75" r="3.5" fill="#0F2044"/>
+      <circle cx="52" cy="75" r="3.5" fill="#0F2044"/>
+      <!-- Chin detail -->
+      <rect x="28" y="80" width="24" height="3" rx="1.5" fill="#E8A020" opacity="0.5"/>
+    </svg>
+
+    <div class="wordmark">
+      <a class="wordmark-text" href="/">Post<span>Mule</span></a>
+      <div class="wordmark-tag">Smart mail management</div>
+    </div>
+
+    <nav>
+      <a href="/" class="nav-link active">Home</a>
+      <a href="/mail" class="nav-link">Mail</a>
+      <a href="/bills" class="nav-link">Bills</a>
+      <a href="/forward-to-me" class="nav-link">ForwardToMe</a>
+      <a href="/pending" class="nav-link">Pending</a>
+      <a href="/entities" class="nav-link">Entities</a>
+      <a href="/settings" class="nav-link">Settings</a>
+      <a href="/logs" class="nav-link">Logs</a>
+    </nav>
+    <div class="header-date">2026-03-21</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PAGE CONTENT
+════════════════════════════════════════════════════════════════ -->
+<div class="page">
+
+  <!-- Mock-up annotation -->
+  <div class="note" style="margin-bottom:20px;">
+    <strong>Mock-up — reference only.</strong>
+    This file shows the target branding. Open in any browser. Gaps vs. current app.py listed below.
+  </div>
+
+  <!-- ── HOME ── -->
+  <p class="page-title">Dashboard</p>
+
+  <!-- Alert toast -->
+  <div class="toast">
+    <div class="toast-dot"></div>
+    Verizon Wireless bill arrived. $94.00 due Apr 5 — 16 days remaining.
+  </div>
+
+  <!-- Stat row -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label">Last Run</div>
+      <div class="stat-value" style="font-size:14px;color:#0F2044;">2026-03-21 02:03 — OK</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Awaiting Forwarding</div>
+      <div class="stat-value" style="color:#2E7D32;">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pending Bills</div>
+      <div class="stat-value" style="color:#E8A020;">3</div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-primary">Run Now</button>
+    <button class="btn-secondary">Dry Run</button>
+  </div>
+
+  <hr style="border:none;border-top:1px solid #DDE3EC;margin-bottom:24px;">
+
+  <!-- ── MAIL ── -->
+  <p class="page-title">Recent Mail</p>
+
+  <!-- Bill — brass left bar -->
+  <div class="mail-card">
+    <div class="mail-bar" style="background:#E8A020;"></div>
+    <div class="mail-body">
+      <div class="mail-row">
+        <div class="mail-sender">Verizon Wireless</div>
+        <div class="mail-date">Mar 20</div>
+      </div>
+      <div class="mail-summary">Account statement — balance due $94.00</div>
+      <span class="badge badge-bill">BILL · APR 5</span>
+    </div>
+  </div>
+
+  <!-- Overdue bill — red left bar -->
+  <div class="mail-card">
+    <div class="mail-bar" style="background:#C62828;"></div>
+    <div class="mail-body">
+      <div class="mail-row">
+        <div class="mail-sender">County Property Tax</div>
+        <div class="mail-date">Mar 8</div>
+      </div>
+      <div class="mail-summary">Final notice — $2,840.00 overdue</div>
+      <span class="badge badge-overdue">OVERDUE</span>
+    </div>
+  </div>
+
+  <!-- ForwardToMe — red left bar (urgent) -->
+  <div class="mail-card">
+    <div class="mail-bar" style="background:#C62828;"></div>
+    <div class="mail-body">
+      <div class="mail-row">
+        <div class="mail-sender">Chase Bank</div>
+        <div class="mail-date">Mar 19</div>
+      </div>
+      <div class="mail-summary">New credit card — physical item, needs forwarding</div>
+      <span class="badge badge-ftm">FORWARD TO ME</span>
+    </div>
+  </div>
+
+  <!-- Notice — steel blue left bar -->
+  <div class="mail-card">
+    <div class="mail-bar" style="background:#7A9CC4;"></div>
+    <div class="mail-body">
+      <div class="mail-row">
+        <div class="mail-sender">IRS</div>
+        <div class="mail-date">Mar 12</div>
+      </div>
+      <div class="mail-summary">Tax refund status update notice</div>
+      <span class="badge badge-notice">NOTICE</span>
+    </div>
+  </div>
+
+  <!-- Junk / Read — smoke left bar, dimmed sender name -->
+  <div class="mail-card">
+    <div class="mail-bar" style="background:#DDE3EC;"></div>
+    <div class="mail-body">
+      <div class="mail-row">
+        <div class="mail-sender-read">Pottery Barn</div>
+        <div class="mail-date">Mar 15</div>
+      </div>
+      <div class="mail-summary">Spring sale — 40% off everything</div>
+      <span class="badge badge-junk">JUNK</span>
+    </div>
+  </div>
+
+  <!-- NeedsReview — yellow/amber badge -->
+  <div class="mail-card">
+    <div class="mail-bar" style="background:#DDE3EC;"></div>
+    <div class="mail-body">
+      <div class="mail-row">
+        <div class="mail-sender">Unknown Sender</div>
+        <div class="mail-date">Mar 21</div>
+      </div>
+      <div class="mail-summary">Unrecognized document — confidence 0.61</div>
+      <span class="badge badge-review">NEEDS REVIEW</span>
+    </div>
+  </div>
+
+  <hr style="border:none;border-top:1px solid #DDE3EC;margin:24px 0;">
+
+  <!-- ── BILLS TABLE ── -->
+  <p class="page-title">Bills</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Sender</th>
+          <th>Amount</th>
+          <th>Due</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="sender">Verizon Wireless</td>
+          <td class="amount">$94.00</td>
+          <td class="due">Apr 5, 2026</td>
+          <td><span class="badge badge-bill">PENDING</span></td>
+        </tr>
+        <tr>
+          <td class="sender">AT&amp;T</td>
+          <td class="amount">$182.50</td>
+          <td class="overdue-due">Mar 15, 2026</td>
+          <td><span class="badge badge-overdue">OVERDUE</span></td>
+        </tr>
+        <tr>
+          <td class="sender">PG&amp;E</td>
+          <td class="amount">$61.00</td>
+          <td class="due">Apr 12, 2026</td>
+          <td><span class="badge badge-notice">MATCHED</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       BRANDING AUDIT — gaps between spec and current app.py
+  ════════════════════════════════════════════════════════════════ -->
+  <hr style="border:none;border-top:1px solid #DDE3EC;margin:32px 0 24px;">
+  <p class="page-title" style="margin-bottom:12px;">Branding Audit — Gaps vs. Current app.py</p>
+
+  <div class="gap">
+    <strong>GAP 1 — No logo SVG in header.</strong>
+    The header renders text-only "PostMule". The brand spec requires the SVG mule mark
+    (ears, eyes, muzzle, nostrils) alongside the wordmark. See header above for the correct version.
+  </div>
+
+  <div class="gap">
+    <strong>GAP 2 — No tagline in header.</strong>
+    "Smart mail management" (#5A7CA4, 11px, uppercase, letter-spacing 2px) is missing beneath
+    the wordmark. Brand spec defines this as a required element.
+  </div>
+
+  <div class="gap">
+    <strong>GAP 3 — Page title font-size is 22px (spec: 20px) and missing letter-spacing.</strong>
+    All &lt;h1&gt; page titles use font-size:22px. Brand spec: 20px, weight 600, #0F2044, tracking -0.3px.
+    Also missing: letter-spacing: -0.3px on all page title elements.
+  </div>
+
+  <div class="gap">
+    <strong>GAP 4 — Mail card badges are all the same blue style regardless of type.</strong>
+    Current app.py renders every category badge as EEF3F9/2C4A6E (Notice blue).
+    Brand spec requires: Bill = brass (#FDF3E0/#7A4C08), Overdue = red (#FEECEC/#8A1010),
+    ForwardToMe = urgent red, Notice = steel blue, Junk = smoke, NeedsReview = amber.
+  </div>
+
+  <div class="gap">
+    <strong>GAP 5 — Read state not applied to mail card sender names.</strong>
+    Brand spec: unread = weight 600, #0F2044. Read/Junk = weight 400, #8A9BB0.
+    Current app hardcodes font-weight:600;color:#0F2044 for all items.
+  </div>
+
+  <div class="gap">
+    <strong>GAP 6 — Mail card body text is 12px (spec: 13px).</strong>
+    The summary line under the sender uses font-size:12px. Brand spec body text is 13px, #5A7090.
+  </div>
+
+  <div class="note" style="margin-top:8px;">
+    <strong>What IS correct:</strong> All color tokens match (#0F2044, #E8A020, #7A9CC4, #F5F6F8,
+    #DDE3EC, #C62828, #2E7D32). Header/nav background, page background, card structure (8px radius,
+    1px #DDE3EC border, 3px left bar), stat labels, toast pattern, table structure — all on-brand.
+  </div>
+
+</div>
+</body>
+</html>
