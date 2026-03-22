@@ -167,16 +167,6 @@ classification:
     - "key"
 
 # ---------------------------------------------------------------------------
-# ocr
-# ---------------------------------------------------------------------------
-ocr:
-  # pdfplumber is tried first (fast, lossless). Falls back to tesseract if no text found.
-  primary: pdfplumber
-  fallback: tesseract
-  tesseract_dpi: 300
-  tesseract_lang: "eng"
-
-# ---------------------------------------------------------------------------
 # file_naming
 # ---------------------------------------------------------------------------
 file_naming:

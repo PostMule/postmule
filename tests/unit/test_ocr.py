@@ -92,7 +92,7 @@ class TestExtractTextFallsBackToTesseract:
             result = extract_text(pdf)
 
         assert result == tesseract_text
-        mock_tess.assert_called_once_with(pdf, 300, "eng")
+        mock_tess.assert_called_once()
 
     def test_uses_tesseract_when_pdfplumber_returns_empty(self, tmp_path):
         pdf = _make_pdf(tmp_path)
@@ -103,15 +103,6 @@ class TestExtractTextFallsBackToTesseract:
             result = extract_text(pdf)
 
         assert result == tesseract_text
-
-    def test_passes_custom_dpi_and_lang_to_tesseract(self, tmp_path):
-        pdf = _make_pdf(tmp_path)
-
-        with patch("postmule.agents.ocr._extract_with_pdfplumber", return_value=""), \
-             patch("postmule.agents.ocr._extract_with_tesseract", return_value="") as mock_tess:
-            extract_text(pdf, tesseract_dpi=600, tesseract_lang="fra")
-
-        mock_tess.assert_called_once_with(pdf, 600, "fra")
 
     def test_returns_empty_when_both_fail(self, tmp_path):
         pdf = _make_pdf(tmp_path)

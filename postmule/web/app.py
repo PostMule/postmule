@@ -645,12 +645,6 @@ def api_settings():
                 if kw.strip()
             ],
         },
-        "ocr": {
-            "primary": form.get("ocr_primary", "pdfplumber"),
-            "fallback": form.get("ocr_fallback", "tesseract"),
-            "tesseract_dpi": intv("ocr_dpi", 300),
-            "tesseract_lang": form.get("ocr_lang", "eng"),
-        },
         "file_naming": {
             "date_format": form.get("fn_date_format", "%Y-%m-%d"),
             "max_sender_length": intv("fn_max_sender", 30),

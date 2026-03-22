@@ -503,7 +503,7 @@
       <button type="button" class="s-tab" onclick="sTab('notifications',this)">Notifications</button>
       <button type="button" class="s-tab" onclick="sTab('mail',this)">Mail Intake</button>
       <button type="button" class="s-tab" onclick="sTab('finance',this)">Finance</button>
-      <button type="button" class="s-tab" onclick="sTab('ai',this)">AI &amp; OCR</button>
+      <button type="button" class="s-tab" onclick="sTab('ai',this)">AI</button>
       <button type="button" class="s-tab" onclick="sTab('storage',this)">Storage</button>
       <button type="button" class="s-tab" onclick="sTab('system',this)">System</button>
     </div>
@@ -863,46 +863,6 @@
             <input class="s-input" style="width:100px;" type="number" name="api_monthly_usd" min="0" step="0.01"
                    value="{{ cfg.get('api_safety',{}).get('monthly_cost_budget_usd',0.00) }}">
           </div>
-        </div>
-      </div>
-
-      <div class="s-card">
-        <h3>OCR</h3>
-        <div class="s-row">
-          <div class="s-label">Primary Engine
-            <div class="s-help">Tried first. pdfplumber is fast and lossless for text-layer PDFs.</div>
-          </div>
-          <select class="s-select" name="ocr_primary">
-            {% set op = cfg.get('ocr',{}).get('primary','pdfplumber') %}
-            {% for t,l in [('pdfplumber','pdfplumber (recommended)'),('tesseract','Tesseract')] %}
-            <option value="{{ t }}" {% if op == t %}selected{% endif %}>{{ l }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="s-row">
-          <div class="s-label">Fallback Engine
-            <div class="s-help">Used when the primary engine finds no text (e.g. scanned image PDFs).</div>
-          </div>
-          <select class="s-select" name="ocr_fallback">
-            {% set of = cfg.get('ocr',{}).get('fallback','tesseract') %}
-            {% for t,l in [('tesseract','Tesseract'),('pdfplumber','pdfplumber')] %}
-            <option value="{{ t }}" {% if of == t %}selected{% endif %}>{{ l }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="s-row">
-          <div class="s-label">Tesseract DPI
-            <div class="s-help">Resolution for Tesseract rendering. 300 is standard for documents.</div>
-          </div>
-          <input class="s-input" style="width:90px;" type="number" name="ocr_dpi" min="72" max="600"
-                 value="{{ cfg.get('ocr',{}).get('tesseract_dpi',300) }}">
-        </div>
-        <div class="s-row">
-          <div class="s-label">Tesseract Language
-            <div class="s-help">Tesseract language code. eng = English. Install additional language packs as needed.</div>
-          </div>
-          <input class="s-input" style="width:90px;" type="text" name="ocr_lang"
-                 value="{{ cfg.get('ocr',{}).get('tesseract_lang','eng') }}">
         </div>
       </div>
 

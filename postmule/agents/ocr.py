@@ -21,18 +21,13 @@ log = logging.getLogger("postmule.ocr")
 _MIN_TEXT_LENGTH = 50
 
 
-def extract_text(
-    pdf_path: Path,
-    tesseract_dpi: int = 300,
-    tesseract_lang: str = "eng",
-) -> str:
+_TESSERACT_DPI = 300
+_TESSERACT_LANG = "eng"
+
+
+def extract_text(pdf_path: Path) -> str:
     """
     Extract text from a PDF, trying pdfplumber first then pytesseract.
-
-    Args:
-        pdf_path:       Path to the PDF file.
-        tesseract_dpi:  DPI for image rendering before OCR (higher = better quality).
-        tesseract_lang: Tesseract language code.
 
     Returns:
         Extracted text string. May be empty if extraction fails completely.
@@ -53,7 +48,7 @@ def extract_text(
     )
 
     # --- Fallback: pytesseract ---
-    text = _extract_with_tesseract(pdf_path, tesseract_dpi, tesseract_lang)
+    text = _extract_with_tesseract(pdf_path, _TESSERACT_DPI, _TESSERACT_LANG)
     if text:
         log.debug(f"tesseract extracted {len(text)} chars from {pdf_path.name}")
     else:
