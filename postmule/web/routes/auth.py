@@ -12,6 +12,16 @@ import postmule.web.app as _app
 auth_bp = Blueprint("auth", __name__)
 
 
+@auth_bp.app_context_processor
+def inject_auth_state():
+    from flask import session as _session
+    pw = _app._dashboard_password()
+    return {
+        "auth_enabled": bool(pw),
+        "is_authenticated": bool(_session.get("authenticated")),
+    }
+
+
 @auth_bp.before_app_request
 def require_auth():
     if request.endpoint in (
@@ -33,6 +43,8 @@ def require_auth():
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
+    if session.get("authenticated"):
+        return redirect(url_for("pages.home"))
     error = None
     if request.method == "POST":
         ip = request.remote_addr or "unknown"

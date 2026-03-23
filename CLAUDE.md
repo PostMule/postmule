@@ -245,7 +245,7 @@ PendingEntityMatches, PendingBillMatches, RunLog, APIUsage
 - localhost:5000 (optional Tailscale for anywhere access)
 - Routes split into blueprints: `auth_bp` (login/logout), `pages_bp` (all page views), `connections_bp` (Google OAuth), `api_bp` (HTMX/JSON endpoints)
 - Auth (rate limiting, lockout, session) implemented in `web/routes/auth.py`
-- Pages: Home, Mail, Bills, Forward To Me, Pending, Entities, Settings, Logs, Connections
+- Pages: Home, Mail, Bills, Forward To Me, Pending, Entities, Corrections, Settings, Logs, Connections
 - Templates: `postmule/web/templates/login.html` and `page.html` (base layout with injected content)
 
 ---

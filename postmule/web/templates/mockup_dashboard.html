@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PostMule — All Pages Mockup</title>
   <style>
-    /* ── Mockup chrome ──────────────────────────────────────────────── */
+    /* ── Mockup page switcher (design tool only — not in the real app) ── */
     * { box-sizing: border-box; }
     #mockup-bar {
       background: #0a0a0a;
@@ -228,15 +228,43 @@
     .login-input { width: 100%; padding: 9px 12px; border: 1px solid #DDE3EC; border-radius: 6px; font-size: 14px; box-sizing: border-box; margin-bottom: 12px; font-family: inherit; }
     .login-btn { width: 100%; padding: 10px; background: #0F2044; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-family: inherit; }
     .login-error { color: #C62828; font-size: 12px; margin-bottom: 10px; }
+
+    /* ── Section titles (used by Corrections) ─────────────────────── */
+    .section-title { font-size: 14px; font-weight: 600; color: #0F2044; margin: 24px 0 12px; }
+    .section-title:first-child { margin-top: 0; }
+
+    /* ── Connections — tabbed provider list ────────────────────────── */
+    .conn-tabs { display: flex; gap: 2px; border-bottom: 2px solid #DDE3EC; margin-bottom: 20px; flex-wrap: wrap; }
+    .conn-tab { padding: 8px 16px; border: none; background: none; cursor: pointer; font-size: 13px; color: #5A7090; border-bottom: 2px solid transparent; margin-bottom: -2px; font-family: inherit; }
+    .conn-tab.active { color: #0F2044; font-weight: 600; border-bottom-color: #0F2044; }
+    .conn-pane { display: none; }
+    .conn-pane.active { display: block; }
+    .conn-provider { background: white; border-radius: 8px; border: 1px solid #DDE3EC; margin-bottom: 8px; }
+    .conn-provider--active { border-color: #A5D6A7; }
+    .conn-provider-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+    .conn-provider-name { font-size: 13px; font-weight: 600; color: #0F2044; }
+    .conn-provider-desc-small { font-size: 11px; color: #7A90A8; margin-top: 2px; }
+    .conn-provider-badge { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+    .conn-provider-badge--ok   { background: #E8F5E9; color: #1B5E20; border: 1px solid #A5D6A7; }
+    .conn-provider-badge--warn { background: #FFF3E0; color: #E65100; border: 1px solid #FFE0B2; }
+    .conn-provider-badge--off  { background: #F5F6F8; color: #7A90A8; border: 1px solid #DDE3EC; }
+    .conn-provider-actions { margin-left: auto; }
+    .conn-provider-body { padding: 0 16px 12px 60px; font-size: 12px; color: #5A7090; }
+    .conn-service-icon { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+    .conn-icon-google { background: #E8F0FE; color: #1A73E8; }
+    .conn-icon-ms     { background: #E3F2FD; color: #0078D4; }
+    .conn-icon-aws    { background: #FFF3E0; color: #FF9900; }
   </style>
 </head>
 <body>
 
 <!-- ═══════════════════════════════════════════════════════════════
-     MOCKUP SWITCHER
+     MOCKUP PAGE SWITCHER — design tool only, not part of the app.
+     This bar lets you navigate between page mockups in this single
+     HTML file. It does not exist in the real PostMule dashboard.
 ════════════════════════════════════════════════════════════════ -->
 <div id="mockup-bar">
-  <span class="m-label">PostMule Mockup</span>
+  <span class="m-label" title="Design reference only — this bar is not in the real app">Page Switcher</span>
   <span class="m-sep">|</span>
   <button class="m-btn" data-sec="login"     onclick="showSection('login')">Login</button>
   <button class="m-btn active" data-sec="home" onclick="showSection('home')">Home</button>
@@ -244,11 +272,11 @@
   <button class="m-btn" data-sec="bills"     onclick="showSection('bills')">Bills</button>
   <button class="m-btn" data-sec="forward"        onclick="showSection('forward')">Forward To Me</button>
   <button class="m-btn" data-sec="pending"        onclick="showSection('pending')">Pending</button>
-  <button class="m-btn" data-sec="entities"       onclick="showSection('entities')">Entities</button>
-  <button class="m-btn" data-sec="logs"           onclick="showSection('logs')">Logs</button>
-  <button class="m-btn" data-sec="connections-new" onclick="showSection('connections-new')">Connections (new)</button>
-  <button class="m-btn" data-sec="connections-ok"  onclick="showSection('connections-ok')">Connections (connected)</button>
-  <button class="m-btn" data-sec="settings"       onclick="showSection('settings')">Settings</button>
+  <button class="m-btn" data-sec="entities"    onclick="showSection('entities')">Entities</button>
+  <button class="m-btn" data-sec="corrections" onclick="showSection('corrections')">Corrections</button>
+  <button class="m-btn" data-sec="logs"        onclick="showSection('logs')">Logs</button>
+  <button class="m-btn" data-sec="connections" onclick="showSection('connections')">Connections</button>
+  <button class="m-btn" data-sec="settings"    onclick="showSection('settings')">Settings</button>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════
@@ -308,9 +336,10 @@
         <a href="#" id="nav-forward"      class="nav-link"         onclick="showSection('forward');return false;">Forward To Me</a>
         <a href="#" id="nav-pending"      class="nav-link"         onclick="showSection('pending');return false;">Pending</a>
         <a href="#" id="nav-entities"     class="nav-link"         onclick="showSection('entities');return false;">Entities</a>
+        <a href="#" id="nav-corrections"  class="nav-link"         onclick="showSection('corrections');return false;">Corrections</a>
         <a href="#" id="nav-settings"     class="nav-link"         onclick="showSection('settings');return false;">Settings</a>
         <a href="#" id="nav-logs"         class="nav-link"         onclick="showSection('logs');return false;">Logs</a>
-        <a href="#" id="nav-connections"  class="nav-link"         onclick="showSection('connections-new');return false;">Connections</a>
+        <a href="#" id="nav-connections"  class="nav-link"         onclick="showSection('connections');return false;">Connections</a>
       </nav>
       <div class="header-date">2026-03-22</div>
     </div>
@@ -615,6 +644,44 @@
       </div>
     </div>
 
+    <!-- ── CORRECTIONS ──────────────────────────────────────────── -->
+    <div id="sec-corrections" class="section" style="display:none;">
+      <h1 class="page-title">Entity Corrections</h1>
+      <p class="page-subtitle">Tracks every time an unrecognized sender name was corrected to a known entity. Used to train future matching and audit alias coverage.</p>
+
+      <p class="section-title">Top Corrected Senders</p>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Original Sender</th><th>Corrections</th><th>Assigned To</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>VERIZON WIRELESS</td><td>14</td><td>Verizon Wireless</td></tr>
+            <tr><td>Comcast Cable Comm</td><td>11</td><td>Comcast</td></tr>
+            <tr><td>PG&amp;E</td><td>9</td><td>PG&amp;E</td></tr>
+            <tr><td>CHASE BANK USA NA</td><td>7</td><td>Chase Bank</td></tr>
+            <tr><td>Amazon.com Services</td><td>5</td><td>Amazon</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="section-title">Full Correction Log</p>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Date</th><th>Type</th><th>Original Sender</th><th>Corrected Entity</th><th>Alias Added</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>2026-03-20</td><td>Bill</td><td>VERIZON WIRELESS</td><td>Verizon Wireless</td><td><input type="checkbox" checked disabled></td></tr>
+            <tr><td>2026-03-18</td><td>Notice</td><td>Comcast Cable Comm</td><td>Comcast</td><td><input type="checkbox" checked disabled></td></tr>
+            <tr><td>2026-03-15</td><td>Bill</td><td>PG&amp;E</td><td>PG&amp;E</td><td><input type="checkbox" disabled></td></tr>
+            <tr><td>2026-03-12</td><td>Bill</td><td>CHASE BANK USA NA</td><td>Chase Bank</td><td><input type="checkbox" checked disabled></td></tr>
+            <tr><td>2026-03-10</td><td>ForwardToMe</td><td>Amazon.com Services</td><td>Amazon</td><td><input type="checkbox" checked disabled></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- ── LOGS ──────────────────────────────────────────────────── -->
     <div id="sec-logs" class="section" style="display:none;">
       <h1 class="page-title">Logs</h1>
@@ -646,112 +713,184 @@
 2026-03-22 02:03:16 INFO  Duration: 15.2s | API requests: 6 | Tokens used: 4,821</div>
     </div>
 
-    <!-- ── CONNECTIONS (Google not connected) ──────────────────── -->
-    <div id="sec-connections-new" class="section" style="display:none;">
+    <!-- ── CONNECTIONS ───────────────────────────────────────────── -->
+    <div id="sec-connections" class="section" style="display:none;">
       <h1 class="page-title" style="margin-bottom:8px;">Connections</h1>
-      <p class="page-subtitle">Manage service connections for email, storage, physical mail, and AI.</p>
+      <p class="page-subtitle">Configure the providers PostMule uses for each service category.</p>
 
-      <div class="conn-grid">
+      <div class="conn-tabs" id="conn-tabs">
+        <button class="conn-tab active" onclick="connTab('email',this)">Email</button>
+        <button class="conn-tab" onclick="connTab('storage',this)">Storage</button>
+        <button class="conn-tab" onclick="connTab('spreadsheet',this)">Spreadsheet</button>
+        <button class="conn-tab" onclick="connTab('physical',this)">Physical Mail</button>
+        <button class="conn-tab" onclick="connTab('ai',this)">AI / LLM</button>
+        <button class="conn-tab" onclick="connTab('finance',this)">Finance</button>
+        <button class="conn-tab" onclick="connTab('notifications',this)">Notifications</button>
+      </div>
 
-        <!-- Google card — not connected -->
-        <div class="conn-card">
-          <div class="conn-card-header">
+      <!-- TAB: Email -->
+      <div id="ctab-email" class="conn-pane active">
+        <div class="conn-provider conn-provider--active">
+          <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-google">G</div>
             <div>
-              <div class="conn-service-name">Google</div>
-              <div class="conn-service-desc">Gmail &middot; Drive &middot; Sheets &middot; Gemini</div>
+              <div class="conn-provider-name">Gmail</div>
+              <div class="conn-provider-desc-small">user@gmail.com</div>
             </div>
-            <div class="conn-status conn-status--off">Not connected</div>
+            <span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            <div class="conn-provider-actions"><button class="btn btn-secondary" onclick="return false;">Reconnect</button></div>
           </div>
-          <p class="conn-note">Sign in with Google to enable Gmail, Drive, Sheets, and Gemini access.</p>
-          <a href="#" class="google-btn" onclick="return false;">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
-              <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
-              <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-              <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-            </svg>
-            Connect Google Account
-          </a>
+          <div class="conn-provider-body">Google OAuth refresh token stored in Windows Credential Manager. Covers Gmail, Drive, Sheets, and Gemini.</div>
         </div>
-
-        <!-- Physical Mail card -->
-        <div class="conn-card">
-          <div class="conn-card-header">
-            <div class="conn-service-icon conn-icon-mail">&#9993;</div>
+        <div class="conn-provider">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon conn-icon-ms">Ms</div>
             <div>
-              <div class="conn-service-name">Physical Mail</div>
-              <div class="conn-service-desc">VirtualPostMail &middot; EarthClass Mail</div>
+              <div class="conn-provider-name">Outlook / Microsoft 365</div>
+              <div class="conn-provider-desc-small">Not configured</div>
             </div>
-            <div class="conn-status conn-status--off">Not configured</div>
+            <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
-          <p class="conn-note">Configure your physical mailbox provider in <a href="#">Settings</a>. Credentials go in <code>credentials.yaml</code>.</p>
         </div>
-
-        <!-- AI Provider card -->
-        <div class="conn-card">
-          <div class="conn-card-header">
-            <div class="conn-service-icon conn-icon-ai">AI</div>
-            <div>
-              <div class="conn-service-name">AI Provider</div>
-              <div class="conn-service-desc">Gemini &middot; Claude &middot; OpenAI</div>
-            </div>
-            <div class="conn-status conn-status--off">Not configured</div>
-          </div>
-          <p class="conn-note">Configure your LLM provider in <a href="#">Settings</a>. API key goes in <code>credentials.yaml</code>.</p>
-        </div>
-
       </div>
-    </div>
 
-    <!-- ── CONNECTIONS (Google connected) ───────────────────────── -->
-    <div id="sec-connections-ok" class="section" style="display:none;">
-      <h1 class="page-title" style="margin-bottom:8px;">Connections</h1>
-      <p class="page-subtitle">Manage service connections for email, storage, physical mail, and AI.</p>
-
-      <div class="conn-grid">
-
-        <!-- Google card — connected -->
-        <div class="conn-card">
-          <div class="conn-card-header">
+      <!-- TAB: Storage -->
+      <div id="ctab-storage" class="conn-pane">
+        <div class="conn-provider conn-provider--active">
+          <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-google">G</div>
             <div>
-              <div class="conn-service-name">Google</div>
-              <div class="conn-service-desc">Gmail &middot; Drive &middot; Sheets &middot; Gemini</div>
+              <div class="conn-provider-name">Google Drive</div>
+              <div class="conn-provider-desc-small">Root folder: PostMule</div>
             </div>
-            <div class="conn-status conn-status--ok">&#10003; Connected</div>
+            <span class="conn-provider-badge conn-provider-badge--ok">Active</span>
           </div>
-          <p class="conn-note">Refresh token stored in Windows Credential Manager. Covers all Google services.</p>
-          <a href="#" class="btn btn-secondary" onclick="return false;">Reconnect</a>
         </div>
-
-        <!-- Physical Mail card — configured -->
-        <div class="conn-card">
-          <div class="conn-card-header">
-            <div class="conn-service-icon conn-icon-mail">&#9993;</div>
+        <div class="conn-provider">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon conn-icon-aws">S3</div>
             <div>
-              <div class="conn-service-name">Physical Mail</div>
-              <div class="conn-service-desc">VirtualPostMail &middot; EarthClass Mail</div>
+              <div class="conn-provider-name">Amazon S3</div>
+              <div class="conn-provider-desc-small">Not configured</div>
             </div>
-            <div class="conn-status conn-status--ok">&#10003; VPM configured</div>
+            <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
-          <p class="conn-note">Configure your physical mailbox provider in <a href="#">Settings</a>. Credentials go in <code>credentials.yaml</code>.</p>
         </div>
-
-        <!-- AI Provider card — Gemini -->
-        <div class="conn-card">
-          <div class="conn-card-header">
-            <div class="conn-service-icon conn-icon-ai">AI</div>
-            <div>
-              <div class="conn-service-name">AI Provider</div>
-              <div class="conn-service-desc">Gemini &middot; Claude &middot; OpenAI</div>
-            </div>
-            <div class="conn-status conn-status--ok">&#10003; Gemini configured</div>
-          </div>
-          <p class="conn-note">Gemini uses your connected Google account &mdash; no extra credentials needed.</p>
-        </div>
-
       </div>
+
+      <!-- TAB: Spreadsheet -->
+      <div id="ctab-spreadsheet" class="conn-pane">
+        <div class="conn-provider conn-provider--active">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon conn-icon-google">G</div>
+            <div>
+              <div class="conn-provider-name">Google Sheets</div>
+              <div class="conn-provider-desc-small">Workbook: PostMule</div>
+            </div>
+            <span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+          </div>
+        </div>
+        <div class="conn-provider">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon conn-icon-ms">Ms</div>
+            <div>
+              <div class="conn-provider-name">Excel Online</div>
+              <div class="conn-provider-desc-small">Not configured</div>
+            </div>
+            <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Physical Mail -->
+      <div id="ctab-physical" class="conn-pane">
+        <div class="conn-provider conn-provider--active">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#E8F5E9;color:#2E7D32;font-size:14px;">&#9993;</div>
+            <div>
+              <div class="conn-provider-name">VirtualPostMail</div>
+              <div class="conn-provider-desc-small">Credentials set</div>
+            </div>
+            <span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            <div class="conn-provider-actions"><button class="btn btn-secondary" onclick="return false;">Update credentials</button></div>
+          </div>
+        </div>
+        <div class="conn-provider">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#F5F6F8;color:#7A90A8;font-size:14px;">&#9993;</div>
+            <div>
+              <div class="conn-provider-name">Earth Class Mail</div>
+              <div class="conn-provider-desc-small">Not configured</div>
+            </div>
+            <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: AI / LLM -->
+      <div id="ctab-ai" class="conn-pane">
+        <div class="conn-provider conn-provider--active">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon conn-icon-google">G</div>
+            <div>
+              <div class="conn-provider-name">Google Gemini</div>
+              <div class="conn-provider-desc-small">gemini-1.5-flash · uses Google OAuth</div>
+            </div>
+            <span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+          </div>
+        </div>
+        <div class="conn-provider">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#F0E6FF;color:#6B21A8;font-size:10px;font-weight:700;">ANT</div>
+            <div>
+              <div class="conn-provider-name">Anthropic Claude</div>
+              <div class="conn-provider-desc-small">API key not set</div>
+            </div>
+            <span class="conn-provider-badge conn-provider-badge--warn">Setup needed</span>
+            <div class="conn-provider-actions"><button class="btn btn-secondary" onclick="return false;">Add API key</button></div>
+          </div>
+        </div>
+        <div class="conn-provider">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#E8F5E9;color:#1B5E20;font-size:10px;font-weight:700;">OAI</div>
+            <div>
+              <div class="conn-provider-name">OpenAI</div>
+              <div class="conn-provider-desc-small">API key not set</div>
+            </div>
+            <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Finance -->
+      <div id="ctab-finance" class="conn-pane">
+        <div class="conn-provider conn-provider--active">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#E3F2FD;color:#1565C0;font-size:10px;font-weight:700;">YNAB</div>
+            <div>
+              <div class="conn-provider-name">YNAB</div>
+              <div class="conn-provider-desc-small">Token set · budget ID set</div>
+            </div>
+            <span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            <div class="conn-provider-actions"><button class="btn btn-secondary" onclick="return false;">Update token</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Notifications -->
+      <div id="ctab-notifications" class="conn-pane">
+        <div class="conn-provider conn-provider--active">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#FFF3E0;color:#E65100;font-size:14px;">@</div>
+            <div>
+              <div class="conn-provider-name">Email Alerts</div>
+              <div class="conn-provider-desc-small">alert@example.com</div>
+            </div>
+            <span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- ── SETTINGS ──────────────────────────────────────────────── -->
@@ -1246,8 +1385,8 @@ government id</textarea>
 <script>
   const NAV_MAP = {
     home: 'home', mail: 'mail', bills: 'bills', forward: 'forward',
-    pending: 'pending', entities: 'entities', logs: 'logs',
-    'connections-new': 'connections', 'connections-ok': 'connections', settings: 'settings'
+    pending: 'pending', entities: 'entities', corrections: 'corrections',
+    logs: 'logs', connections: 'connections', settings: 'settings'
   };
 
   function showSection(name) {
@@ -1275,6 +1414,13 @@ government id</textarea>
     document.querySelectorAll('.s-pane').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.s-tab').forEach(t => t.classList.remove('active'));
     document.getElementById('stab-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function connTab(name, btn) {
+    document.querySelectorAll('.conn-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.conn-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('ctab-' + name).classList.add('active');
     btn.classList.add('active');
   }
 </script>

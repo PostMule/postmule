@@ -49,6 +49,17 @@ def get_pending_items(data_dir: Path) -> list[dict[str, Any]]:
     return [i for i in load_forward_to_me(data_dir) if i.get("forwarding_status") == "pending"]
 
 
+def set_entity_override(data_dir: Path, item_id: str, entity_id: str) -> bool:
+    """Set entity_override_id on a forward-to-me record. Returns True if found and updated."""
+    items = load_forward_to_me(data_dir)
+    for item in items:
+        if item.get("id") == item_id:
+            item["entity_override_id"] = entity_id
+            save_forward_to_me(data_dir, items)
+            return True
+    return False
+
+
 def to_sheet_rows(items: list[dict[str, Any]]) -> list[list[Any]]:
     rows = [_HEADERS]
     for i in items:

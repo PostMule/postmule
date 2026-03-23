@@ -9,6 +9,7 @@ from flask import Blueprint, redirect, render_template, request, url_for
 
 from postmule.data import bills as bills_data
 from postmule.data import entities as entity_data
+from postmule.data import entity_corrections as corrections_data
 from postmule.data import forward_to_me as ftm_data
 from postmule.data import notices as notices_data
 from postmule.data import run_log as run_log_data
@@ -53,12 +54,14 @@ def mail():
         + [{"_type": "ForwardToMe", **f} for f in all_ftm]
     )
     items.sort(key=lambda x: x.get("date_received", ""), reverse=True)
+    all_entities = entity_data.load_entities(_app._data_dir)
     return render_template(
         "page.html",
         page="mail",
         title="Mail",
         items=items,
         year=year,
+        entities=all_entities,
         today=date.today().isoformat(),
     )
 
@@ -68,6 +71,7 @@ def bills():
     year = request.args.get("year", date.today().year, type=int)
     all_bills = bills_data.load_bills(_app._data_dir, year)
     pending = [b for b in all_bills if b.get("status") == "pending"]
+    all_entities = entity_data.load_entities(_app._data_dir)
     return render_template(
         "page.html",
         page="bills",
@@ -75,6 +79,7 @@ def bills():
         bills=all_bills,
         pending_bills=pending,
         year=year,
+        entities=all_entities,
         today=date.today().isoformat(),
     )
 
@@ -83,12 +88,14 @@ def bills():
 def forward():
     items = ftm_data.load_forward_to_me(_app._data_dir)
     pending = [i for i in items if i.get("forwarding_status") == "pending"]
+    all_entities = entity_data.load_entities(_app._data_dir)
     return render_template(
         "page.html",
         page="forward",
         title="Forward To Me",
         items=items,
         pending=pending,
+        entities=all_entities,
         today=date.today().isoformat(),
     )
 
@@ -115,6 +122,20 @@ def entities():
         title="Entities",
         entities=all_entities,
         entity_categories=entity_data.CATEGORIES,
+        today=date.today().isoformat(),
+    )
+
+
+@pages_bp.route("/corrections")
+def corrections():
+    summary = corrections_data.correction_summary(_app._data_dir)
+    all_corrections = corrections_data.load_corrections(_app._data_dir)
+    return render_template(
+        "page.html",
+        page="corrections",
+        title="Entity Corrections",
+        correction_summary=summary,
+        corrections=all_corrections,
         today=date.today().isoformat(),
     )
 
@@ -190,25 +211,122 @@ def view_pdf(mail_id: str):
 # Helpers
 # ------------------------------------------------------------------
 
+def _cred_get(*keys: str) -> str | None:
+    """Read a nested key from credentials.enc; returns None on any error."""
+    try:
+        from postmule.core.credentials import load_credentials
+        creds = load_credentials(_app._enc_path)
+        node = creds
+        for k in keys:
+            if not isinstance(node, dict):
+                return None
+            node = node.get(k)
+        return str(node) if node else None
+    except Exception:
+        return None
+
+
 def _connection_status() -> dict:
     """Return live connection status for each service category."""
     from postmule.core.credentials import google_credentials_available
     google_ok = google_credentials_available()
     cfg = _app._config_raw
-    mbox_type = ""
+
+    # mailbox
     mbox_providers = cfg.get("mailbox", {}).get("providers", [])
-    if mbox_providers:
-        mbox_type = mbox_providers[0].get("type", "")
-    llm_type = ""
+    mbox_type = mbox_providers[0].get("type", "") if mbox_providers else ""
+    vpm_creds_ok = (
+        bool(_cred_get("vpm", "username")) and bool(_cred_get("vpm", "password"))
+    ) if mbox_type == "vpm" else False
+
+    # email
+    email_providers = cfg.get("email", {}).get("providers", [])
+    email_type = ""
+    email_address = ""
+    if email_providers:
+        ep = email_providers[0]
+        email_type = ep.get("type", "")
+        email_address = ep.get("address", "") or ep.get("username", "")
+
+    # storage
+    storage_providers = cfg.get("storage", {}).get("providers", [])
+    storage_type = ""
+    storage_root = ""
+    if storage_providers:
+        sp = storage_providers[0]
+        storage_type = sp.get("type", "")
+        storage_root = sp.get("root_folder", "") or sp.get("bucket", "")
+
+    # spreadsheet
+    sheet_providers = cfg.get("spreadsheet", {}).get("providers", [])
+    sheet_type = ""
+    sheet_name = ""
+    if sheet_providers:
+        shp = sheet_providers[0]
+        sheet_type = shp.get("type", "")
+        sheet_name = shp.get("workbook_name", "") or shp.get("spreadsheet_name", "")
+
+    # LLM
     llm_providers = cfg.get("llm", {}).get("providers", [])
+    llm_type = ""
+    llm_model = ""
     if llm_providers:
-        llm_type = llm_providers[0].get("type", "")
+        lp = llm_providers[0]
+        llm_type = lp.get("type", "")
+        llm_model = lp.get("model", "")
+    anthropic_key = _cred_get("anthropic", "api_key")
+    openai_key = _cred_get("openai", "api_key")
+
+    # finance
+    finance_providers = cfg.get("finance", {}).get("providers", [])
+    finance_type = finance_providers[0].get("type", "") if finance_providers else ""
+    ynab_token = _cred_get("ynab", "access_token")
+    ynab_budget = _cred_get("ynab", "budget_id")
+
+    # notifications
+    alert_email = cfg.get("notifications", {}).get("alert_email", "")
+
     return {
+        # Legacy flat keys kept for backward compat
         "google": google_ok,
         "vpm": mbox_type == "vpm",
         "anthropic": llm_type == "anthropic",
         "mbox_type": mbox_type,
         "llm_type": llm_type,
+        # Per-category dicts
+        "email": {
+            "type": email_type,
+            "address": email_address,
+            "enabled": bool(email_type),
+        },
+        "storage": {
+            "type": storage_type,
+            "root_folder": storage_root,
+        },
+        "spreadsheet": {
+            "type": sheet_type,
+            "workbook_name": sheet_name,
+        },
+        "mailbox": {
+            "type": mbox_type,
+            "enabled": bool(mbox_type),
+            "creds_ok": vpm_creds_ok if mbox_type == "vpm" else bool(mbox_type),
+        },
+        "llm": {
+            "type": llm_type,
+            "model": llm_model,
+            "anthropic_key": anthropic_key,
+            "openai_key": openai_key,
+        },
+        "finance": {
+            "type": finance_type,
+            "ynab_ok": bool(ynab_token) and bool(ynab_budget),
+            "ynab_token": ynab_token,
+            "ynab_budget": ynab_budget,
+        },
+        "notifications": {
+            "alert_email": alert_email,
+        },
     }
 
 

@@ -11,12 +11,14 @@ Routes:
   GET  /settings       Config editor
   GET  /logs           Log viewer
   GET  /connections                  Service connection status and management
+  GET  /corrections                  Entity correction log summary
   GET  /setup/oauth/google           Start Google OAuth flow (uses baked-in client credentials)
   GET  /setup/oauth/google/callback  OAuth callback — saves refresh token to system keychain
   POST /api/approve                 Approve a pending match
   POST /api/deny                    Deny a pending match
   POST /api/entity/<id>             Update a single entity field (marks user_verified)
   POST /api/entity/<id>/add-account Append an account number to an entity
+  POST /api/mail/<id>/entity        Override entity association; optionally add alias
   POST /api/run                     Trigger a manual run
   GET  /api/run/status              Check whether a run is in progress
 """
@@ -69,6 +71,7 @@ _NAV_ITEMS = [
     ("forward", "/forward", "Forward To Me"),
     ("pending", "/pending", "Pending"),
     ("entities", "/entities", "Entities"),
+    ("corrections", "/corrections", "Corrections"),
     ("settings", "/settings", "Settings"),
     ("logs", "/logs", "Logs"),
     ("connections", "/connections", "Connections"),

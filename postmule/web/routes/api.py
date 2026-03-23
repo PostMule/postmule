@@ -11,7 +11,11 @@ import yaml
 from flask import Blueprint, jsonify, redirect, request, url_for
 
 from postmule.core.config import load_config
+from postmule.data import bills as bills_data
+from postmule.data import entity_corrections as corrections_data
 from postmule.data import entities as entity_data
+from postmule.data import forward_to_me as ftm_data
+from postmule.data import notices as notices_data
 
 import postmule.web.app as _app
 
@@ -317,6 +321,79 @@ def api_entity_update(entity_id: str):
     updated = entity_data.update_entity_field(_app._data_dir, entity_id, field, parsed_value)
     if updated is None:
         return "Entity not found", 404
+    return ("", 200)
+
+
+@api_bp.route("/api/mail/<mail_id>/entity", methods=["POST"])
+def api_mail_entity_override(mail_id: str):
+    """Override the entity association for a mail item and log the correction."""
+    entity_id = request.form.get("entity_id", "").strip()
+    add_alias = request.form.get("add_alias", "false").lower() == "true"
+    if not entity_id:
+        return jsonify({"error": "entity_id required"}), 400
+
+    # Locate the mail item and determine its type
+    mail_item = None
+    mail_type = None
+    from postmule.data._io import recent_years
+    for year in recent_years():
+        for bill in bills_data.load_bills(_app._data_dir, year):
+            if bill.get("id") == mail_id:
+                mail_item = bill
+                mail_type = "Bill"
+                break
+        if mail_item:
+            break
+        for notice in notices_data.load_notices(_app._data_dir, year):
+            if notice.get("id") == mail_id:
+                mail_item = notice
+                mail_type = "Notice"
+                break
+        if mail_item:
+            break
+    if not mail_item:
+        for ftm in ftm_data.load_forward_to_me(_app._data_dir):
+            if ftm.get("id") == mail_id:
+                mail_item = ftm
+                mail_type = "ForwardToMe"
+                break
+
+    if not mail_item or not mail_type:
+        return jsonify({"error": "Mail item not found"}), 404
+
+    # Locate the target entity
+    entities = entity_data.load_entities(_app._data_dir)
+    target_entity = next((e for e in entities if e["id"] == entity_id), None)
+    if not target_entity:
+        return jsonify({"error": "Entity not found"}), 404
+
+    original_sender = mail_item.get("sender", "")
+
+    # Apply the override to the record
+    if mail_type == "Bill":
+        bills_data.set_entity_override(_app._data_dir, mail_id, entity_id)
+    elif mail_type == "Notice":
+        notices_data.set_entity_override(_app._data_dir, mail_id, entity_id)
+    else:
+        ftm_data.set_entity_override(_app._data_dir, mail_id, entity_id)
+
+    # Optionally add original sender as an alias on the target entity
+    if add_alias and original_sender:
+        if original_sender not in target_entity["aliases"]:
+            target_entity["aliases"].append(original_sender)
+            entity_data.save_entities(_app._data_dir, entities)
+
+    # Log the correction for developer review
+    corrections_data.log_correction(
+        _app._data_dir,
+        mail_id=mail_id,
+        mail_type=mail_type,
+        original_sender=original_sender,
+        corrected_entity_id=entity_id,
+        corrected_entity_name=target_entity["canonical_name"],
+        added_alias=add_alias and bool(original_sender),
+    )
+
     return ("", 200)
 
 

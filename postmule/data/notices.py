@@ -10,7 +10,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from postmule.data._io import atomic_write, year_from
+from postmule.data._io import atomic_write, recent_years, year_from
 
 _HEADERS = [
     "ID", "Date Received", "Date Processed", "Sender", "Recipients",
@@ -43,6 +43,26 @@ def add_notice(data_dir: Path, notice: dict[str, Any]) -> dict[str, Any]:
     notices.append(notice)
     save_notices(data_dir, notices, year)
     return notice
+
+
+def find_notice(data_dir: Path, notice_id: str) -> dict[str, Any] | None:
+    for year in recent_years():
+        for notice in load_notices(data_dir, year):
+            if notice.get("id") == notice_id:
+                return notice
+    return None
+
+
+def set_entity_override(data_dir: Path, notice_id: str, entity_id: str) -> bool:
+    """Set entity_override_id on a notice record. Returns True if found and updated."""
+    for year in recent_years():
+        notices = load_notices(data_dir, year)
+        for notice in notices:
+            if notice.get("id") == notice_id:
+                notice["entity_override_id"] = entity_id
+                save_notices(data_dir, notices, year)
+                return True
+    return False
 
 
 def to_sheet_rows(notices: list[dict[str, Any]]) -> list[list[Any]]:

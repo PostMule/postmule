@@ -99,6 +99,18 @@ def mark_bill_alerted(data_dir: Path, bill_id: str) -> bool:
     return False
 
 
+def set_entity_override(data_dir: Path, bill_id: str, entity_id: str) -> bool:
+    """Set entity_override_id on a bill record. Returns True if found and updated."""
+    for year in recent_years():
+        bills = load_bills(data_dir, year)
+        for bill in bills:
+            if bill.get("id") == bill_id:
+                bill["entity_override_id"] = entity_id
+                save_bills(data_dir, bills, year)
+                return True
+    return False
+
+
 def to_sheet_rows(bills: list[dict[str, Any]]) -> list[list[Any]]:
     rows = [_HEADERS]
     for b in bills:
