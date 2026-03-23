@@ -3,401 +3,1305 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PostMule — Dashboard Mock-up</title>
+  <title>PostMule — All Pages Mockup</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #F5F6F8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    /* ── Mockup chrome ──────────────────────────────────────────────── */
+    * { box-sizing: border-box; }
+    #mockup-bar {
+      background: #0a0a0a;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      border-bottom: 1px solid #1e1e1e;
+    }
+    #mockup-bar .m-label {
+      color: #555;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-right: 4px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      white-space: nowrap;
+    }
+    .m-btn {
+      background: #1c1c1c;
+      color: #888;
+      border: 1px solid #2e2e2e;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    .m-btn:hover { background: #252525; color: #aaa; }
+    .m-btn.active { background: #E8A020; color: #0a0a0a; border-color: #E8A020; font-weight: 700; }
+    .m-sep { color: #333; font-size: 14px; user-select: none; }
 
-    /* ── Header / Nav ── */
+    /* ── Reset / Base ──────────────────────────────────────────────── */
+    [x-cloak] { display: none !important; }
+    body {
+      background: #F5F6F8;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+    }
+
+    /* ── Header ────────────────────────────────────────────────────── */
     .header { background: #0F2044; padding: 0 24px; }
     .header-inner {
       max-width: 1100px; margin: 0 auto;
-      display: flex; align-items: center; gap: 20px; height: 60px;
+      display: flex; align-items: center; gap: 16px; height: 60px;
     }
-    /* Logo SVG is inline — see HTML below */
-    .wordmark { display: flex; flex-direction: column; line-height: 1; }
-    .wordmark-text {
-      font-size: 18px; font-weight: 600; color: white; letter-spacing: -0.3px;
-      text-decoration: none;
-    }
-    .wordmark-text span { color: #E8A020; }
-    .wordmark-tag {
-      font-size: 11px; color: #5A7CA4; letter-spacing: 2px;
-      text-transform: uppercase; margin-top: 3px;
-    }
+    .logo-link { display: flex; align-items: center; gap: 12px; text-decoration: none; flex-shrink: 0; }
+    .logo-wordmark { line-height: 1; }
+    .logo-name { font-size: 18px; font-weight: 600; color: white; letter-spacing: -0.3px; }
+    .logo-accent { color: #E8A020; }
+    .logo-tagline { font-size: 11px; color: #5A7CA4; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
+    .header-date { color: #5A7CA4; font-size: 11px; }
     nav { display: flex; gap: 4px; flex: 1; }
-    .nav-link {
-      color: #5A7CA4; font-size: 13px; padding: 6px 12px;
-      border-radius: 4px; text-decoration: none;
-    }
-    .nav-link:hover { background: #1a3060; color: white; }
-    .nav-link.active { background: #1a3060; color: white; }
-    .header-date { color: #5A7CA4; font-size: 11px; white-space: nowrap; }
+    .nav-link { color: #5A7CA4; font-size: 13px; padding: 6px 12px; border-radius: 4px; text-decoration: none; }
+    .nav-link:hover, .nav-link.active { background: #1a3060; color: white; }
 
-    /* ── Page layout ── */
-    .page { max-width: 1100px; margin: 24px auto; padding: 0 24px; }
-    .page-title {
-      font-size: 20px; font-weight: 600; color: #0F2044;
-      letter-spacing: -0.3px; margin-bottom: 16px;
-    }
+    /* ── Content wrapper ───────────────────────────────────────────── */
+    .content { max-width: 1100px; margin: 24px auto; padding: 0 24px; }
 
-    /* ── Stat cards (dashboard) ── */
+    /* ── Typography ────────────────────────────────────────────────── */
+    .page-title { font-size: 20px; font-weight: 600; color: #0F2044; letter-spacing: -0.3px; margin: 0 0 16px; }
+    .page-subtitle { color: #5A7090; margin-bottom: 24px; }
+
+    /* ── Cards ─────────────────────────────────────────────────────── */
+    .card { background: white; border-radius: 8px; border: 1px solid #DDE3EC; padding: 16px; }
+    .card-lg { background: white; border-radius: 8px; border: 1px solid #DDE3EC; padding: 28px; }
+
+    /* ── Buttons ───────────────────────────────────────────────────── */
+    .btn { border: none; border-radius: 6px; font-size: 13px; cursor: pointer; padding: 10px 20px; font-family: inherit; }
+    .btn:disabled { opacity: 0.65; cursor: not-allowed; }
+    .btn-primary   { background: #0F2044; color: white; }
+    .btn-secondary { background: #F5F6F8; color: #0F2044; border: 1px solid #DDE3EC; }
+    .btn-warning   { background: #E8A020; color: #0F2044; font-weight: 600; }
+    .btn-danger    { background: #F5F6F8; color: #C62828; border: 1px solid #FFCDD2; }
+    .btn-sm        { padding: 6px 14px; font-size: 12px; border-radius: 4px; }
+
+    /* ── Banners ───────────────────────────────────────────────────── */
+    .banner-error { background: #FFEBEE; border: 1px solid #FFCDD2; border-radius: 8px; padding: 14px 18px; color: #C62828; margin-bottom: 20px; max-width: 480px; }
+    .banner-warning { background: #FFF3E0; border: 1px solid #FFE0B2; border-radius: 8px; padding: 20px; color: #E65100; }
+
+    /* ── Home — stats ──────────────────────────────────────────────── */
     .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
-    .stat-card { background: white; border-radius: 8px; border: 1px solid #DDE3EC; padding: 16px; }
-    .stat-label {
-      font-size: 10px; font-weight: 600; color: #7A90A8;
-      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
-    }
-    .stat-value { font-size: 22px; font-weight: 600; }
+    .stat-label { font-size: 11px; color: #7A90A8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .stat-value         { font-size: 14px; color: #0F2044; font-weight: 600; }
+    .stat-value--number { font-size: 22px; font-weight: 600; }
+    .stat-value--alert   { color: #C62828; }
+    .stat-value--ok      { color: #2E7D32; }
+    .stat-value--warning { color: #E8A020; }
+    .run-grid { display: flex; gap: 12px; }
 
-    /* ── Action buttons ── */
-    .btn-primary {
-      background: #0F2044; color: white; border: none; padding: 10px 20px;
-      border-radius: 6px; font-size: 13px; cursor: pointer;
-    }
-    .btn-secondary {
-      background: #F5F6F8; color: #0F2044; border: 1px solid #DDE3EC;
-      padding: 10px 20px; border-radius: 6px; font-size: 13px; cursor: pointer;
-    }
-    .btn-row { display: flex; gap: 8px; margin-bottom: 24px; }
-
-    /* ── Mail cards ── */
-    .mail-card {
-      background: white; border-radius: 8px; border: 1px solid #DDE3EC;
-      margin-bottom: 8px; display: flex; overflow: hidden;
-    }
+    /* ── Mail items ────────────────────────────────────────────────── */
+    .mail-item { background: white; border-radius: 8px; border: 1px solid #DDE3EC; margin-bottom: 8px; display: flex; overflow: hidden; }
     .mail-bar { width: 3px; flex-shrink: 0; }
+    .mail-bar--bill    { background: #E8A020; }
+    .mail-bar--forward { background: #C62828; }
+    .mail-bar--notice  { background: #7A9CC4; }
+    .mail-bar--default { background: #DDE3EC; }
     .mail-body { padding: 12px 16px; flex: 1; }
-    .mail-row { display: flex; justify-content: space-between; align-items: flex-start; }
-    .mail-sender { font-size: 13px; font-weight: 600; color: #0F2044; }
-    .mail-sender-read { font-size: 13px; font-weight: 400; color: #8A9BB0; }
-    .mail-date { font-size: 11px; color: #B8C8D8; }
+    .mail-header { display: flex; justify-content: space-between; }
+    .mail-sender        { font-size: 13px; font-weight: 600; color: #0F2044; }
+    .mail-sender--read  { font-size: 13px; font-weight: 400; color: #8A9BB0; }
+    .mail-date   { font-size: 11px; color: #B8C8D8; }
     .mail-summary { font-size: 13px; color: #5A7090; margin-top: 3px; }
-    .badge {
-      display: inline-block; font-size: 10px; font-weight: 600;
-      letter-spacing: 1px; padding: 2px 8px; border-radius: 4px; margin-top: 6px;
-    }
-    /* badge variants */
-    .badge-bill    { background: #FDF3E0; color: #7A4C08; border: 1px solid #E8A020; }
-    .badge-overdue { background: #FEECEC; color: #8A1010; border: 1px solid #FFCDD2; }
-    .badge-ftm     { background: #FEECEC; color: #8A1010; border: 1px solid #C62828; }
-    .badge-notice  { background: #EEF3F9; color: #2C4A6E; border: 1px solid #C0D0E4; }
-    .badge-junk    { background: #F5F6F8; color: #7A90A8; border: 1px solid #DDE3EC; }
-    .badge-review  { background: #FFF8E1; color: #6D4C00; border: 1px solid #FFD54F; }
 
-    /* ── Toast alert ── */
-    .toast {
-      background: #0F2044; color: white; border-radius: 8px;
-      padding: 12px 16px; font-size: 13px; display: flex; align-items: center;
-      gap: 10px; margin-bottom: 24px;
-    }
-    .toast-dot { width: 7px; height: 7px; border-radius: 50%; background: #E8A020; flex-shrink: 0; }
+    /* ── Badges ────────────────────────────────────────────────────── */
+    .badge { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 1px; padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
+    .badge--bill        { background: #FDF3E0; color: #7A4C08; border: 1px solid #E8A020; }
+    .badge--forward     { background: #FEECEC; color: #8A1010; border: 1px solid #C62828; }
+    .badge--notice      { background: #EEF3F9; color: #2C4A6E; border: 1px solid #C0D0E4; }
+    .badge--personal    { background: #EEF3F9; color: #2C4A6E; border: 1px solid #C0D0E4; }
+    .badge--junk        { background: #F5F6F8; color: #7A90A8; border: 1px solid #DDE3EC; }
+    .badge--needs-review { background: #FFF8E1; color: #6D4C00; border: 1px solid #FFD54F; }
 
-    /* ── Bills table ── */
-    .table-wrap {
-      background: white; border-radius: 8px; border: 1px solid #DDE3EC;
-      overflow: hidden; margin-bottom: 24px;
-    }
-    table { width: 100%; border-collapse: collapse; }
-    th {
-      padding: 10px 14px; text-align: left; font-size: 10px; font-weight: 600;
-      color: #5A7090; text-transform: uppercase; letter-spacing: 0.5px;
-      background: #F5F6F8; border-bottom: 1px solid #DDE3EC;
-    }
-    td { padding: 10px 14px; font-size: 13px; border-top: 1px solid #DDE3EC; }
-    td.sender { color: #0F2044; font-weight: 500; }
-    td.amount { color: #0F2044; }
-    td.due    { color: #E8A020; }
-    td.overdue-due { color: #C62828; font-weight: 600; }
+    /* ── Bills table ───────────────────────────────────────────────── */
+    .table-wrap { background: white; border-radius: 8px; border: 1px solid #DDE3EC; overflow: hidden; }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table thead tr { background: #F5F6F8; }
+    .data-table th { padding: 10px 14px; text-align: left; font-size: 11px; color: #5A7090; }
+    .data-table tbody tr { border-top: 1px solid #DDE3EC; }
+    .data-table td { padding: 10px 14px; }
+    .td-sender { color: #0F2044; font-weight: 500; }
+    .td-amount { color: #0F2044; }
+    .td-due    { color: #E8A020; }
+    .td-due--overdue { color: #C62828; font-weight: 600; }
+    .td-center { text-align: center; color: #7A90A8; }
+    .status-badge { background: #EEF3F9; color: #2C4A6E; padding: 2px 8px; border-radius: 4px; border: 1px solid #C0D0E4; font-size: 11px; }
+    .status-badge--overdue { background: #FEECEC; color: #8A1010; border: 1px solid #C62828; }
+    .status-badge--matched { background: #E8F5E9; color: #1B5E20; border: 1px solid #A5D6A7; }
 
-    /* ── Section divider / label ── */
-    .section-label {
-      font-size: 10px; font-weight: 600; color: #7A90A8;
-      text-transform: uppercase; letter-spacing: 2px; margin: 0 0 10px;
-    }
+    /* ── Pending matches ───────────────────────────────────────────── */
+    .match-row { background: white; border-radius: 8px; border: 1px solid #DDE3EC; padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 16px; }
+    .match-row__body { flex: 1; }
+    .match-name   { font-weight: 600; color: #0F2044; }
+    .match-detail { font-size: 12px; color: #5A7090; }
+    .match-auto   { font-size: 11px; color: #B8C8D8; }
 
-    /* ── Annotation boxes (mock-up only) ── */
-    .note {
-      background: #0F2044; color: #7A9CC4; font-size: 11px; border-radius: 6px;
-      padding: 8px 12px; margin-bottom: 16px; border-left: 3px solid #E8A020;
-    }
-    .note strong { color: #E8A020; }
-    .gap {
-      background: #FEECEC; color: #8A1010; font-size: 11px; border-radius: 6px;
-      padding: 8px 12px; margin-bottom: 16px; border-left: 3px solid #C62828;
-    }
-    .gap strong { color: #C62828; }
+    /* ── Entities ──────────────────────────────────────────────────── */
+    .entity-row { background: white; border-radius: 8px; border: 1px solid #DDE3EC; padding: 12px 16px; margin-bottom: 8px; }
+    .entity-header { display: flex; gap: 8px; align-items: center; }
+    .entity-name { font-weight: 600; color: #0F2044; }
+    .entity-type { font-size: 10px; background: #EEF3F9; color: #2C4A6E; padding: 2px 8px; border-radius: 4px; border: 1px solid #C0D0E4; }
+    .entity-aliases { font-size: 11px; color: #7A90A8; margin-top: 4px; }
+
+    /* ── Forward-to-me ─────────────────────────────────────────────── */
+    .forward-item { background: white; border-radius: 8px; border: 1px solid #FFCDD2; padding: 14px 16px; margin-bottom: 8px; }
+    .forward-urgent { color: #C62828; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+    .forward-sender { font-weight: 600; color: #0F2044; }
+    .forward-summary { font-size: 12px; color: #5A7090; }
+    .forward-date { font-size: 11px; color: #B8C8D8; margin-top: 4px; }
+
+    /* ── Log viewer ────────────────────────────────────────────────── */
+    .log-viewer { background: #0F2044; border-radius: 8px; padding: 16px; font-family: monospace; font-size: 11px; color: #7A9CC4; overflow-x: auto; white-space: pre-wrap; max-height: 600px; overflow-y: auto; }
+
+    /* ── Setup / OAuth ─────────────────────────────────────────────── */
+    .setup-wrap { max-width: 480px; }
+    .oauth-success-icon { width: 36px; height: 36px; background: #2E7D32; border-radius: 50%; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+    .oauth-connected-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .oauth-title   { font-size: 15px; font-weight: 600; color: #0F2044; }
+    .oauth-subtitle { font-size: 13px; color: #2E7D32; margin-top: 2px; }
+    .oauth-desc    { color: #5A7090; font-size: 13px; margin: 0 0 20px; }
+    .connect-title { font-size: 15px; font-weight: 600; color: #0F2044; margin-bottom: 6px; }
+    .connect-desc  { color: #5A7090; font-size: 13px; margin: 0; line-height: 1.6; }
+    .google-btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; background: #0F2044; color: white; border-radius: 6px; font-size: 14px; font-weight: 600; text-decoration: none; }
+
+    /* ── Settings — tabs & cards ───────────────────────────────────── */
+    .s-tabs { display: flex; gap: 2px; border-bottom: 2px solid #DDE3EC; margin-bottom: 20px; }
+    .s-tab { padding: 8px 16px; border: none; background: none; cursor: pointer; font-size: 13px; color: #5A7090; border-bottom: 2px solid transparent; margin-bottom: -2px; font-family: inherit; }
+    .s-tab.active { color: #0F2044; font-weight: 600; border-bottom-color: #0F2044; }
+    .s-pane { display: none; }
+    .s-pane.active { display: block; }
+    .s-card { background: white; border-radius: 8px; border: 1px solid #DDE3EC; padding: 20px; margin-bottom: 16px; }
+    .s-card h3 { font-size: 13px; font-weight: 700; color: #0F2044; margin: 0 0 16px; padding-bottom: 10px; border-bottom: 1px solid #EEF3F9; text-transform: uppercase; letter-spacing: 0.5px; }
+    .s-row { display: grid; grid-template-columns: 220px 1fr; gap: 16px; align-items: start; margin-bottom: 14px; }
+    .s-row:last-child { margin-bottom: 0; }
+    .s-label { font-size: 13px; font-weight: 500; color: #2C4A6E; padding-top: 7px; }
+    .s-help  { font-size: 11px; color: #7A90A8; margin-top: 3px; line-height: 1.4; }
+    .s-input { padding: 7px 10px; border: 1px solid #DDE3EC; border-radius: 6px; font-size: 13px; width: 100%; box-sizing: border-box; background: white; font-family: inherit; }
+    .s-input:focus  { outline: none; border-color: #5A7CA4; box-shadow: 0 0 0 2px rgba(90,124,164,0.15); }
+    .s-input--sm    { width: 80px; }
+    .s-input--md    { width: 120px; }
+    .s-input--wide  { width: 200px; }
+    .s-input--mono  { font-family: monospace; font-size: 12px; resize: vertical; }
+    .s-select { padding: 7px 10px; border: 1px solid #DDE3EC; border-radius: 6px; font-size: 13px; background: white; }
+    .s-select:focus { outline: none; border-color: #5A7CA4; }
+    .s-check { display: flex; align-items: center; gap: 8px; padding-top: 6px; }
+    .s-check input[type=checkbox] { width: 16px; height: 16px; accent-color: #0F2044; }
+    .s-check-label { font-size: 13px; color: #0F2044; }
+    .s-provider { border: 1px solid #EEF3F9; border-radius: 6px; padding: 12px 16px; margin-bottom: 8px; background: #FAFBFD; }
+    .s-provider-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-weight: 600; font-size: 13px; color: #0F2044; }
+    .s-provider-desc { font-size: 12px; color: #5A7090; }
+    .s-badge { font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 600; letter-spacing: 0.5px; }
+    .s-badge-api { background: #E3F2FD; color: #1565C0; border: 1px solid #BBDEFB; }
+    .s-badge-exp { background: #FFF3E0; color: #E65100; border: 1px solid #FFE0B2; }
+    .s-meta { font-size: 11px; font-weight: 400; color: #7A90A8; }
+    .s-settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .s-saved { background: #E8F5E9; border: 1px solid #A5D6A7; color: #1B5E20; padding: 8px 16px; border-radius: 6px; font-size: 13px; }
+    .s-sticky-save { position: sticky; bottom: 0; background: rgba(245,246,248,0.95); padding: 16px 0; border-top: 1px solid #DDE3EC; margin-top: 8px; display: flex; gap: 12px; align-items: center; }
+    .s-save-note { font-size: 12px; color: #7A90A8; }
+    .s-inline-gap { display: flex; align-items: center; gap: 8px; }
+    .s-inline-gap-lg { display: flex; align-items: center; gap: 12px; }
+    .s-unit { font-size: 12px; color: #7A90A8; }
+    .s-dollar { font-size: 13px; color: #5A7090; }
+    .s-env-note { font-size: 11px; color: #7A90A8; }
+    .s-provider-label { color: #2C4A6E; font-weight: 500; white-space: nowrap; }
+    .s-recommended { font-size: 11px; font-weight: 400; color: #2E7D32; }
+    .text-note { font-size: 12px; color: #7A90A8; margin: 0 0 16px; }
+    .text-muted { color: #7A90A8; font-size: 13px; }
+    .text-ok { color: #2E7D32; font-size: 13px; }
+    .code-tag { background: #F5F6F8; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+
+    /* ── Login ─────────────────────────────────────────────────────── */
+    .login-wrapper { background: #F5F6F8; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-card { background: white; border-radius: 10px; border: 1px solid #DDE3EC; padding: 32px; width: 320px; }
+    .login-card h1 { font-size: 20px; color: #0F2044; margin: 0 0 24px; }
+    .login-input { width: 100%; padding: 9px 12px; border: 1px solid #DDE3EC; border-radius: 6px; font-size: 14px; box-sizing: border-box; margin-bottom: 12px; font-family: inherit; }
+    .login-btn { width: 100%; padding: 10px; background: #0F2044; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-family: inherit; }
+    .login-error { color: #C62828; font-size: 12px; margin-bottom: 10px; }
   </style>
 </head>
 <body>
 
 <!-- ═══════════════════════════════════════════════════════════════
-     HEADER — with full SVG logo (currently missing in app.py)
+     MOCKUP SWITCHER
 ════════════════════════════════════════════════════════════════ -->
-<div class="header">
-  <div class="header-inner">
+<div id="mockup-bar">
+  <span class="m-label">PostMule Mockup</span>
+  <span class="m-sep">|</span>
+  <button class="m-btn" data-sec="login"     onclick="showSection('login')">Login</button>
+  <button class="m-btn active" data-sec="home" onclick="showSection('home')">Home</button>
+  <button class="m-btn" data-sec="mail"      onclick="showSection('mail')">Mail</button>
+  <button class="m-btn" data-sec="bills"     onclick="showSection('bills')">Bills</button>
+  <button class="m-btn" data-sec="forward"        onclick="showSection('forward')">Forward To Me</button>
+  <button class="m-btn" data-sec="pending"        onclick="showSection('pending')">Pending</button>
+  <button class="m-btn" data-sec="entities"       onclick="showSection('entities')">Entities</button>
+  <button class="m-btn" data-sec="logs"           onclick="showSection('logs')">Logs</button>
+  <button class="m-btn" data-sec="connections-new" onclick="showSection('connections-new')">Connections (new)</button>
+  <button class="m-btn" data-sec="connections-ok"  onclick="showSection('connections-ok')">Connections (connected)</button>
+  <button class="m-btn" data-sec="settings"       onclick="showSection('settings')">Settings</button>
+</div>
 
-    <!-- SVG Mule mark — ears (navy rect + brass stripe), head (steel blue),
-         eyes (white circle → navy circle → brass highlight),
-         muzzle bar (steel blue), nostrils (navy), chin detail (brass) -->
-    <svg width="36" height="44" viewBox="0 0 80 96" fill="none" aria-hidden="true">
-      <!-- Ears -->
-      <rect x="14" y="0" width="12" height="48" rx="6" fill="#7A9CC4"/>
-      <rect x="17" y="4" width="6" height="38" rx="3" fill="#E8A020"/>
-      <rect x="54" y="0" width="12" height="48" rx="6" fill="#7A9CC4"/>
-      <rect x="57" y="4" width="6" height="38" rx="3" fill="#E8A020"/>
-      <!-- Head -->
-      <rect x="8" y="36" width="64" height="48" rx="8" fill="#7A9CC4"/>
-      <!-- Forehead lines -->
-      <line x1="14" y1="52" x2="66" y2="52" stroke="#5A7CA4" stroke-width="1"/>
-      <line x1="14" y1="59" x2="66" y2="59" stroke="#5A7CA4" stroke-width="1"/>
-      <line x1="14" y1="66" x2="66" y2="66" stroke="#5A7CA4" stroke-width="1"/>
-      <!-- Left eye -->
-      <circle cx="24" cy="54" r="7" fill="#F5F6F8"/>
-      <circle cx="25" cy="54" r="4" fill="#0F2044"/>
-      <circle cx="23.5" cy="52.5" r="1.5" fill="#E8A020" opacity="0.8"/>
-      <!-- Right eye -->
-      <circle cx="56" cy="54" r="7" fill="#F5F6F8"/>
-      <circle cx="57" cy="54" r="4" fill="#0F2044"/>
-      <circle cx="55.5" cy="52.5" r="1.5" fill="#E8A020" opacity="0.8"/>
-      <!-- Muzzle bar -->
-      <rect x="16" y="68" width="48" height="14" rx="6" fill="#5A7CA4"/>
-      <!-- Nostrils -->
-      <circle cx="28" cy="75" r="3.5" fill="#0F2044"/>
-      <circle cx="52" cy="75" r="3.5" fill="#0F2044"/>
-      <!-- Chin detail -->
-      <rect x="28" y="80" width="24" height="3" rx="1.5" fill="#E8A020" opacity="0.5"/>
-    </svg>
-
-    <div class="wordmark">
-      <a class="wordmark-text" href="/">Post<span>Mule</span></a>
-      <div class="wordmark-tag">Smart mail management</div>
+<!-- ═══════════════════════════════════════════════════════════════
+     LOGIN
+════════════════════════════════════════════════════════════════ -->
+<div id="area-login" style="display:none;">
+  <div class="login-wrapper">
+    <div class="login-card">
+      <h1>Post<span style="color:#E8A020;">Mule</span></h1>
+      <form>
+        <div class="login-error">Incorrect password.</div>
+        <input class="login-input" type="password" placeholder="Dashboard password" autofocus>
+        <button class="login-btn" type="button">Sign in</button>
+      </form>
     </div>
-
-    <nav>
-      <a href="/" class="nav-link active">Home</a>
-      <a href="/mail" class="nav-link">Mail</a>
-      <a href="/bills" class="nav-link">Bills</a>
-      <a href="/forward-to-me" class="nav-link">ForwardToMe</a>
-      <a href="/pending" class="nav-link">Pending</a>
-      <a href="/entities" class="nav-link">Entities</a>
-      <a href="/settings" class="nav-link">Settings</a>
-      <a href="/logs" class="nav-link">Logs</a>
-    </nav>
-    <div class="header-date">2026-03-21</div>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════
-     PAGE CONTENT
+     APP SHELL (header + content)
 ════════════════════════════════════════════════════════════════ -->
-<div class="page">
+<div id="area-app">
 
-  <!-- Mock-up annotation -->
-  <div class="note" style="margin-bottom:20px;">
-    <strong>Mock-up — reference only.</strong>
-    This file shows the target branding. Open in any browser. Gaps vs. current app.py listed below.
-  </div>
-
-  <!-- ── HOME ── -->
-  <p class="page-title">Dashboard</p>
-
-  <!-- Alert toast -->
-  <div class="toast">
-    <div class="toast-dot"></div>
-    Verizon Wireless bill arrived. $94.00 due Apr 5 — 16 days remaining.
-  </div>
-
-  <!-- Stat row -->
-  <div class="stat-grid">
-    <div class="stat-card">
-      <div class="stat-label">Last Run</div>
-      <div class="stat-value" style="font-size:14px;color:#0F2044;">2026-03-21 02:03 — OK</div>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-inner">
+      <a href="#" class="logo-link" onclick="return false;">
+        <svg width="32" height="38" viewBox="0 0 80 96" fill="none" aria-hidden="true">
+          <rect x="14" y="0" width="12" height="48" rx="6" fill="#7A9CC4"/>
+          <rect x="17" y="4" width="6" height="38" rx="3" fill="#E8A020"/>
+          <rect x="54" y="0" width="12" height="48" rx="6" fill="#7A9CC4"/>
+          <rect x="57" y="4" width="6" height="38" rx="3" fill="#E8A020"/>
+          <rect x="8" y="36" width="64" height="48" rx="8" fill="#7A9CC4"/>
+          <line x1="14" y1="52" x2="66" y2="52" stroke="#5A7CA4" stroke-width="1"/>
+          <line x1="14" y1="59" x2="66" y2="59" stroke="#5A7CA4" stroke-width="1"/>
+          <line x1="14" y1="66" x2="66" y2="66" stroke="#5A7CA4" stroke-width="1"/>
+          <circle cx="24" cy="54" r="7" fill="#F5F6F8"/>
+          <circle cx="25" cy="54" r="4" fill="#0F2044"/>
+          <circle cx="23.5" cy="52.5" r="1.5" fill="#E8A020" opacity="0.8"/>
+          <circle cx="56" cy="54" r="7" fill="#F5F6F8"/>
+          <circle cx="57" cy="54" r="4" fill="#0F2044"/>
+          <circle cx="55.5" cy="52.5" r="1.5" fill="#E8A020" opacity="0.8"/>
+          <rect x="16" y="68" width="48" height="14" rx="6" fill="#5A7CA4"/>
+          <circle cx="28" cy="75" r="3.5" fill="#0F2044"/>
+          <circle cx="52" cy="75" r="3.5" fill="#0F2044"/>
+          <rect x="28" y="80" width="24" height="3" rx="1.5" fill="#E8A020" opacity="0.5"/>
+        </svg>
+        <div class="logo-wordmark">
+          <div class="logo-name">Post<span class="logo-accent">Mule</span></div>
+          <div class="logo-tagline">Smart mail management</div>
+        </div>
+      </a>
+      <nav>
+        <a href="#" id="nav-home"     class="nav-link active"  onclick="showSection('home');return false;">Home</a>
+        <a href="#" id="nav-mail"     class="nav-link"         onclick="showSection('mail');return false;">Mail</a>
+        <a href="#" id="nav-bills"    class="nav-link"         onclick="showSection('bills');return false;">Bills</a>
+        <a href="#" id="nav-forward"      class="nav-link"         onclick="showSection('forward');return false;">Forward To Me</a>
+        <a href="#" id="nav-pending"      class="nav-link"         onclick="showSection('pending');return false;">Pending</a>
+        <a href="#" id="nav-entities"     class="nav-link"         onclick="showSection('entities');return false;">Entities</a>
+        <a href="#" id="nav-settings"     class="nav-link"         onclick="showSection('settings');return false;">Settings</a>
+        <a href="#" id="nav-logs"         class="nav-link"         onclick="showSection('logs');return false;">Logs</a>
+        <a href="#" id="nav-connections"  class="nav-link"         onclick="showSection('connections-new');return false;">Connections</a>
+      </nav>
+      <div class="header-date">2026-03-22</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Awaiting Forwarding</div>
-      <div class="stat-value" style="color:#2E7D32;">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Pending Bills</div>
-      <div class="stat-value" style="color:#E8A020;">3</div>
-    </div>
   </div>
 
-  <div class="btn-row">
-    <button class="btn-primary">Run Now</button>
-    <button class="btn-secondary">Dry Run</button>
-  </div>
+  <!-- Content -->
+  <div class="content">
 
-  <hr style="border:none;border-top:1px solid #DDE3EC;margin-bottom:24px;">
-
-  <!-- ── MAIL ── -->
-  <p class="page-title">Recent Mail</p>
-
-  <!-- Bill — brass left bar -->
-  <div class="mail-card">
-    <div class="mail-bar" style="background:#E8A020;"></div>
-    <div class="mail-body">
-      <div class="mail-row">
-        <div class="mail-sender">Verizon Wireless</div>
-        <div class="mail-date">Mar 20</div>
+    <!-- ── HOME ──────────────────────────────────────────────────── -->
+    <div id="sec-home" class="section">
+      <h1 class="page-title">Dashboard</h1>
+      <div class="stat-grid">
+        <div class="card">
+          <div class="stat-label">Last Run</div>
+          <div class="stat-value">2026-03-22 02:03 &mdash; OK</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Awaiting Forwarding</div>
+          <div class="stat-value--number stat-value--ok">0</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Pending Bills</div>
+          <div class="stat-value--number stat-value--warning">3</div>
+        </div>
       </div>
-      <div class="mail-summary">Account statement — balance due $94.00</div>
-      <span class="badge badge-bill">BILL · APR 5</span>
-    </div>
-  </div>
-
-  <!-- Overdue bill — red left bar -->
-  <div class="mail-card">
-    <div class="mail-bar" style="background:#C62828;"></div>
-    <div class="mail-body">
-      <div class="mail-row">
-        <div class="mail-sender">County Property Tax</div>
-        <div class="mail-date">Mar 8</div>
+      <div class="run-grid">
+        <button class="btn btn-primary">Run Now</button>
+        <button class="btn btn-secondary">Dry Run</button>
       </div>
-      <div class="mail-summary">Final notice — $2,840.00 overdue</div>
-      <span class="badge badge-overdue">OVERDUE</span>
     </div>
-  </div>
 
-  <!-- ForwardToMe — red left bar (urgent) -->
-  <div class="mail-card">
-    <div class="mail-bar" style="background:#C62828;"></div>
-    <div class="mail-body">
-      <div class="mail-row">
-        <div class="mail-sender">Chase Bank</div>
-        <div class="mail-date">Mar 19</div>
+    <!-- ── MAIL ──────────────────────────────────────────────────── -->
+    <div id="sec-mail" class="section" style="display:none;">
+      <h1 class="page-title">Mail</h1>
+
+      <div class="mail-item">
+        <div class="mail-bar mail-bar--bill"></div>
+        <div class="mail-body">
+          <div class="mail-header">
+            <div class="mail-sender">Verizon Wireless</div>
+            <div class="mail-date">2026-03-20</div>
+          </div>
+          <div class="mail-summary">Monthly account statement &mdash; balance due $94.00</div>
+          <span class="badge badge--bill">BILL &middot; APR 5</span>
+        </div>
       </div>
-      <div class="mail-summary">New credit card — physical item, needs forwarding</div>
-      <span class="badge badge-ftm">FORWARD TO ME</span>
-    </div>
-  </div>
 
-  <!-- Notice — steel blue left bar -->
-  <div class="mail-card">
-    <div class="mail-bar" style="background:#7A9CC4;"></div>
-    <div class="mail-body">
-      <div class="mail-row">
-        <div class="mail-sender">IRS</div>
-        <div class="mail-date">Mar 12</div>
+      <div class="mail-item">
+        <div class="mail-bar mail-bar--forward"></div>
+        <div class="mail-body">
+          <div class="mail-header">
+            <div class="mail-sender">Chase Bank</div>
+            <div class="mail-date">2026-03-19</div>
+          </div>
+          <div class="mail-summary">New credit card enclosed &mdash; physical item requires forwarding</div>
+          <span class="badge badge--forward">FORWARD TO ME</span>
+        </div>
       </div>
-      <div class="mail-summary">Tax refund status update notice</div>
-      <span class="badge badge-notice">NOTICE</span>
-    </div>
-  </div>
 
-  <!-- Junk / Read — smoke left bar, dimmed sender name -->
-  <div class="mail-card">
-    <div class="mail-bar" style="background:#DDE3EC;"></div>
-    <div class="mail-body">
-      <div class="mail-row">
-        <div class="mail-sender-read">Pottery Barn</div>
-        <div class="mail-date">Mar 15</div>
+      <div class="mail-item">
+        <div class="mail-bar mail-bar--bill"></div>
+        <div class="mail-body">
+          <div class="mail-header">
+            <div class="mail-sender">AT&amp;T</div>
+            <div class="mail-date">2026-03-18</div>
+          </div>
+          <div class="mail-summary">Wireless service statement &mdash; $182.50 past due</div>
+          <span class="badge badge--bill">BILL &middot; MAR 15 (OVERDUE)</span>
+        </div>
       </div>
-      <div class="mail-summary">Spring sale — 40% off everything</div>
-      <span class="badge badge-junk">JUNK</span>
-    </div>
-  </div>
 
-  <!-- NeedsReview — yellow/amber badge -->
-  <div class="mail-card">
-    <div class="mail-bar" style="background:#DDE3EC;"></div>
-    <div class="mail-body">
-      <div class="mail-row">
-        <div class="mail-sender">Unknown Sender</div>
-        <div class="mail-date">Mar 21</div>
+      <div class="mail-item">
+        <div class="mail-bar mail-bar--notice"></div>
+        <div class="mail-body">
+          <div class="mail-header">
+            <div class="mail-sender">IRS</div>
+            <div class="mail-date">2026-03-12</div>
+          </div>
+          <div class="mail-summary">Tax refund status update &mdash; your refund has been approved</div>
+          <span class="badge badge--notice">NOTICE</span>
+        </div>
       </div>
-      <div class="mail-summary">Unrecognized document — confidence 0.61</div>
-      <span class="badge badge-review">NEEDS REVIEW</span>
+
+      <div class="mail-item">
+        <div class="mail-bar mail-bar--notice"></div>
+        <div class="mail-body">
+          <div class="mail-header">
+            <div class="mail-sender">State DMV</div>
+            <div class="mail-date">2026-03-10</div>
+          </div>
+          <div class="mail-summary">Vehicle registration renewal notice &mdash; due May 1, 2026</div>
+          <span class="badge badge--notice">NOTICE</span>
+        </div>
+      </div>
+
+      <div class="mail-item">
+        <div class="mail-bar mail-bar--default"></div>
+        <div class="mail-body">
+          <div class="mail-header">
+            <div class="mail-sender--read">Pottery Barn</div>
+            <div class="mail-date">2026-03-15</div>
+          </div>
+          <div class="mail-summary">Spring sale &mdash; 40% off everything this weekend</div>
+          <span class="badge badge--junk">JUNK</span>
+        </div>
+      </div>
+
+      <div class="mail-item">
+        <div class="mail-bar mail-bar--default"></div>
+        <div class="mail-body">
+          <div class="mail-header">
+            <div class="mail-sender--read">Williams Sonoma</div>
+            <div class="mail-date">2026-03-14</div>
+          </div>
+          <div class="mail-summary">Your exclusive catalog is inside</div>
+          <span class="badge badge--junk">JUNK</span>
+        </div>
+      </div>
+
+      <div class="mail-item">
+        <div class="mail-bar mail-bar--default"></div>
+        <div class="mail-body">
+          <div class="mail-header">
+            <div class="mail-sender">Unknown Sender</div>
+            <div class="mail-date">2026-03-21</div>
+          </div>
+          <div class="mail-summary">Unrecognized document &mdash; classification confidence 0.61</div>
+          <span class="badge badge--needs-review">NEEDS REVIEW</span>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <hr style="border:none;border-top:1px solid #DDE3EC;margin:24px 0;">
+    <!-- ── BILLS ──────────────────────────────────────────────────── -->
+    <div id="sec-bills" class="section" style="display:none;">
+      <h1 class="page-title">Bills</h1>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Sender</th>
+              <th>Amount</th>
+              <th>Due</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-sender">AT&amp;T</td>
+              <td class="td-amount">$182.50</td>
+              <td class="td-due--overdue">Mar 15, 2026</td>
+              <td><span class="status-badge status-badge--overdue">OVERDUE</span></td>
+            </tr>
+            <tr>
+              <td class="td-sender">Verizon Wireless</td>
+              <td class="td-amount">$94.00</td>
+              <td class="td-due">Apr 5, 2026</td>
+              <td><span class="status-badge">PENDING</span></td>
+            </tr>
+            <tr>
+              <td class="td-sender">Amazon Prime</td>
+              <td class="td-amount">$14.99</td>
+              <td class="td-due">Apr 1, 2026</td>
+              <td><span class="status-badge">PENDING</span></td>
+            </tr>
+            <tr>
+              <td class="td-sender">PG&amp;E</td>
+              <td class="td-amount">$61.00</td>
+              <td class="td-due">Apr 12, 2026</td>
+              <td><span class="status-badge status-badge--matched">MATCHED</span></td>
+            </tr>
+            <tr>
+              <td class="td-sender">Comcast</td>
+              <td class="td-amount">$89.99</td>
+              <td class="td-due">Mar 28, 2026</td>
+              <td><span class="status-badge status-badge--matched">MATCHED</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-  <!-- ── BILLS TABLE ── -->
-  <p class="page-title">Bills</p>
+    <!-- ── FORWARD TO ME ──────────────────────────────────────────── -->
+    <div id="sec-forward" class="section" style="display:none;">
+      <h1 class="page-title">Forward To Me</h1>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Sender</th>
-          <th>Amount</th>
-          <th>Due</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="sender">Verizon Wireless</td>
-          <td class="amount">$94.00</td>
-          <td class="due">Apr 5, 2026</td>
-          <td><span class="badge badge-bill">PENDING</span></td>
-        </tr>
-        <tr>
-          <td class="sender">AT&amp;T</td>
-          <td class="amount">$182.50</td>
-          <td class="overdue-due">Mar 15, 2026</td>
-          <td><span class="badge badge-overdue">OVERDUE</span></td>
-        </tr>
-        <tr>
-          <td class="sender">PG&amp;E</td>
-          <td class="amount">$61.00</td>
-          <td class="due">Apr 12, 2026</td>
-          <td><span class="badge badge-notice">MATCHED</span></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+      <div class="forward-item">
+        <div class="forward-urgent">&#9888; ACTION REQUIRED</div>
+        <div class="forward-sender">Chase Bank</div>
+        <div class="forward-summary">New credit card enclosed &mdash; must be forwarded to your current address to activate</div>
+        <div class="forward-date">Received: 2026-03-19</div>
+      </div>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       BRANDING AUDIT — gaps between spec and current app.py
-  ════════════════════════════════════════════════════════════════ -->
-  <hr style="border:none;border-top:1px solid #DDE3EC;margin:32px 0 24px;">
-  <p class="page-title" style="margin-bottom:12px;">Branding Audit — Gaps vs. Current app.py</p>
+      <div class="forward-item">
+        <div class="forward-urgent">&#9888; ACTION REQUIRED</div>
+        <div class="forward-sender">County Tax Assessor</div>
+        <div class="forward-summary">Final notice for property tax payment &mdash; $2,840.00 overdue, certified mail</div>
+        <div class="forward-date">Received: 2026-03-08</div>
+      </div>
+    </div>
 
-  <div class="gap">
-    <strong>GAP 1 — No logo SVG in header.</strong>
-    The header renders text-only "PostMule". The brand spec requires the SVG mule mark
-    (ears, eyes, muzzle, nostrils) alongside the wordmark. See header above for the correct version.
-  </div>
+    <!-- ── PENDING REVIEWS ───────────────────────────────────────── -->
+    <div id="sec-pending" class="section" style="display:none;">
+      <h1 class="page-title">Pending Reviews</h1>
 
-  <div class="gap">
-    <strong>GAP 2 — No tagline in header.</strong>
-    "Smart mail management" (#5A7CA4, 11px, uppercase, letter-spacing 2px) is missing beneath
-    the wordmark. Brand spec defines this as a required element.
-  </div>
+      <div class="match-row">
+        <div class="match-row__body">
+          <div class="match-name">&ldquo;Verizon Wireless Inc&rdquo;</div>
+          <div class="match-detail">Looks like: Verizon Wireless &mdash; similarity 92%</div>
+          <div class="match-auto">Auto-approves: 2026-03-29</div>
+        </div>
+        <button class="btn btn-primary btn-sm">Approve</button>
+        <button class="btn btn-danger btn-sm">Deny</button>
+      </div>
 
-  <div class="gap">
-    <strong>GAP 3 — Page title font-size is 22px (spec: 20px) and missing letter-spacing.</strong>
-    All &lt;h1&gt; page titles use font-size:22px. Brand spec: 20px, weight 600, #0F2044, tracking -0.3px.
-    Also missing: letter-spacing: -0.3px on all page title elements.
-  </div>
+      <div class="match-row">
+        <div class="match-row__body">
+          <div class="match-name">&ldquo;AT&amp;T Mobility LLC&rdquo;</div>
+          <div class="match-detail">Looks like: AT&amp;T &mdash; similarity 88%</div>
+          <div class="match-auto">Auto-approves: 2026-03-29</div>
+        </div>
+        <button class="btn btn-primary btn-sm">Approve</button>
+        <button class="btn btn-danger btn-sm">Deny</button>
+      </div>
 
-  <div class="gap">
-    <strong>GAP 4 — Mail card badges are all the same blue style regardless of type.</strong>
-    Current app.py renders every category badge as EEF3F9/2C4A6E (Notice blue).
-    Brand spec requires: Bill = brass (#FDF3E0/#7A4C08), Overdue = red (#FEECEC/#8A1010),
-    ForwardToMe = urgent red, Notice = steel blue, Junk = smoke, NeedsReview = amber.
-  </div>
+      <div class="match-row">
+        <div class="match-row__body">
+          <div class="match-name">&ldquo;Pacific Gas Electric Co&rdquo;</div>
+          <div class="match-detail">Looks like: PG&amp;E &mdash; similarity 81%</div>
+          <div class="match-auto">Auto-approves: 2026-03-29</div>
+        </div>
+        <button class="btn btn-primary btn-sm">Approve</button>
+        <button class="btn btn-danger btn-sm">Deny</button>
+      </div>
+    </div>
 
-  <div class="gap">
-    <strong>GAP 5 — Read state not applied to mail card sender names.</strong>
-    Brand spec: unread = weight 600, #0F2044. Read/Junk = weight 400, #8A9BB0.
-    Current app hardcodes font-weight:600;color:#0F2044 for all items.
-  </div>
+    <!-- ── ENTITIES ──────────────────────────────────────────────── -->
+    <div id="sec-entities" class="section" style="display:none;">
+      <h1 class="page-title">Entities</h1>
 
-  <div class="gap">
-    <strong>GAP 6 — Mail card body text is 12px (spec: 13px).</strong>
-    The summary line under the sender uses font-size:12px. Brand spec body text is 13px, #5A7090.
-  </div>
+      <div class="entity-row">
+        <div class="entity-header">
+          <span class="entity-name">Verizon Wireless</span>
+          <span class="entity-type">biller</span>
+        </div>
+        <div class="entity-aliases">Aliases: Verizon Wireless Inc, VZW, Verizon</div>
+      </div>
 
-  <div class="note" style="margin-top:8px;">
-    <strong>What IS correct:</strong> All color tokens match (#0F2044, #E8A020, #7A9CC4, #F5F6F8,
-    #DDE3EC, #C62828, #2E7D32). Header/nav background, page background, card structure (8px radius,
-    1px #DDE3EC border, 3px left bar), stat labels, toast pattern, table structure — all on-brand.
-  </div>
+      <div class="entity-row">
+        <div class="entity-header">
+          <span class="entity-name">AT&amp;T</span>
+          <span class="entity-type">biller</span>
+        </div>
+        <div class="entity-aliases">Aliases: AT&amp;T Mobility LLC, AT&amp;T Internet, AT&amp;T Services</div>
+      </div>
 
-</div>
+      <div class="entity-row">
+        <div class="entity-header">
+          <span class="entity-name">PG&amp;E</span>
+          <span class="entity-type">biller</span>
+        </div>
+        <div class="entity-aliases">Aliases: Pacific Gas Electric Co, Pacific Gas &amp; Electric</div>
+      </div>
+
+      <div class="entity-row">
+        <div class="entity-header">
+          <span class="entity-name">Chase Bank</span>
+          <span class="entity-type">financial</span>
+        </div>
+        <div class="entity-aliases">Aliases: JPMorgan Chase, Chase Bank USA</div>
+      </div>
+
+      <div class="entity-row">
+        <div class="entity-header">
+          <span class="entity-name">IRS</span>
+          <span class="entity-type">government</span>
+        </div>
+        <div class="entity-aliases">Aliases: Internal Revenue Service, U.S. Treasury &mdash; IRS</div>
+      </div>
+
+      <div class="entity-row">
+        <div class="entity-header">
+          <span class="entity-name">Amazon</span>
+          <span class="entity-type">biller</span>
+        </div>
+        <div class="entity-aliases">Aliases: Amazon Prime, Amazon.com, Amazon Web Services</div>
+      </div>
+
+      <div class="entity-row">
+        <div class="entity-header">
+          <span class="entity-name">Comcast</span>
+          <span class="entity-type">biller</span>
+        </div>
+        <div class="entity-aliases">Aliases: Xfinity, Comcast Cable Communications</div>
+      </div>
+    </div>
+
+    <!-- ── LOGS ──────────────────────────────────────────────────── -->
+    <div id="sec-logs" class="section" style="display:none;">
+      <h1 class="page-title">Logs</h1>
+      <div class="log-viewer">2026-03-22 02:03:01 INFO  PostMule daily run starting (dry_run=False)
+2026-03-22 02:03:01 INFO  Loading config from C:\PostMule\config.yaml
+2026-03-22 02:03:02 INFO  Authenticating with Google OAuth (keyring refresh token)
+2026-03-22 02:03:03 INFO  Gmail: scanning inbox for scan notifications from noreply@virtualpostmail.com
+2026-03-22 02:03:04 INFO  Gmail: found 3 unprocessed scan notification(s)
+2026-03-22 02:03:04 INFO  Processing scan: VPM-20260322-001 — Verizon Wireless
+2026-03-22 02:03:05 INFO  OCR: pdfplumber extracted 847 chars (primary engine)
+2026-03-22 02:03:06 INFO  Gemini: classified as Bill (confidence 0.97) — amount $94.00, due 2026-04-05
+2026-03-22 02:03:06 INFO  Entity match: "Verizon Wireless" → Verizon Wireless (exact, 100%)
+2026-03-22 02:03:07 INFO  Saved: PostMule/Bills/2026/2026-03-22_VerizonWireless_$94.00.pdf
+2026-03-22 02:03:07 INFO  Processing scan: VPM-20260322-002 — Chase Bank
+2026-03-22 02:03:08 INFO  OCR: pdfplumber extracted 312 chars (primary engine)
+2026-03-22 02:03:09 INFO  Gemini: classified as ForwardToMe (confidence 0.99) — new credit card
+2026-03-22 02:03:09 INFO  Alert: urgent ForwardToMe item detected — sending immediate email
+2026-03-22 02:03:10 INFO  Email alert sent to user@example.com — subject: [PostMule] URGENT: Forward To Me
+2026-03-22 02:03:10 INFO  Processing scan: VPM-20260322-003 — Unknown sender
+2026-03-22 02:03:11 INFO  OCR: pdfplumber extracted 94 chars; fallback Tesseract extracted 201 chars
+2026-03-22 02:03:12 INFO  Gemini: classified as NeedsReview (confidence 0.61 &lt; threshold 0.80)
+2026-03-22 02:03:12 INFO  Finance: checking YNAB for recent transactions to match against 3 pending bills
+2026-03-22 02:03:13 INFO  Finance: matched PG&amp;E $61.00 → YNAB transaction #a8f2c1 (exact amount, 2026-03-18)
+2026-03-22 02:03:13 INFO  Finance: matched Comcast $89.99 → YNAB transaction #b3d7e9 (exact amount, 2026-03-20)
+2026-03-22 02:03:14 INFO  Spreadsheet: rebuilding Google Sheets view (3 sheets)
+2026-03-22 02:03:16 INFO  Spreadsheet: updated Bills, Mail, Entities tabs
+2026-03-22 02:03:16 INFO  Daily summary email sent to user@example.com
+2026-03-22 02:03:16 INFO  Run complete — 3 scans processed, 2 bills matched, 1 ForwardToMe alert sent
+2026-03-22 02:03:16 INFO  Duration: 15.2s | API requests: 6 | Tokens used: 4,821</div>
+    </div>
+
+    <!-- ── CONNECTIONS (Google not connected) ──────────────────── -->
+    <div id="sec-connections-new" class="section" style="display:none;">
+      <h1 class="page-title" style="margin-bottom:8px;">Connections</h1>
+      <p class="page-subtitle">Manage service connections for email, storage, physical mail, and AI.</p>
+
+      <div class="conn-grid">
+
+        <!-- Google card — not connected -->
+        <div class="conn-card">
+          <div class="conn-card-header">
+            <div class="conn-service-icon conn-icon-google">G</div>
+            <div>
+              <div class="conn-service-name">Google</div>
+              <div class="conn-service-desc">Gmail &middot; Drive &middot; Sheets &middot; Gemini</div>
+            </div>
+            <div class="conn-status conn-status--off">Not connected</div>
+          </div>
+          <p class="conn-note">Sign in with Google to enable Gmail, Drive, Sheets, and Gemini access.</p>
+          <a href="#" class="google-btn" onclick="return false;">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+              <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+              <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+              <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+            </svg>
+            Connect Google Account
+          </a>
+        </div>
+
+        <!-- Physical Mail card -->
+        <div class="conn-card">
+          <div class="conn-card-header">
+            <div class="conn-service-icon conn-icon-mail">&#9993;</div>
+            <div>
+              <div class="conn-service-name">Physical Mail</div>
+              <div class="conn-service-desc">VirtualPostMail &middot; EarthClass Mail</div>
+            </div>
+            <div class="conn-status conn-status--off">Not configured</div>
+          </div>
+          <p class="conn-note">Configure your physical mailbox provider in <a href="#">Settings</a>. Credentials go in <code>credentials.yaml</code>.</p>
+        </div>
+
+        <!-- AI Provider card -->
+        <div class="conn-card">
+          <div class="conn-card-header">
+            <div class="conn-service-icon conn-icon-ai">AI</div>
+            <div>
+              <div class="conn-service-name">AI Provider</div>
+              <div class="conn-service-desc">Gemini &middot; Claude &middot; OpenAI</div>
+            </div>
+            <div class="conn-status conn-status--off">Not configured</div>
+          </div>
+          <p class="conn-note">Configure your LLM provider in <a href="#">Settings</a>. API key goes in <code>credentials.yaml</code>.</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── CONNECTIONS (Google connected) ───────────────────────── -->
+    <div id="sec-connections-ok" class="section" style="display:none;">
+      <h1 class="page-title" style="margin-bottom:8px;">Connections</h1>
+      <p class="page-subtitle">Manage service connections for email, storage, physical mail, and AI.</p>
+
+      <div class="conn-grid">
+
+        <!-- Google card — connected -->
+        <div class="conn-card">
+          <div class="conn-card-header">
+            <div class="conn-service-icon conn-icon-google">G</div>
+            <div>
+              <div class="conn-service-name">Google</div>
+              <div class="conn-service-desc">Gmail &middot; Drive &middot; Sheets &middot; Gemini</div>
+            </div>
+            <div class="conn-status conn-status--ok">&#10003; Connected</div>
+          </div>
+          <p class="conn-note">Refresh token stored in Windows Credential Manager. Covers all Google services.</p>
+          <a href="#" class="btn btn-secondary" onclick="return false;">Reconnect</a>
+        </div>
+
+        <!-- Physical Mail card — configured -->
+        <div class="conn-card">
+          <div class="conn-card-header">
+            <div class="conn-service-icon conn-icon-mail">&#9993;</div>
+            <div>
+              <div class="conn-service-name">Physical Mail</div>
+              <div class="conn-service-desc">VirtualPostMail &middot; EarthClass Mail</div>
+            </div>
+            <div class="conn-status conn-status--ok">&#10003; VPM configured</div>
+          </div>
+          <p class="conn-note">Configure your physical mailbox provider in <a href="#">Settings</a>. Credentials go in <code>credentials.yaml</code>.</p>
+        </div>
+
+        <!-- AI Provider card — Gemini -->
+        <div class="conn-card">
+          <div class="conn-card-header">
+            <div class="conn-service-icon conn-icon-ai">AI</div>
+            <div>
+              <div class="conn-service-name">AI Provider</div>
+              <div class="conn-service-desc">Gemini &middot; Claude &middot; OpenAI</div>
+            </div>
+            <div class="conn-status conn-status--ok">&#10003; Gemini configured</div>
+          </div>
+          <p class="conn-note">Gemini uses your connected Google account &mdash; no extra credentials needed.</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ──────────────────────────────────────────────── -->
+    <div id="sec-settings" class="section" style="display:none;">
+      <div class="s-settings-header">
+        <h1 class="page-title" style="margin:0;">Settings</h1>
+      </div>
+      <p class="text-note">Saved to <code class="code-tag">config.yaml</code>. API keys and passwords live in the encrypted credentials file and are not shown here.</p>
+
+      <form onsubmit="return false;">
+      <div class="s-tabs">
+        <button type="button" class="s-tab active" onclick="sTab('general',this)">General</button>
+        <button type="button" class="s-tab" onclick="sTab('notifications',this)">Notifications</button>
+        <button type="button" class="s-tab" onclick="sTab('mail',this)">Mail Intake</button>
+        <button type="button" class="s-tab" onclick="sTab('finance',this)">Finance</button>
+        <button type="button" class="s-tab" onclick="sTab('ai',this)">AI &amp; OCR</button>
+        <button type="button" class="s-tab" onclick="sTab('storage',this)">Storage</button>
+        <button type="button" class="s-tab" onclick="sTab('system',this)">System</button>
+      </div>
+
+      <!-- TAB: General -->
+      <div id="stab-general" class="s-pane active">
+        <div class="s-card">
+          <h3>Application</h3>
+          <div class="s-row">
+            <div class="s-label">Dry Run
+              <div class="s-help">Simulate all actions — no files moved, no emails sent. Safe for testing.</div>
+            </div>
+            <div class="s-check">
+              <input type="checkbox">
+              <span class="s-check-label">Enable dry run mode</span>
+            </div>
+          </div>
+        </div>
+        <div class="s-card">
+          <h3>Schedule</h3>
+          <div class="s-row">
+            <div class="s-label">Daily Run Time
+              <div class="s-help">24-hour time for the automatic daily run. Configured in Windows Task Scheduler.</div>
+            </div>
+            <input class="s-input s-input--md" type="time" value="02:00">
+          </div>
+          <div class="s-row">
+            <div class="s-label">Timezone
+              <div class="s-help">Your local timezone. Used for scheduling and log timestamps.</div>
+            </div>
+            <select class="s-select">
+              <option selected>America/Los_Angeles</option>
+              <option>America/Denver</option>
+              <option>America/Chicago</option>
+              <option>America/New_York</option>
+              <option>UTC</option>
+            </select>
+          </div>
+        </div>
+        <div class="s-card">
+          <h3>Logging</h3>
+          <div class="s-row">
+            <div class="s-label">Log Level
+              <div class="s-help">Verbosity of log output. INFO is recommended for normal use.</div>
+            </div>
+            <select class="s-select">
+              <option>DEBUG</option>
+              <option selected>INFO</option>
+              <option>WARNING</option>
+              <option>ERROR</option>
+            </select>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Verbose Log Retention
+              <div class="s-help">Number of days of detailed daily logs to keep.</div>
+            </div>
+            <input class="s-input s-input--sm" type="number" value="7">
+          </div>
+          <div class="s-row">
+            <div class="s-label">Processing Log Years
+              <div class="s-help">Years of annual processing summaries to retain.</div>
+            </div>
+            <input class="s-input s-input--sm" type="number" value="3">
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Notifications -->
+      <div id="stab-notifications" class="s-pane">
+        <div class="s-card">
+          <h3>Alerts</h3>
+          <div class="s-row">
+            <div class="s-label">Alert Email
+              <div class="s-help">Where PostMule sends the daily summary and urgent alerts.</div>
+            </div>
+            <input class="s-input" type="email" placeholder="you@example.com" value="user@example.com">
+          </div>
+          <div class="s-row">
+            <div class="s-label">Urgent Forward-To-Me Alert
+              <div class="s-help">Send an immediate alert (not just the daily summary) when physical mail requires forwarding.</div>
+            </div>
+            <div class="s-check">
+              <input type="checkbox" checked>
+              <span class="s-check-label">Send immediate alert</span>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Bill Due Alert Days
+              <div class="s-help">Send a proactive alert when a bill is due within this many days.</div>
+            </div>
+            <div class="s-inline-gap">
+              <input class="s-input s-input--sm" type="number" value="7">
+              <span class="s-unit">days</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Mail Intake -->
+      <div id="stab-mail" class="s-pane">
+        <div class="s-card">
+          <h3>Physical Mailbox Provider</h3>
+          <div class="s-row">
+            <div class="s-label">Provider Type
+              <div class="s-help">Your virtual mailbox service.</div>
+            </div>
+            <select class="s-select">
+              <option selected>VirtualPostMail</option>
+              <option>Earth Class Mail</option>
+              <option>Traveling Mailbox</option>
+              <option>PostScan Mail</option>
+            </select>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Enabled
+              <div class="s-help">Uncheck to skip mailbox scanning.</div>
+            </div>
+            <div class="s-check">
+              <input type="checkbox" checked>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Scan Notification Sender
+              <div class="s-help">Email address your mailbox provider uses for scan notifications.</div>
+            </div>
+            <input class="s-input" type="email" value="noreply@virtualpostmail.com">
+          </div>
+          <div class="s-row">
+            <div class="s-label">Scan Subject Prefix
+              <div class="s-help">Subject line prefix used to identify scan notification emails.</div>
+            </div>
+            <input class="s-input" type="text" value="[Scan Request]">
+          </div>
+        </div>
+        <div class="s-card">
+          <h3>Email — Mailbox Notifications Account</h3>
+          <div class="s-row">
+            <div class="s-label">Provider Type</div>
+            <select class="s-select">
+              <option selected>Gmail</option>
+              <option>Outlook / Microsoft 365</option>
+              <option>Generic IMAP</option>
+            </select>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Enabled</div>
+            <div class="s-check"><input type="checkbox" checked></div>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Email Address
+              <div class="s-help">The Gmail/Outlook account that receives mailbox scan notifications.</div>
+            </div>
+            <input class="s-input" type="email" placeholder="YourMailManagement@gmail.com" value="mailmgmt@gmail.com">
+          </div>
+          <div class="s-row">
+            <div class="s-label">Label
+              <div class="s-help">Gmail label applied to processed scan notification emails.</div>
+            </div>
+            <input class="s-input s-input--wide" type="text" value="PostMule">
+          </div>
+        </div>
+        <div class="s-card">
+          <h3>Email — Bill Intake Account <span class="s-meta">(Phase 23 — optional)</span></h3>
+          <div class="s-row">
+            <div class="s-label">Provider Type</div>
+            <select class="s-select"><option selected>Gmail</option></select>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Enabled
+              <div class="s-help">Enable once you have a dedicated bills inbox and billers sending PDFs directly.</div>
+            </div>
+            <div class="s-check"><input type="checkbox"></div>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Email Address
+              <div class="s-help">Dedicated inbox for biller-sent PDF attachments.</div>
+            </div>
+            <input class="s-input" type="email" placeholder="bills@yourdomain.com">
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Finance -->
+      <div id="stab-finance" class="s-pane">
+        <div class="s-card">
+          <h3>Finance Providers</h3>
+          <p class="text-note">Enable the provider(s) you use. Credentials are configured in the encrypted credentials file — not here.</p>
+          <div class="s-provider">
+            <div class="s-provider-header">
+              <input type="checkbox" checked>
+              YNAB <span class="s-badge s-badge-api">Real API</span>
+              <span class="s-recommended">Recommended</span>
+            </div>
+            <div class="s-provider-desc">You Need A Budget — free Personal Access Token. Get one at app.ynab.com &rarr; Account Settings &rarr; Developer Settings.</div>
+          </div>
+          <div class="s-provider">
+            <div class="s-provider-header">
+              <input type="checkbox">
+              Plaid <span class="s-badge s-badge-api">Real API</span>
+            </div>
+            <div class="s-provider-desc" style="margin-bottom:10px;">Development tier is free (up to 100 institutions). Requires running the Plaid Link flow once per bank.</div>
+            <div class="s-inline-gap">
+              <label class="s-provider-label">Environment</label>
+              <select class="s-select">
+                <option>sandbox</option>
+                <option selected>development</option>
+                <option>production</option>
+              </select>
+              <span class="s-env-note">Use sandbox for testing, development for real bank data (free).</span>
+            </div>
+          </div>
+          <div class="s-provider">
+            <div class="s-provider-header">
+              <input type="checkbox">
+              Simplifi by Quicken <span class="s-badge s-badge-exp">Experimental</span>
+            </div>
+            <div class="s-provider-desc">Browser automation — may break without notice if Simplifi updates their UI.</div>
+          </div>
+          <div class="s-provider">
+            <div class="s-provider-header">
+              <input type="checkbox">
+              Monarch Money <span class="s-badge s-badge-exp">Experimental</span>
+            </div>
+            <div class="s-provider-desc">Browser automation — no public API. May break without notice.</div>
+          </div>
+        </div>
+        <div class="s-card">
+          <h3>Bill Matching</h3>
+          <div class="s-row">
+            <div class="s-label">Require Manual Approval
+              <div class="s-help">When a bill is matched to a bank transaction, require you to approve it in the Pending tab before marking as paid.</div>
+            </div>
+            <div class="s-check">
+              <input type="checkbox" checked>
+              <span class="s-check-label">Require approval</span>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Amount Tolerance
+              <div class="s-help">Allow bill and transaction amounts to differ by up to this many cents. 0 = exact match required.</div>
+            </div>
+            <div class="s-inline-gap">
+              <input class="s-input s-input--sm" type="number" value="0">
+              <span class="s-unit">cents</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: AI & OCR -->
+      <div id="stab-ai" class="s-pane">
+        <div class="s-card">
+          <h3>AI / LLM Provider</h3>
+          <div class="s-row">
+            <div class="s-label">Provider
+              <div class="s-help">AI service used to classify mail. API keys go in the credentials file.</div>
+            </div>
+            <select class="s-select">
+              <option selected>Google Gemini (free tier: 1500 req/day)</option>
+              <option>OpenAI</option>
+              <option>Anthropic</option>
+              <option>Ollama (local)</option>
+            </select>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Model
+              <div class="s-help">Gemini: gemini-1.5-flash. OpenAI: gpt-4o-mini. Anthropic: claude-haiku-4-5-20251001.</div>
+            </div>
+            <input class="s-input" type="text" value="gemini-1.5-flash">
+          </div>
+          <div class="s-row">
+            <div class="s-label">Confidence Threshold
+              <div class="s-help">Items classified below this confidence score go to NeedsReview instead of their category. Range 0.0–1.0.</div>
+            </div>
+            <div class="s-inline-gap">
+              <input class="s-input" style="width:90px;" type="number" value="0.80">
+              <span class="s-unit">0.80 recommended</span>
+            </div>
+          </div>
+        </div>
+        <div class="s-card">
+          <h3>API Safety Limits</h3>
+          <div class="s-row">
+            <div class="s-label">Daily Request Limit
+              <div class="s-help">Hard stop — PostMule will not make more API calls than this per day. Gemini free tier: 1500/day.</div>
+            </div>
+            <input class="s-input" style="width:120px;" type="number" value="1400">
+          </div>
+          <div class="s-row">
+            <div class="s-label">Daily Token Limit
+              <div class="s-help">Hard stop on tokens per day. Gemini free tier: 1,000,000/day.</div>
+            </div>
+            <input class="s-input" style="width:120px;" type="number" value="900000">
+          </div>
+          <div class="s-row">
+            <div class="s-label">Warn at %
+              <div class="s-help">Send a warning alert when this percentage of any limit is reached.</div>
+            </div>
+            <div class="s-inline-gap">
+              <input class="s-input s-input--sm" type="number" value="80">
+              <span class="s-unit">%</span>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Monthly Cost Budget
+              <div class="s-help">$0.00 = free tier only. Raise this if using a paid plan.</div>
+            </div>
+            <div class="s-inline-gap">
+              <span class="s-dollar">$</span>
+              <input class="s-input" style="width:100px;" type="number" value="0.00">
+            </div>
+          </div>
+        </div>
+        <div class="s-card">
+          <h3>OCR</h3>
+          <div class="s-row">
+            <div class="s-label">Primary Engine
+              <div class="s-help">Tried first. pdfplumber is fast and lossless for text-layer PDFs.</div>
+            </div>
+            <select class="s-select">
+              <option selected>pdfplumber (recommended)</option>
+              <option>Tesseract</option>
+            </select>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Fallback Engine
+              <div class="s-help">Used when the primary engine finds no text (e.g. scanned image PDFs).</div>
+            </div>
+            <select class="s-select">
+              <option selected>Tesseract</option>
+              <option>pdfplumber</option>
+            </select>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Tesseract DPI
+              <div class="s-help">Resolution for Tesseract rendering. 300 is standard for documents.</div>
+            </div>
+            <input class="s-input" style="width:90px;" type="number" value="300">
+          </div>
+          <div class="s-row">
+            <div class="s-label">Tesseract Language
+              <div class="s-help">Tesseract language code. eng = English.</div>
+            </div>
+            <input class="s-input" style="width:90px;" type="text" value="eng">
+          </div>
+        </div>
+        <div class="s-card">
+          <h3>Classification — Forward-To-Me Keywords</h3>
+          <div class="s-provider-desc" style="margin-bottom:12px;">Items matching these keywords are always classified as ForwardToMe regardless of AI confidence. One keyword per line.</div>
+          <textarea class="s-input s-input--mono" rows="8">credit card
+debit card
+check
+cheque
+certified mail
+registered mail
+passport
+driver's license
+government id</textarea>
+        </div>
+      </div>
+
+      <!-- TAB: Storage -->
+      <div id="stab-storage" class="s-pane">
+        <div class="s-card">
+          <h3>File Storage</h3>
+          <div class="s-row">
+            <div class="s-label">Provider
+              <div class="s-help">Where PostMule stores PDFs and JSON data. Cloud storage is strongly recommended.</div>
+            </div>
+            <select class="s-select">
+              <option selected>Google Drive</option>
+              <option>Dropbox</option>
+              <option>OneDrive</option>
+              <option>Amazon S3</option>
+              <option>Box</option>
+            </select>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Root Folder Name
+              <div class="s-help">Top-level folder created in your storage provider.</div>
+            </div>
+            <input class="s-input s-input--wide" type="text" value="PostMule">
+          </div>
+        </div>
+        <div class="s-card">
+          <h3>Spreadsheet (Dashboard View)</h3>
+          <p class="text-note">The spreadsheet is a generated view only — it is rebuilt from JSON data and is never the source of truth.</p>
+          <div class="s-row">
+            <div class="s-label">Provider</div>
+            <select class="s-select">
+              <option selected>Google Sheets</option>
+              <option>Excel Online</option>
+              <option>Airtable</option>
+              <option>None (disable)</option>
+            </select>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Workbook / File Name</div>
+            <input class="s-input s-input--wide" type="text" value="PostMule">
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: System -->
+      <div id="stab-system" class="s-pane">
+        <div class="s-card">
+          <h3>File Naming</h3>
+          <div class="s-row">
+            <div class="s-label">Date Format
+              <div class="s-help">strftime format for dates in file names. Default: %Y-%m-%d → 2025-03-15.</div>
+            </div>
+            <input class="s-input" style="width:160px;" type="text" value="%Y-%m-%d">
+          </div>
+          <div class="s-row">
+            <div class="s-label">Max Sender Name Length</div>
+            <input class="s-input s-input--sm" type="number" value="30">
+          </div>
+          <div class="s-row">
+            <div class="s-label">Max Recipient Name Length</div>
+            <input class="s-input s-input--sm" type="number" value="30">
+          </div>
+        </div>
+        <div class="s-card">
+          <h3>Entity Matching</h3>
+          <div class="s-row">
+            <div class="s-label">Fuzzy Match Threshold
+              <div class="s-help">Minimum similarity score (0.0–1.0) to propose an alias match.</div>
+            </div>
+            <input class="s-input" style="width:90px;" type="number" value="0.85">
+          </div>
+          <div class="s-row">
+            <div class="s-label">Auto-Approve After Days
+              <div class="s-help">Automatically approve pending entity matches after this many days without action.</div>
+            </div>
+            <div class="s-inline-gap">
+              <input class="s-input s-input--sm" type="number" value="7">
+              <span class="s-unit">days</span>
+            </div>
+          </div>
+        </div>
+        <div class="s-card">
+          <h3>Data Protection</h3>
+          <div class="s-row">
+            <div class="s-label">Soft Deletes Only
+              <div class="s-help">Never permanently delete files automatically. Items are moved to Trash and flagged for manual review.</div>
+            </div>
+            <div class="s-check">
+              <input type="checkbox" checked>
+              <span class="s-check-label">Enabled (recommended)</span>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Trash Retention</div>
+            <div class="s-inline-gap">
+              <input class="s-input s-input--sm" type="number" value="90">
+              <span class="s-unit">days</span>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Max Files Moved per Run
+              <div class="s-help">Safety cap — alert and stop if more than this many files would be moved in one run.</div>
+            </div>
+            <input class="s-input s-input--sm" type="number" value="50">
+          </div>
+          <div class="s-row">
+            <div class="s-label">Write Verification
+              <div class="s-help">Read back and hash-verify every file write.</div>
+            </div>
+            <div class="s-check"><input type="checkbox" checked></div>
+          </div>
+        </div>
+        <div class="s-card">
+          <h3>Deployment</h3>
+          <div class="s-row">
+            <div class="s-label">Dashboard Port
+              <div class="s-help">Local port the web dashboard listens on. Default: 5000.</div>
+            </div>
+            <input class="s-input" style="width:100px;" type="number" value="5000">
+          </div>
+          <div class="s-row">
+            <div class="s-label">Tailscale
+              <div class="s-help">Make the dashboard accessible via Tailscale VPN.</div>
+            </div>
+            <div class="s-check">
+              <input type="checkbox">
+              <span class="s-check-label">Enable Tailscale access</span>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Task Scheduler Task Name
+              <div class="s-help">Name of the Windows Task Scheduler entry for the daily run.</div>
+            </div>
+            <input class="s-input" type="text" value="PostMule Daily Run">
+          </div>
+        </div>
+      </div>
+
+      <!-- Save bar -->
+      <div class="s-sticky-save">
+        <button type="submit" class="btn btn-primary" style="padding:10px 28px;font-size:14px;">Save Settings</button>
+        <span class="s-save-note">Saving rewrites config.yaml — YAML comments will be removed. Keep a backup if your comments are important.</span>
+      </div>
+      </form>
+    </div>
+
+  </div><!-- .content -->
+</div><!-- #area-app -->
+
+<script>
+  const NAV_MAP = {
+    home: 'home', mail: 'mail', bills: 'bills', forward: 'forward',
+    pending: 'pending', entities: 'entities', logs: 'logs',
+    'connections-new': 'connections', 'connections-ok': 'connections', settings: 'settings'
+  };
+
+  function showSection(name) {
+    // Update switcher buttons
+    document.querySelectorAll('[data-sec]').forEach(b =>
+      b.classList.toggle('active', b.dataset.sec === name));
+
+    const isLogin = name === 'login';
+    document.getElementById('area-login').style.display = isLogin ? '' : 'none';
+    document.getElementById('area-app').style.display   = isLogin ? 'none' : '';
+
+    if (!isLogin) {
+      // Switch content section
+      document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+      document.getElementById('sec-' + name).style.display = 'block';
+
+      // Update nav active state
+      document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+      const navKey = NAV_MAP[name];
+      if (navKey) document.getElementById('nav-' + navKey).classList.add('active');
+    }
+  }
+
+  function sTab(name, btn) {
+    document.querySelectorAll('.s-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.s-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('stab-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+</script>
 </body>
 </html>

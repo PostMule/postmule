@@ -104,7 +104,7 @@ Brand voice: short, declarative. "Bill arrived. $94 due Apr 5." "16 days remaini
 | Storage | JSON files (primary) + configurable spreadsheet view (default: Google Sheets) |
 | Files | Configurable storage provider (default: Google Drive) |
 | Email | Configurable email provider (default: Gmail API / OAuth2) |
-| Dashboard | Flask + vanilla JS (fetch API) + custom inline CSS (localhost:5000) |
+| Dashboard | Flask + HTMX + Alpine.js + external CSS (localhost:5000) |
 | Finance sync | YNAB API (recommended), Plaid API, Monarch (Playwright scraping, experimental) |
 | Encryption | Fernet (credentials) + system keyring (master password) |
 | Testing | pytest, 80%+ coverage, GitHub Actions CI |
@@ -241,10 +241,11 @@ PendingEntityMatches, PendingBillMatches, RunLog, APIUsage
 ---
 
 ## Web Dashboard (v1)
-- Flask + vanilla JS (fetch API) + custom inline CSS
+- Flask + HTMX + Alpine.js + external CSS
 - localhost:5000 (optional Tailscale for anywhere access)
-- Setup wizard IS the web UI (first run opens browser to /setup)
-- Pages: Home, Mail, Bills, ForwardToMe, Pending, Entities, Settings, Logs, Setup
+- Routes split into blueprints: `auth_bp` (login/logout), `pages_bp` (all page views), `connections_bp` (Google OAuth), `api_bp` (HTMX/JSON endpoints)
+- Auth (rate limiting, lockout, session) implemented in `web/routes/auth.py`
+- Pages: Home, Mail, Bills, Forward To Me, Pending, Entities, Settings, Logs, Connections
 - Templates: `postmule/web/templates/login.html` and `page.html` (base layout with injected content)
 
 ---
@@ -335,7 +336,7 @@ Example: `2025-11-15_Alice_ATT_Bill.pdf`
 | 15 | Integrity agents (4) | ✅ Done |
 | 16 | Retroactive processing | ✅ Done |
 | 17 | Simplifi sync agent | ✅ Done |
-| 18 | Unit + integration tests | ✅ Done (481 tests passing) |
+| 18 | Unit + integration tests | ✅ Done (526 tests passing) |
 | 19 | Web dashboard (Flask) | ✅ Done |
 | 20 | Documentation | ✅ Done (CLAUDE.md, README, CONTRIBUTING.md, config/credentials examples) |
 | 21 | Statement date + ACH descriptor fields | Planned (small — schema + extraction) |
@@ -345,7 +346,7 @@ Example: `2025-11-15_Alice_ATT_Bill.pdf`
 
 ### Priority Gaps (fix before first real-world run)
 - **CLI rename:** ~~`vpm`~~ renamed to `postmule` (was colliding with VirtualPostMail brand) ✓
-- **Dashboard auth:** Single configurable password, rate limiting, 15-min lockout, 8-hour session timeout — fully implemented in `web/app.py` ✓
+- **Dashboard auth:** Single configurable password, rate limiting, 15-min lockout, 8-hour session timeout — fully implemented in `web/routes/auth.py` ✓
 - **Notification deduplication:** `alert_sent_date` field implemented in bill schema; `send_bill_due_alert` skips already-alerted bills ✓
 - **End-to-end validation:** Run actual pipeline against real Gmail/VPM/Gemini/Drive before
   further feature work
