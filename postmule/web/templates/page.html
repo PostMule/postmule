@@ -132,6 +132,7 @@
             <th>Amount</th>
             <th>Due</th>
             <th>Status</th>
+            <th>Source</th>
           </tr>
         </thead>
         <tbody>
@@ -141,9 +142,10 @@
             <td class="td-amount">${{ '%.2f'|format(bill.get('amount_due',0)) }}</td>
             <td class="td-due">{{ bill.get('due_date','') }}</td>
             <td><span class="status-badge">{{ bill.get('status','pending').upper() }}</span></td>
+            <td>{% if bill.get('drive_file_id') %}<a href="/pdf/{{ bill.get('id') }}" target="_blank" class="pdf-link">View PDF</a>{% else %}—{% endif %}</td>
           </tr>
         {% else %}
-          <tr><td colspan="4" class="td-center">No bills found.</td></tr>
+          <tr><td colspan="5" class="td-center">No bills found.</td></tr>
         {% endfor %}
         </tbody>
       </table>
@@ -385,6 +387,7 @@
       <div class="forward-sender">{{ item.get('sender','') }}</div>
       <div class="forward-summary">{{ item.get('summary','') }}</div>
       <div class="forward-date">Received: {{ item.get('date_received','') }}</div>
+      {% if item.get('drive_file_id') %}<a href="/pdf/{{ item.get('id') }}" target="_blank" class="pdf-link">View PDF</a>{% endif %}
     </div>
     {% else %}
     <div class="text-ok">No items awaiting forwarding.</div>
