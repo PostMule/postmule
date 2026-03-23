@@ -137,12 +137,20 @@ class SimplifiProvider:
         Update a transaction's payee name in Simplifi.
         Called after approving a bill match to correct the payee name.
 
+        Investigation finding: Simplifi exposes no public API for transaction
+        updates. The only interaction path is browser automation (Playwright),
+        but the transaction_id this provider generates is synthetic
+        (``{date}_{payee[:20]}_{amount}``) — not a real Simplifi internal ID —
+        so there is no reliable way to locate the exact row for editing.
+        This limitation matches Monarch Money and Plaid, which also have no
+        rename endpoint. Use YNAB if automatic payee writeback is required.
+
         Returns:
-            True if successful.
+            False (not supported by Simplifi).
         """
-        log.warning(
-            f"Simplifi update_transaction_name is not implemented — "
-            f"transaction {transaction_id} payee was NOT renamed to '{new_name}'. "
-            "Use YNAB for automatic payee correction."
+        log.info(
+            f"Simplifi does not support transaction rename via API — "
+            f"transaction {transaction_id} payee was NOT updated to '{new_name}'. "
+            "Use YNAB for automatic payee writeback."
         )
         return False

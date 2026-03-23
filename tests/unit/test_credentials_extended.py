@@ -254,6 +254,7 @@ class TestBuildGoogleCredentials:
         mock_google_auth_transport.Request = mock_request_cls
 
         with patch("postmule.core.credentials.load_google_refresh_token", return_value="refresh_tok"), \
+             patch("postmule.core.constants.GOOGLE_CLIENT_ID", "test-client-id"), \
              patch.dict(sys.modules, {
                  "google.oauth2.credentials": mock_google_oauth2,
                  "google.auth.transport.requests": mock_google_auth_transport,

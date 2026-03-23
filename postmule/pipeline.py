@@ -19,6 +19,7 @@ from typing import Any
 
 from postmule.agents import classification as classify_agent
 from postmule.agents import email_ingestion
+from postmule.agents import mailbox_ingestion
 from postmule.agents import entity_discovery
 from postmule.agents.integrity import duplicate_detector, run_monitor
 from postmule.core.config import Config
@@ -51,6 +52,7 @@ class Providers:
     llm: Any
     safety_agent: Any
     folder_ids: dict = field(default_factory=dict)
+    vpm: Any = None  # VpmProvider — set when VPM credentials are configured
 
 
 def run_daily_pipeline(
@@ -124,15 +126,26 @@ def run_daily_pipeline(
     try:
         mailbox_provider_cfg = (cfg.get("mailbox", "providers") or [{}])[0]
         with tempfile.TemporaryDirectory() as tmpdir:
-            ingestion = email_ingestion.run_ingestion(
-                gmail=providers.gmail,
-                drive=providers.drive,
-                inbox_folder_id=providers.folder_ids.get("inbox", ""),
-                download_dir=Path(tmpdir),
-                sender_filter=mailbox_provider_cfg.get("scan_sender", "noreply@virtualpostmail.com"),
-                subject_filter=mailbox_provider_cfg.get("scan_subject_prefix", "[Scan Request]"),
-                dry_run=dry_run,
-            )
+            if providers.vpm is not None:
+                log.info("Using VPM direct API for ingestion")
+                ingestion = mailbox_ingestion.run_vpm_ingestion(
+                    vpm=providers.vpm,
+                    drive=providers.drive,
+                    inbox_folder_id=providers.folder_ids.get("inbox", ""),
+                    download_dir=Path(tmpdir),
+                    dry_run=dry_run,
+                )
+            else:
+                log.info("Using Gmail for ingestion")
+                ingestion = email_ingestion.run_ingestion(
+                    gmail=providers.gmail,
+                    drive=providers.drive,
+                    inbox_folder_id=providers.folder_ids.get("inbox", ""),
+                    download_dir=Path(tmpdir),
+                    sender_filter=mailbox_provider_cfg.get("scan_sender", "noreply@virtualpostmail.com"),
+                    subject_filter=mailbox_provider_cfg.get("scan_subject_prefix", "[Scan Request]"),
+                    dry_run=dry_run,
+                )
             stats["emails_found"] = ingestion.emails_found
             errors.extend(ingestion.errors)
             processed_pdfs = ingestion.ingested
@@ -373,6 +386,20 @@ def _build_providers(cfg: Config, credentials: dict, data_dir: Path):
     folders_cfg = storage_provider_cfg.get("folders") or {}
     folder_ids = drive.ensure_folder_structure(folders_cfg)
 
+    # Build VPM provider if credentials are available
+    vpm = None
+    mailbox_provider_cfg = (cfg.get("mailbox", "providers") or [{}])[0]
+    if mailbox_provider_cfg.get("type") == "vpm" and mailbox_provider_cfg.get("enabled", True):
+        vpm_creds = credentials.get("vpm", {})
+        vpm_username = vpm_creds.get("username", "")
+        vpm_password = vpm_creds.get("password", "")
+        if vpm_username and vpm_password:
+            from postmule.providers.mailbox.vpm import VpmProvider
+            vpm = VpmProvider(vpm_username, vpm_password)
+            log.info("VPM direct API provider configured")
+        else:
+            log.debug("VPM credentials not set — ingestion will use Gmail fallback")
+
     return Providers(
         gmail=gmail,
         drive=drive,
@@ -380,6 +407,7 @@ def _build_providers(cfg: Config, credentials: dict, data_dir: Path):
         llm=llm,
         safety_agent=safety_agent,
         folder_ids=folder_ids,
+        vpm=vpm,
     )
 
 

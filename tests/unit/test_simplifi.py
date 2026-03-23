@@ -30,9 +30,25 @@ class TestSimplifiGetRecentTransactions:
 
 class TestSimplifiUpdateTransactionName:
     def test_returns_false(self):
+        """Simplifi has no rename API — always returns False."""
         provider = SimplifiProvider("user", "pass")
         result = provider.update_transaction_name("txn-id", "New Name")
         assert result is False
+
+    def test_returns_false_for_any_input(self):
+        provider = SimplifiProvider("user", "pass")
+        assert provider.update_transaction_name("", "") is False
+        assert provider.update_transaction_name("x", "y") is False
+
+    def test_logs_info_not_warning(self, caplog):
+        """Should log at INFO level — this is a known limitation, not an error."""
+        import logging
+        provider = SimplifiProvider("user", "pass")
+        with caplog.at_level(logging.INFO, logger="postmule.finance.simplifi"):
+            provider.update_transaction_name("txn-123", "AT&T")
+        assert any("txn-123" in r.message for r in caplog.records)
+        assert all(r.levelno <= logging.INFO for r in caplog.records
+                   if "txn-123" in r.message)
 
 
 class TestParseTransactionRow:
