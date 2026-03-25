@@ -5,16 +5,15 @@
 ---
 
 ## Last Completed
-Issues #35, #36, #37 — In-app Help section, GitHub docs, entity UI polish.
-- **#37**: Entity expand button replaced with CSS-rotated chevron `›` (`.entity-expand-chevron`). `payment_address` field added to entity schema v3 (`entities.py` migrate + add_entity), API save handler, and entity detail panel (view + edit modes with textarea).
-- **#36**: Created `docs/` with Mermaid diagrams: `architecture.md`, `workflows.md`, `providers.md`, `installation.md`, `configuration.md`. README updated with Mermaid graph + doc links.
-- **#35**: Help nav item added (`/help`, `/help/installation`, `/help/configuration` routes). `architecture.svg` created. Help page block added to `page.html` with three tabs: Overview (SVG + components table + pipeline steps), Installation (step-by-step guide), Configuration (config section tables). 620 tests passing.
+Issue #38 — Providers page: added missing providers to all tabs, unhid Developer tab.
+- **mockup_dashboard.html**: Email tab got ProtonMail + Generic IMAP; Physical Mail got Traveling Mailbox + PostScan Mail; Finance got Plaid + Simplifi + Monarch Money; Developer pane had `style="display:none;"` removed.
+- **page.html**: already had all providers — no changes needed.
 
 ## Next
 Work the issues in this order (check `gh issue list --repo PostMule/app` for current state):
 
-1. **#33** — Entities page UI overhaul (depends on #32 ✓)
-2. **#34** — Mail page inline reassignment UI (independent, can be done any time)
+1. **#34** — Mail page inline reassignment UI
+2. **#39** — In-app Feedback button
 3. **#30** — End-to-end validation (BLOCKED — do not start; user will unblock manually)
 
 ## Mid-Session Decisions (active)
