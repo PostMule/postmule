@@ -5,16 +5,19 @@
 ---
 
 ## Last Completed
-Mockup sync — added all missing features to `mockup_dashboard.html`:
-- **Help section**: added Help button to switcher bar, Help link to nav, full `sec-help` section (Overview/Installation/Configuration tabs matching page.html), `helpTab()` JS function, updated `NAV_MAP` to include `help`.
-- **Feedback modal**: added CSS styles, updated Feedback button onclick to open modal, added full modal HTML (type selector, title, description, steps-to-reproduce, contact email, success state), added JS (`closeFeedbackModal`, `updateFeedbackType`, `submitFeedbackMockup`). Mockup uses a simulated success instead of calling `/api/feedback`.
+Issue #34 — Mail page inline reassignment UI:
+- `bills/notices/forward_to_me.py`: added `set_category_override(data_dir, id, category)` (soft override, mirrors `entity_override_id` pattern)
+- `api.py`: new `POST /api/mail/<id>/category` endpoint (respects dry_run); valid categories: Bill, Notice, ForwardToMe, Personal, Junk, NeedsReview
+- `pages.py`: mail route honors `category_override` field when setting `_type` on items
+- `page.html`: replaced `entityPicker` x-data on mail items with new `mailReassign` Alpine component — Edit button expands inline row with category chip picker + entity search + one Save button for both
+- `style.css`: added `.mail-edit-btn`, `.mail-edit-row`, `.cat-chip`, `.cat-chip--active` styles
+- `mockup_dashboard.html`: Edit button on all items; Verizon item shows open edit panel
 
 ## Next
 Work the issues in this order (check `gh issue list --repo PostMule/app` for current state):
 
-1. **#34** — Mail page inline reassignment UI
-2. **#39** — In-app Feedback button
-3. **#30** — End-to-end validation (BLOCKED — do not start; user will unblock manually)
+1. **#39** — In-app Feedback button (note: feedback modal HTML + `/api/feedback` GitHub endpoint already exist in `page.html` and `api.py`; issue needs local-first `data/feedback.json` log + footer placement + context fields)
+2. **#30** — End-to-end validation (BLOCKED — do not start; user will unblock manually)
 
 ## Mid-Session Decisions (active)
 - **Friendly name is primary, must be unique.** Canonical `name` (LLM-extracted) shown as secondary muted text. Validation must block save if friendly_name already exists on another entity.
