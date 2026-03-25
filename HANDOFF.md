@@ -5,9 +5,9 @@
 ---
 
 ## Last Completed
-Issue #38 — Providers page: added missing providers to all tabs, unhid Developer tab.
-- **mockup_dashboard.html**: Email tab got ProtonMail + Generic IMAP; Physical Mail got Traveling Mailbox + PostScan Mail; Finance got Plaid + Simplifi + Monarch Money; Developer pane had `style="display:none;"` removed.
-- **page.html**: already had all providers — no changes needed.
+Mockup sync — added all missing features to `mockup_dashboard.html`:
+- **Help section**: added Help button to switcher bar, Help link to nav, full `sec-help` section (Overview/Installation/Configuration tabs matching page.html), `helpTab()` JS function, updated `NAV_MAP` to include `help`.
+- **Feedback modal**: added CSS styles, updated Feedback button onclick to open modal, added full modal HTML (type selector, title, description, steps-to-reproduce, contact email, success state), added JS (`closeFeedbackModal`, `updateFeedbackType`, `submitFeedbackMockup`). Mockup uses a simulated success instead of calling `/api/feedback`.
 
 ## Next
 Work the issues in this order (check `gh issue list --repo PostMule/app` for current state):
