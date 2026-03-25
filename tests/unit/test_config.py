@@ -83,21 +83,21 @@ class TestValidate:
             load_config(path)
 
     def test_no_llm_provider_raises(self, tmp_path, minimal_config_data):
-        minimal_config_data["llm"]["providers"] = [{"type": "gemini", "enabled": False}]
+        minimal_config_data["llm"]["providers"] = [{"service": "gemini", "enabled": False}]
         path = tmp_path / "config.yaml"
         path.write_text(yaml.dump(minimal_config_data))
         with pytest.raises(ConfigError, match="llm"):
             load_config(path)
 
     def test_no_email_provider_raises(self, tmp_path, minimal_config_data):
-        minimal_config_data["email"]["providers"] = [{"type": "gmail", "enabled": False}]
+        minimal_config_data["email"]["providers"] = [{"service": "gmail", "enabled": False}]
         path = tmp_path / "config.yaml"
         path.write_text(yaml.dump(minimal_config_data))
         with pytest.raises(ConfigError, match="email"):
             load_config(path)
 
     def test_no_storage_provider_raises(self, tmp_path, minimal_config_data):
-        minimal_config_data["storage"]["providers"] = [{"type": "google_drive", "enabled": False}]
+        minimal_config_data["storage"]["providers"] = [{"service": "google_drive", "enabled": False}]
         path = tmp_path / "config.yaml"
         path.write_text(yaml.dump(minimal_config_data))
         with pytest.raises(ConfigError, match="storage"):

@@ -102,6 +102,44 @@ class TestGeminiParseResponse:
         assert result.recipients == []
         assert result.amount_due is None
 
+    def test_statement_date_and_ach_descriptor_parsed(self):
+        raw = json.dumps({
+            "category": "Bill",
+            "confidence": 0.92,
+            "sender": "ATT",
+            "recipients": ["Alice"],
+            "amount_due": 94.0,
+            "due_date": "2025-04-05",
+            "account_number": "1234",
+            "summary": "Monthly bill",
+            "statement_date": "2025-03-15",
+            "ach_descriptor": "ATT*PAYMENT 800-555-0100",
+        })
+        result = self.provider._parse_response(raw, tokens_used=100)
+        assert result.statement_date == "2025-03-15"
+        assert result.ach_descriptor == "ATT*PAYMENT 800-555-0100"
+
+    def test_statement_date_and_ach_descriptor_default_to_none(self):
+        raw = json.dumps({
+            "category": "Bill",
+            "confidence": 0.9,
+            "sender": "Verizon",
+            "recipients": [],
+            "amount_due": 50.0,
+            "due_date": "2025-05-01",
+            "account_number": None,
+            "summary": "Bill",
+        })
+        result = self.provider._parse_response(raw, tokens_used=50)
+        assert result.statement_date is None
+        assert result.ach_descriptor is None
+
+    def test_dry_run_returns_none_for_new_fields(self):
+        provider = GeminiProvider(api_key="test-key")
+        result = provider.classify("some text", dry_run=True)
+        assert result.statement_date is None
+        assert result.ach_descriptor is None
+
 
 class TestGeminiClassifyWithMockedClient:
     def test_calls_safety_agent_before_api(self):

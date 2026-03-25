@@ -15,6 +15,7 @@ reconciles transactions with your bank — all running on your own machine.
 - **Modular providers** — Swap virtual mailbox, email, storage, LLM, and finance providers with one config line
 - **Zero lock-in** — All data stored as plain JSON files; Google Sheets is a generated view
 - **Privacy-first** — Runs locally; credentials encrypted with Fernet, master password in system keyring
+- **Web dashboard** — Local browser UI (localhost:5000) for reviewing mail, managing bills, editing entities, and configuring all connections; optional Tailscale for remote access
 - **Retroactive processing** — Process your full mail history in one command
 
 ## Status
@@ -24,7 +25,7 @@ See [build phases](CLAUDE.md#build-order--status) for detailed progress.
 
 ## Requirements
 
-- Python 3.11+
+- Python 3.12+
 - Windows 11 (primary target; macOS/Linux may work with minor adjustments)
 - A supported virtual mailbox service (VirtualPostMail, Earth Class Mail, etc.)
 - A supported email provider for notifications (default: Gmail)

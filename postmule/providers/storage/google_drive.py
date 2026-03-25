@@ -173,6 +173,34 @@ class DriveProvider:
             _, done = downloader.next_chunk()
         return buffer.getvalue()
 
+    def upload_bytes(
+        self,
+        data: bytes,
+        filename: str,
+        folder_id: str,
+        mimetype: str = "application/octet-stream",
+    ) -> str:
+        """Upload arbitrary bytes to a Drive folder; return the file ID."""
+        from googleapiclient.http import MediaInMemoryUpload  # type: ignore[import]
+
+        svc = self._get_service()
+        metadata = {"name": filename, "parents": [folder_id]}
+        media = MediaInMemoryUpload(data, mimetype=mimetype, resumable=False)
+        file = svc.files().create(
+            body=metadata,
+            media_body=media,
+            fields="id, name",
+        ).execute()
+        file_id = file["id"]
+        log.info(f"Uploaded bytes: {filename} -> Drive ({file_id})")
+        return file_id
+
+    def delete_file(self, file_id: str) -> None:
+        """Permanently delete a file from Drive by ID."""
+        svc = self._get_service()
+        svc.files().delete(fileId=file_id).execute()
+        log.info(f"Deleted Drive file: {file_id}")
+
     def list_folder(self, folder_id: str) -> list[dict[str, str]]:
         """
         List files in a Drive folder.

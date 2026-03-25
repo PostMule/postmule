@@ -94,6 +94,44 @@ class GmailProvider:
 
         return emails
 
+    def list_emails_with_pdf_attachments(self) -> list[EmailMessage]:
+        """Return all unprocessed emails that contain at least one PDF attachment.
+
+        Used for the bill_intake pipeline step (Phase 23). Searches for any email
+        with a PDF attachment that has not yet been labelled as processed.
+        """
+        svc = self._get_service()
+        self._get_or_create_label()
+
+        query = f"has:attachment filename:pdf -label:{self.label_name}"
+        log.debug(f"Gmail bill-intake query: {query}")
+
+        messages: list[dict] = []
+        page_token = None
+
+        while True:
+            kwargs: dict[str, Any] = {"userId": "me", "q": query, "maxResults": 100}
+            if page_token:
+                kwargs["pageToken"] = page_token
+
+            result = svc.users().messages().list(**kwargs).execute()
+            messages.extend(result.get("messages", []))
+            log.debug(f"Retrieved {len(messages)} bill-intake candidates so far...")
+
+            page_token = result.get("nextPageToken")
+            if not page_token:
+                break
+
+        log.info(f"Found {len(messages)} unprocessed emails with PDF attachments")
+
+        emails = []
+        for msg_ref in messages:
+            email = self._load_email(svc, msg_ref["id"])
+            if email:
+                emails.append(email)
+
+        return emails
+
     def mark_as_processed(self, message_id: str) -> None:
         """Apply the configured label to an email to mark it as processed."""
         svc = self._get_service()

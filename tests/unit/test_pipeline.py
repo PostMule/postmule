@@ -25,14 +25,14 @@ def minimal_config(tmp_path):
         "app": {"dry_run": False, "install_dir": str(tmp_path)},
         "notifications": {"alert_email": "test@example.com"},
         "llm": {
-            "providers": [{"type": "gemini", "enabled": True}],
+            "providers": [{"service": "gemini", "enabled": True}],
             "classification_confidence_threshold": 0.80,
         },
         "email": {
-            "providers": [{"type": "gmail", "enabled": True, "address": "test@gmail.com"}]
+            "providers": [{"service": "gmail", "enabled": True, "address": "test@gmail.com"}]
         },
         "storage": {
-            "providers": [{"type": "google_drive", "enabled": True, "root_folder": "PostMule"}]
+            "providers": [{"service": "google_drive", "enabled": True, "root_folder": "PostMule"}]
         },
         "data_protection": {"max_files_moved_per_run": 50},
         "deployment": {"dashboard_port": 5000},

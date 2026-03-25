@@ -48,6 +48,35 @@ def test_to_sheet_rows(tmp_path):
     bills = load_bills(tmp_path, 2025)
     rows = to_sheet_rows(bills)
     assert rows[0] == ["ID", "Date Received", "Date Processed", "Sender", "Recipients",
-                       "Amount Due", "Due Date", "Account Number", "Summary",
+                       "Amount Due", "Due Date", "Statement Date", "Account Number", "ACH Descriptor", "Summary",
                        "Drive File ID", "Filename", "Status", "Matched Transaction ID", "Alert Sent Date"]
     assert rows[1][3] == "ATT"
+
+
+def test_to_sheet_rows_includes_new_fields(tmp_path):
+    add_bill(tmp_path, {
+        "date_received": "2025-03-01",
+        "sender": "ATT",
+        "amount_due": 94.0,
+        "recipients": ["Alice"],
+        "statement_date": "2025-03-15",
+        "ach_descriptor": "ATT*PAYMENT",
+    })
+    bills = load_bills(tmp_path, 2025)
+    rows = to_sheet_rows(bills)
+    header = rows[0]
+    data_row = rows[1]
+    stmt_idx = header.index("Statement Date")
+    ach_idx = header.index("ACH Descriptor")
+    assert data_row[stmt_idx] == "2025-03-15"
+    assert data_row[ach_idx] == "ATT*PAYMENT"
+
+
+def test_new_fields_default_to_empty_in_sheet_rows(tmp_path):
+    add_bill(tmp_path, {"date_received": "2025-03-01", "sender": "PGE", "amount_due": 50.0})
+    bills = load_bills(tmp_path, 2025)
+    rows = to_sheet_rows(bills)
+    header = rows[0]
+    data_row = rows[1]
+    assert data_row[header.index("Statement Date")] == ""
+    assert data_row[header.index("ACH Descriptor")] == ""

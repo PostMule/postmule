@@ -35,3 +35,17 @@ class StorageProvider(Protocol):
     def ensure_folder_structure(self, folders: dict[str, str]) -> dict[str, str]:
         """Create all required folders if absent; return {key: folder_id}."""
         ...
+
+    def upload_bytes(
+        self,
+        data: bytes,
+        filename: str,
+        folder_id: str,
+        mimetype: str = "application/octet-stream",
+    ) -> str:
+        """Upload arbitrary bytes; return the remote file ID."""
+        ...
+
+    def delete_file(self, file_id: str) -> None:
+        """Permanently delete a file by ID."""
+        ...

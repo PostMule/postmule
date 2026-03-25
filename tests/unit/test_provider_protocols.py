@@ -97,6 +97,12 @@ class TestStorageProviderProtocol:
             def ensure_folder_structure(self, folders):
                 return {}
 
+            def upload_bytes(self, data, filename, folder_id, mimetype="application/octet-stream"):
+                return "file-id"
+
+            def delete_file(self, file_id):
+                pass
+
         return MyStorage()
 
     def test_concrete_class_with_all_methods_is_instance(self):

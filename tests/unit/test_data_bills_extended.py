@@ -190,4 +190,4 @@ class TestToSheetRowsEdgeCases:
         row = rows[1]
         # All fields should be empty strings or "pending"
         assert row[0] == ""   # id
-        assert row[11] == "pending"  # status default
+        assert row[13] == "pending"  # status default (index shifted by 2 new fields)

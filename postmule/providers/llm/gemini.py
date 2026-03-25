@@ -34,7 +34,9 @@ Respond with ONLY a valid JSON object — no markdown, no explanation. Use this 
   "amount_due": <float or null>,
   "due_date": "<YYYY-MM-DD or null>",
   "account_number": "<last 4 digits only, or null>",
-  "summary": "<one sentence description>"
+  "summary": "<one sentence description>",
+  "statement_date": "<YYYY-MM-DD or null — the billing cycle/statement date, if different from due_date>",
+  "ach_descriptor": "<ACH/bank descriptor string as it would appear on a bank statement, or null>"
 }}
 
 Category definitions:
@@ -111,6 +113,8 @@ class GeminiProvider:
                 due_date=None,
                 account_number=None,
                 summary="[dry-run — no API call made]",
+            statement_date=None,
+            ach_descriptor=None,
             )
 
         names_str = ", ".join(known_names) if known_names else "unknown"
@@ -164,6 +168,8 @@ class GeminiProvider:
                 due_date=None,
                 account_number=None,
                 summary="Could not parse LLM response",
+                statement_date=None,
+                ach_descriptor=None,
                 tokens_used=tokens_used,
                 raw_response=raw,
             )
@@ -186,6 +192,8 @@ class GeminiProvider:
             due_date=data.get("due_date"),
             account_number=data.get("account_number"),
             summary=data.get("summary", ""),
+            statement_date=data.get("statement_date"),
+            ach_descriptor=data.get("ach_descriptor"),
             tokens_used=tokens_used,
             raw_response=raw,
         )

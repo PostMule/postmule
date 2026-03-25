@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PostMule — {{ title }}</title>
   <link rel="stylesheet" href="/static/style.css">
+  <!-- Apply accessibility prefs synchronously to avoid flash of wrong theme/size -->
+  <script>
+    (function() {
+      var fs = localStorage.getItem('a11y-font-size');
+      var hc = localStorage.getItem('a11y-high-contrast');
+      if (fs) document.documentElement.setAttribute('data-font-size', fs);
+      if (hc === '1') document.documentElement.setAttribute('data-theme', 'high-contrast');
+    })();
+  </script>
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
   <script src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
 </head>
@@ -46,15 +55,55 @@
         {% endfor %}
       </nav>
       <div class="header-date" aria-label="Today's date">{{ today }}</div>
-      {% if auth_enabled and is_authenticated %}
-      <a href="/logout" class="header-logout" aria-label="Sign out">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-          <polyline points="16 17 21 12 16 7"/>
-          <line x1="21" y1="12" x2="9" y2="12"/>
-        </svg>
-        Sign out
-      </a>
+      <button class="feedback-nav-btn" id="feedbackOpenBtn" aria-label="Send feedback" onclick="document.getElementById('feedbackModal').removeAttribute('hidden');document.getElementById('feedbackTitle').focus();">Feedback</button>
+      <!-- Accessibility toolbar -->
+      <div x-data="{ open: false, fontSize: localStorage.getItem('a11y-font-size') || 'default', hc: localStorage.getItem('a11y-high-contrast') === '1' }"
+           @click.outside="open = false" @keydown.escape.window="open = false" style="position:relative">
+        <button class="a11y-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Accessibility options" title="Accessibility options">Aa</button>
+        <div class="a11y-menu" x-show="open" x-cloak role="dialog" aria-label="Accessibility options">
+          <div class="a11y-menu-section">
+            <div class="a11y-menu-label" id="a11y-size-label">Text size</div>
+            <div class="a11y-size-btns" role="group" aria-labelledby="a11y-size-label">
+              <button class="a11y-size-btn" :class="{ active: fontSize === 'default' }" @click="fontSize='default'; localStorage.setItem('a11y-font-size','default'); document.documentElement.removeAttribute('data-font-size')" aria-label="Default text size" :aria-pressed="(fontSize==='default').toString()">A</button>
+              <button class="a11y-size-btn" style="font-size:1.05em" :class="{ active: fontSize === 'large' }" @click="fontSize='large'; localStorage.setItem('a11y-font-size','large'); document.documentElement.setAttribute('data-font-size','large')" aria-label="Large text size" :aria-pressed="(fontSize==='large').toString()">A+</button>
+              <button class="a11y-size-btn" style="font-size:1.15em" :class="{ active: fontSize === 'xl' }" @click="fontSize='xl'; localStorage.setItem('a11y-font-size','xl'); document.documentElement.setAttribute('data-font-size','xl')" aria-label="Extra large text size" :aria-pressed="(fontSize==='xl').toString()">A++</button>
+            </div>
+          </div>
+          <div class="a11y-menu-section">
+            <div class="a11y-menu-label">Display</div>
+            <button class="a11y-contrast-btn" :class="{ active: hc }" @click="hc=!hc; localStorage.setItem('a11y-high-contrast', hc ? '1' : '0'); hc ? document.documentElement.setAttribute('data-theme','high-contrast') : document.documentElement.removeAttribute('data-theme')" :aria-pressed="hc.toString()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20z" fill="currentColor"/></svg>
+              High contrast
+            </button>
+          </div>
+        </div>
+      </div>
+      {% if auth_enabled %}
+        {% if is_authenticated %}
+        <div class="header-user" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
+          <button class="header-user-btn" @click="open = !open" :aria-expanded="open.toString()" aria-haspopup="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            </svg>
+            Admin
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" :style="open ? 'transform:rotate(180deg)' : ''">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="header-user-menu" x-show="open" x-cloak>
+            <a href="/logout" class="header-user-menu-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Sign out
+            </a>
+          </div>
+        </div>
+        {% else %}
+        <a href="/login" class="header-login-btn">Login</a>
+        {% endif %}
       {% endif %}
     </div>
   </header>
@@ -73,22 +122,50 @@
         </div>
       </div>
     </div>
-    <div class="stat-grid">
-      <div class="card">
-        <div class="stat-label">Last Run</div>
-        <div class="stat-value">
-          {% if last_run %}{{ last_run.get('end_time','')[:16] }} &mdash; {{ last_run.get('status','') }}{% else %}Never{% endif %}
+
+    {# ── Last Run card (full width, prominent) ─────────────────── #}
+    {% if last_run %}
+    {% set run_status = last_run.get('status','') %}
+    <div class="last-run-card {% if run_status == 'failed' %}last-run-card--error{% elif run_status == 'partial' %}last-run-card--warning{% else %}last-run-card--ok{% endif %}">
+      <div class="last-run-indicator"></div>
+      <div class="last-run-body">
+        <div class="last-run-label">Last Run</div>
+        <div class="last-run-time">{{ last_run.get('end_time','')[:16].replace('T',' ') }}</div>
+        <div class="last-run-detail">
+          <span class="last-run-status {% if run_status == 'failed' %}last-run-status--error{% elif run_status == 'partial' %}last-run-status--warning{% else %}last-run-status--ok{% endif %}">{{ run_status|upper }}</span>
+          &nbsp;&middot;&nbsp; {{ last_run.get('pdfs_processed', 0) }} item{% if last_run.get('pdfs_processed', 0) != 1 %}s{% endif %} processed
+          {% if run_status in ('failed', 'partial') %}
+          &nbsp;&middot;&nbsp; <a href="/logs" class="last-run-logs-link">View logs &rarr;</a>
+          {% endif %}
         </div>
       </div>
-      <div class="card">
-        <div class="stat-label">Awaiting Forwarding</div>
-        <div class="stat-value--number {% if pending_ftm_count > 0 %}stat-value--alert{% else %}stat-value--ok{% endif %}">{{ pending_ftm_count }}</div>
-      </div>
-      <div class="card">
-        <div class="stat-label">Pending Bills</div>
-        <div class="stat-value--number stat-value--warning">{{ pending_bills_count }}</div>
+    </div>
+    {% else %}
+    <div class="last-run-card last-run-card--none">
+      <div class="last-run-indicator"></div>
+      <div class="last-run-body">
+        <div class="last-run-label">Last Run</div>
+        <div class="last-run-time" style="color:#8A9BB0">Never</div>
+        <div class="last-run-detail" style="color:#8A9BB0">No pipeline runs recorded yet.</div>
       </div>
     </div>
+    {% endif %}
+
+    {# ── Clickable summary counts ──────────────────────────────── #}
+    <div class="stat-grid">
+      <a class="card stat-card-link" href="/forward">
+        <div class="stat-label">Awaiting Forwarding</div>
+        <div class="stat-value--number {% if pending_ftm_count > 0 %}stat-value--alert{% else %}stat-value--ok{% endif %}">{{ pending_ftm_count }}</div>
+        <div class="stat-card-hint">{% if pending_ftm_count > 0 %}Action required &rarr;{% else %}All clear{% endif %}</div>
+      </a>
+      <a class="card stat-card-link" href="/bills">
+        <div class="stat-label">Pending Bills</div>
+        <div class="stat-value--number {% if pending_bills_count > 0 %}stat-value--warning{% else %}stat-value--ok{% endif %}">{{ pending_bills_count }}</div>
+        <div class="stat-card-hint">{% if pending_bills_count > 0 %}Review bills &rarr;{% else %}All clear{% endif %}</div>
+      </a>
+    </div>
+
+    {# ── Run buttons ──────────────────────────────────────────── #}
     <div class="run-grid" x-data="{ running: false }">
       <button class="btn btn-primary"
               :disabled="running"
@@ -108,22 +185,7 @@
       </button>
     </div>
 
-    {% elif page == 'mail' %}
-    <div class="page-title-row">
-      <h1 class="page-title">Mail</h1>
-      <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false">
-        <button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Mail">?</button>
-        <div class="help-popover" x-show="open" @click.outside="open = false" x-cloak>
-          <p>All mail items PostMule has processed — bills, general notices, and items flagged for forwarding. Items are sorted by date received, newest first.</p>
-          <p>Click <strong>Wrong entity?</strong> on any item to correct its sender association. That correction is logged and used to improve future matching.</p>
-        </div>
-      </div>
-    </div>
-    {% set bar_class = {
-      'Bill':        'mail-bar--bill',
-      'Notice':      'mail-bar--notice',
-      'ForwardToMe': 'mail-bar--forward'
-    } %}
+    {# ── Recent activity feed ─────────────────────────────────── #}
     {% set badge_class = {
       'Bill':        'badge--bill',
       'ForwardToMe': 'badge--forward',
@@ -132,52 +194,225 @@
       'Junk':        'badge--junk',
       'NeedsReview': 'badge--needs-review'
     } %}
-    {% for item in items %}
-    {% set is_read = item._type in ('Junk', 'Personal') %}
-    <div class="mail-item"
-         x-data="entityPicker('{{ item.get('id','') }}', '{{ item.get('entity_override_id','') }}')"
-         @keydown.escape="open = false">
-      <div class="mail-bar {{ bar_class.get(item._type, 'mail-bar--default') }}"></div>
-      <div class="mail-body">
-        <div class="mail-header">
-          <div class="{{ 'mail-sender--read' if is_read else 'mail-sender' }}">{{ item.get('sender','Unknown') }}</div>
-          <div class="mail-date">{{ item.get('date_received','') }}</div>
-        </div>
-        <div class="mail-summary">{{ item.get('summary','') }}</div>
-        <div class="mail-footer">
+    <div class="recent-activity">
+      <div class="recent-activity-header">Recent Activity</div>
+      {% if recent_items %}
+      {% for item in recent_items %}
+      <div class="recent-item">
+        <div class="recent-item-left">
           <span class="badge {{ badge_class.get(item._type, 'badge--junk') }}">{{ item._type.upper() }}</span>
-          {% if item.get('drive_file_id') %}<a href="/pdf/{{ item.get('id') }}" target="_blank" class="pdf-link">View PDF</a>{% endif %}
-          {% if item.get('entity_override_id') %}<span class="entity-override-badge" title="Entity manually overridden">&#10003; Corrected</span>{% endif %}
-          <button class="entity-fix-btn" @click="open = !open">Wrong entity?</button>
         </div>
-        <div x-show="open" x-cloak class="entity-picker">
-          <div class="entity-picker-label">Assign to entity:</div>
-          <input class="entity-picker-search" type="text" placeholder="Search entities\u2026" x-model="query" @input="filter()">
-          <div class="entity-picker-list">
-            {% for entity in entities %}
-            <div class="entity-picker-option"
-                 x-show="matchedIds.includes('{{ entity.id }}')"
-                 @click="select('{{ entity.id }}', '{{ entity.canonical_name|replace("'","\\'")|replace('"','\\"') }}')">
-              {{ entity.canonical_name }}
-              <span class="entity-badge entity-badge--{{ entity.get('category','biller') }}">{{ entity.get('category','biller') }}</span>
-            </div>
-            {% endfor %}
-          </div>
-          <label class="entity-picker-alias-label">
-            <input type="checkbox" x-model="addAlias">
-            Add &ldquo;{{ item.get('sender','') }}&rdquo; as alias on selected entity
-          </label>
-          <div class="entity-picker-actions">
-            <button class="btn btn-primary btn-sm" @click="save('{{ item.get('sender','') | replace("'", "\\'") }}')" :disabled="!selectedId">Save</button>
-            <button class="btn btn-secondary btn-sm" @click="open = false">Cancel</button>
-          </div>
-          <div x-show="saved" x-cloak class="entity-picker-saved">Saved.</div>
+        <div class="recent-item-body">
+          <div class="recent-item-sender">{{ item.get('sender','Unknown') }}</div>
+          <div class="recent-item-summary">{{ item.get('summary','') }}</div>
         </div>
+        <div class="recent-item-date">{{ item.get('date_received','') }}</div>
+      </div>
+      {% endfor %}
+      <div style="margin-top:10px;font-size:0.8125rem;">
+        <a href="/mail" style="color:#7A9CC4;text-decoration:none;font-weight:500;">View all mail &rarr;</a>
+      </div>
+      {% else %}
+      <div class="text-muted" style="padding:16px 0">No mail items yet.</div>
+      {% endif %}
+    </div>
+
+    {% elif page == 'mail' %}
+    <div x-data="mailHub('{{ initial_tab }}')">
+
+    {# ── Status widget ──────────────────────────────────────────── #}
+    <div class="mail-status-bar">
+      <div class="mail-status-run">
+        {% if last_run %}
+        {% set rs = last_run.get('status','ok') %}
+        <span class="mail-status-dot mail-status-dot--{{ 'error' if rs == 'failed' else ('warning' if rs == 'partial' else 'ok') }}"></span>
+        <span class="mail-status-label">Last run {{ last_run.get('end_time','')[:16].replace('T',' ') }}</span>
+        <a href="/logs" class="mail-status-logslink">Logs &rarr;</a>
+        {% else %}
+        <span class="mail-status-dot mail-status-dot--none"></span>
+        <span class="mail-status-label" style="color:#8A9BB0">Never run</span>
+        {% endif %}
+      </div>
+      <div class="mail-status-counts">
+        {% if pending_ftm_count > 0 %}
+        <span class="mail-status-count mail-status-count--alert">{{ pending_ftm_count }} forward pending</span>
+        {% endif %}
+        {% if pending_bills_count > 0 %}
+        <span class="mail-status-count mail-status-count--warning">{{ pending_bills_count }} bills unmatched</span>
+        {% endif %}
+      </div>
+      <div class="mail-status-actions" x-data="{ running: false }">
+        <button class="btn btn-primary btn-sm"
+                :disabled="running"
+                x-text="running ? 'Running\u2026' : 'Run Now'"
+                @click="running = true"
+                hx-post="/api/run"
+                hx-vals='{"dry_run": "false"}'
+                hx-swap="none">Run Now</button>
+        <button class="btn btn-secondary btn-sm"
+                :disabled="running"
+                hx-post="/api/run"
+                hx-vals='{"dry_run": "true"}'
+                hx-swap="none">Dry Run</button>
       </div>
     </div>
-    {% else %}
-    <div class="text-muted">No mail items found.</div>
-    {% endfor %}
+
+    {# ── Filter bar ─────────────────────────────────────────────── #}
+    <div class="mail-filter-bar">
+      <div class="mail-filter-tabs" role="tablist" aria-label="Mail type filter">
+        <button id="tab-mail-all" role="tab" class="mail-filter-tab" :class="{ active: typeFilter === 'all' }" @click="typeFilter = 'all'" :aria-selected="(typeFilter === 'all').toString()" aria-controls="panel-mail-list">All</button>
+        <button id="tab-mail-bill" role="tab" class="mail-filter-tab" :class="{ active: typeFilter === 'Bill' }" @click="typeFilter = 'Bill'" :aria-selected="(typeFilter === 'Bill').toString()" aria-controls="panel-mail-list">Bills</button>
+        <button id="tab-mail-notice" role="tab" class="mail-filter-tab" :class="{ active: typeFilter === 'Notice' }" @click="typeFilter = 'Notice'" :aria-selected="(typeFilter === 'Notice').toString()" aria-controls="panel-mail-list">Notices</button>
+        <button id="tab-mail-forward" role="tab" class="mail-filter-tab" :class="{ active: typeFilter === 'ForwardToMe' }" @click="typeFilter = 'ForwardToMe'" :aria-selected="(typeFilter === 'ForwardToMe').toString()" aria-controls="panel-mail-list">Forward To Me</button>
+        <button id="tab-mail-unassigned" role="tab" class="mail-filter-tab mail-filter-tab--unassigned" :class="{ active: typeFilter === 'unassigned' }" @click="typeFilter = 'unassigned'" :aria-selected="(typeFilter === 'unassigned').toString()" aria-controls="panel-unassigned">
+          Unassigned{% if pending_matches %} <span class="mail-filter-badge">{{ pending_matches|length }}</span>{% endif %}
+        </button>
+      </div>
+      <div class="mail-filter-right">
+        <label for="mail-year-select" class="visually-hidden">Filter by year</label>
+        <select id="mail-year-select" class="mail-year-select" aria-label="Filter by year" @change="changeYear($event.target.value)">
+          {% for yr in range(today[:4]|int, today[:4]|int - 4, -1) %}
+          <option value="{{ yr }}" {% if yr == year %}selected{% endif %}>{{ yr }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    {# ── Unassigned: entity match proposals ─────────────────────── #}
+    <div id="panel-unassigned" role="tabpanel" aria-labelledby="tab-mail-unassigned" x-show="typeFilter === 'unassigned'" x-cloak>
+      {% for match in pending_matches %}
+      <div data-match-row class="match-row">
+        <div class="match-row__body">
+          <div class="match-name">&ldquo;{{ match.proposed_name }}&rdquo;</div>
+          <div class="match-detail">Looks like: {{ match.match_entity_id }} &mdash; {{ '%.0f'|format(match.similarity * 100) }}% similar</div>
+          <div class="match-auto">Auto-approves: {{ match.auto_approve_after }}</div>
+          {% if match.get('source_mail_id') %}<a href="/pdf/{{ match.source_mail_id }}" target="_blank" class="pdf-link">View source PDF</a>{% endif %}
+        </div>
+        <button class="btn btn-primary btn-sm"
+                hx-post="/api/approve"
+                hx-vals='{"match_id": "{{ match.id }}"}'
+                hx-target="closest [data-match-row]"
+                hx-swap="outerHTML">Approve</button>
+        <button class="btn btn-danger btn-sm"
+                hx-post="/api/deny"
+                hx-vals='{"match_id": "{{ match.id }}"}'
+                hx-target="closest [data-match-row]"
+                hx-swap="outerHTML">Deny</button>
+      </div>
+      {% else %}
+      <div class="text-muted">No unassigned entity proposals.</div>
+      {% endfor %}
+    </div>
+
+    {# ── Unified mail list ──────────────────────────────────────── #}
+    <div id="panel-mail-list" role="tabpanel" aria-labelledby="tab-mail-all tab-mail-bill tab-mail-notice tab-mail-forward" x-show="typeFilter !== 'unassigned'">
+      {% set bar_class = {
+        'Bill':        'mail-bar--bill',
+        'Notice':      'mail-bar--notice',
+        'ForwardToMe': 'mail-bar--forward'
+      } %}
+      {% set badge_class = {
+        'Bill':        'badge--bill',
+        'ForwardToMe': 'badge--forward',
+        'Notice':      'badge--notice',
+        'Personal':    'badge--personal',
+        'Junk':        'badge--junk',
+        'NeedsReview': 'badge--needs-review'
+      } %}
+      {% set type_display = {
+        'Bill':        'BILL',
+        'Notice':      'NOTICE',
+        'ForwardToMe': 'FORWARD',
+        'Personal':    'PERSONAL',
+        'Junk':        'JUNK',
+        'NeedsReview': 'NEEDS REVIEW'
+      } %}
+      {% for item in items %}
+      {% set is_read = item._type in ('Junk', 'Personal') %}
+      {% set match = pending_by_sender.get(item.get('sender', '')|lower) %}
+      <div class="mail-item"
+           x-show="typeFilter === 'all' || typeFilter === '{{ item._type }}'"
+           x-data="entityPicker('{{ item.get('id','') }}', '{{ item.get('entity_override_id','') }}')"
+           @keydown.escape="open = false">
+        <div class="mail-bar {{ bar_class.get(item._type, 'mail-bar--default') }}"></div>
+        <div class="mail-body">
+          <div class="mail-header">
+            <div class="{{ 'mail-sender--read' if is_read else 'mail-sender' }}">{{ item.get('sender','Unknown') }}</div>
+            <div class="mail-date">{{ item.get('date_received','') }}</div>
+          </div>
+          <div class="mail-summary">{{ item.get('summary','') }}</div>
+          {% if item._type == 'Bill' and item.get('due_date') %}
+          <div class="mail-due-row">
+            <span class="mail-due-label">Due {{ item.get('due_date') }}</span>
+            {% if item.get('amount_due') %}<span class="mail-due-amount">${{ '%.2f'|format(item.get('amount_due', 0)) }}</span>{% endif %}
+            {% if item.get('status') %}<span class="status-badge">{{ item.get('status','').upper() }}</span>{% endif %}
+          </div>
+          {% endif %}
+          {% if item._type == 'ForwardToMe' and item.get('forwarding_status') == 'pending' %}
+          <div class="mail-forward-alert">ACTION REQUIRED &mdash; contact your mailbox to ship this item</div>
+          {% endif %}
+          <div class="mail-footer">
+            <span class="badge {{ badge_class.get(item._type, 'badge--junk') }}">{{ type_display.get(item._type, item._type.upper()) }}</span>
+            {% if item.get('drive_file_id') %}<a href="/pdf/{{ item.get('id') }}" target="_blank" class="pdf-link">View PDF</a>{% endif %}
+            {% if item.get('entity_override_id') %}<span class="entity-override-badge" title="Entity manually overridden">&#10003; Corrected</span>{% endif %}
+            <button class="entity-fix-btn" @click="open = !open">Wrong entity?</button>
+          </div>
+          {% if match %}
+          <div class="mail-unassigned-row" data-match-row>
+            <span class="mail-unassigned-label">Unassigned &mdash; looks like <strong>{{ match.match_entity_id }}</strong> ({{ '%.0f'|format(match.similarity * 100) }}% match)</span>
+            <button class="btn btn-primary btn-sm"
+                    hx-post="/api/approve"
+                    hx-vals='{"match_id": "{{ match.id }}"}'
+                    hx-target="closest [data-match-row]"
+                    hx-swap="outerHTML">Approve</button>
+            <button class="btn btn-danger btn-sm"
+                    hx-post="/api/deny"
+                    hx-vals='{"match_id": "{{ match.id }}"}'
+                    hx-target="closest [data-match-row]"
+                    hx-swap="outerHTML">Deny</button>
+          </div>
+          {% endif %}
+          <div x-show="open" x-cloak class="entity-picker">
+            <div class="entity-picker-label">Assign to entity:</div>
+            <input class="entity-picker-search" type="text" placeholder="Search entities&#x2026;" x-model="query" @input="filter()" aria-label="Search entities">
+            <div class="entity-picker-list">
+              {% for entity in entities %}
+              <div class="entity-picker-option"
+                   x-show="matchedIds.includes('{{ entity.id }}')"
+                   @click="select('{{ entity.id }}', '{{ entity.canonical_name|replace("'","\\'")|replace('"','\\"') }}')">
+                {{ entity.canonical_name }}              </div>
+              {% endfor %}
+            </div>
+            <label class="entity-picker-alias-label">
+              <input type="checkbox" x-model="addAlias">
+              Add &ldquo;{{ item.get('sender','') }}&rdquo; as alias on selected entity
+            </label>
+            <div class="entity-picker-actions">
+              <button class="btn btn-primary btn-sm" @click="save('{{ item.get('sender','') | replace("'", "\\'") }}')" :disabled="!selectedId">Save</button>
+              <button class="btn btn-secondary btn-sm" @click="open = false">Cancel</button>
+            </div>
+            <div x-show="saved" x-cloak class="entity-picker-saved" aria-live="polite" role="status">Saved.</div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-muted">No mail items found.</div>
+      {% endfor %}
+    </div>
+
+    </div>{# end mailHub #}
+    <script>
+    function mailHub(initialTab) {
+      var tabKeyMap = { bills: 'Bill', forward: 'ForwardToMe', notices: 'Notice', unassigned: 'unassigned', all: 'all' };
+      var tabRevMap = { Bill: 'bills', ForwardToMe: 'forward', Notice: 'notices', unassigned: 'unassigned', all: 'all' };
+      return {
+        typeFilter: tabKeyMap[initialTab] || 'all',
+        changeYear: function(yr) {
+          window.location.href = '/mail?year=' + yr + '&tab=' + (tabRevMap[this.typeFilter] || 'all');
+        }
+      };
+    }
+    </script>
 
     {% elif page == 'bills' %}
     <div class="page-title-row">
@@ -191,12 +426,13 @@
       </div>
     </div>
     <div class="table-wrap">
-      <table class="data-table">
+      <table class="data-table" aria-label="Bills">
         <thead>
           <tr>
             <th>Sender</th>
             <th>Amount</th>
             <th>Due</th>
+            <th>Statement Date</th>
             <th>Status</th>
             <th>Source</th>
           </tr>
@@ -208,18 +444,20 @@
             <td class="td-sender">
               {{ bill.get('sender','') }}
               {% if bill.get('entity_override_id') %}<span class="entity-override-badge" title="Entity manually overridden">&#10003;</span>{% endif %}
-              <button class="entity-fix-btn entity-fix-btn--inline" @click="open = !open">&#9998;</button>
+              <button class="entity-fix-btn entity-fix-btn--inline" @click="open = !open" :aria-expanded="open.toString()" :aria-label="'Override entity for ' + '{{ bill.get('sender','') }}'">&#9998;<span class="visually-hidden">Override entity</span></button>
+              {% if bill.get('ach_descriptor') %}<div class="td-ach-descriptor" title="ACH descriptor">{{ bill.get('ach_descriptor') }}</div>{% endif %}
             </td>
             <td class="td-amount">${{ '%.2f'|format(bill.get('amount_due',0)) }}</td>
             <td class="td-due">{{ bill.get('due_date','') }}</td>
+            <td class="td-statement-date">{{ bill.get('statement_date','') or '—' }}</td>
             <td><span class="status-badge">{{ bill.get('status','pending').upper() }}</span></td>
             <td>{% if bill.get('drive_file_id') %}<a href="/pdf/{{ bill.get('id') }}" target="_blank" class="pdf-link">View PDF</a>{% else %}—{% endif %}</td>
           </tr>
           <tr x-show="open" x-cloak>
-            <td colspan="5" class="td-picker-cell">
+            <td colspan="6" class="td-picker-cell">
               <div class="entity-picker entity-picker--table">
                 <div class="entity-picker-label">Assign to entity:</div>
-                <input class="entity-picker-search" type="text" placeholder="Search entities&#x2026;" x-model="query" @input="filter()">
+                <input class="entity-picker-search" type="text" placeholder="Search entities&#x2026;" x-model="query" @input="filter()" aria-label="Search entities">
                 <div class="entity-picker-list">
                   {% for entity in entities %}
                   <div class="entity-picker-option"
@@ -238,12 +476,12 @@
                   <button class="btn btn-primary btn-sm" @click="save()" :disabled="!selectedId">Save</button>
                   <button class="btn btn-secondary btn-sm" @click="open = false">Cancel</button>
                 </div>
-                <div x-show="saved" x-cloak class="entity-picker-saved">Saved.</div>
+                <div x-show="saved" x-cloak class="entity-picker-saved" aria-live="polite" role="status">Saved.</div>
               </div>
             </td>
           </tr>
         {% else %}
-          <tr><td colspan="5" class="td-center">No bills found.</td></tr>
+          <tr><td colspan="6" class="td-center">No bills found.</td></tr>
         {% endfor %}
         </tbody>
       </table>
@@ -299,22 +537,27 @@
     {% if not entities %}
     <div class="text-muted">No entities found. Run PostMule to discover entities from your mail.</div>
     {% else %}
-    <table class="entity-table">
+    <div role="search">
+      <label for="entity-search" class="visually-hidden">Search entities</label>
+      <input type="text" class="entity-search-input" id="entity-search"
+             oninput="filterEntities(this.value)"
+             placeholder="Filter entities&#x2026;" autocomplete="off" aria-label="Search entities">
+    </div>
+    <table class="entity-table" aria-label="Entities">
       <thead>
         <tr>
           <th>Name</th>
-          <th>Category</th>
           <th>Aliases</th>
           <th>Accounts</th>
           <th>Last Seen</th>
           <th></th>
         </tr>
       </thead>
-      <tbody>
-        {% for entity in entities %}
-        <tr x-data="{ open: false, editing: false }" class="entity-tr">
+      {% for entity in entities %}
+      <tbody class="entity-group" x-data="{ open: false }"
+             data-search="{{ (entity.canonical_name + ' ' + entity.aliases|join(' '))|lower }}">
+        <tr class="entity-tr">
           <td class="entity-name-cell">{{ entity.canonical_name }}</td>
-          <td><span class="entity-badge entity-badge--{{ entity.get('category','biller') }}">{{ entity.get('category','biller') }}</span></td>
           <td class="entity-aliases-cell">{{ entity.aliases | join(', ') }}</td>
           <td class="entity-accounts-cell">{{ entity.get('account_numbers', []) | length }}</td>
           <td class="entity-lastseen-cell">
@@ -322,12 +565,12 @@
             <a href="/pdf/{{ entity.last_seen_in_mail_id }}" target="_blank" class="pdf-link">View</a>
             {% else %}&mdash;{% endif %}
           </td>
-          <td><button class="entity-expand-btn" @click="open = !open" :aria-expanded="open">
-            <span x-text="open ? '▲' : '▼'"></span>
+          <td><button class="entity-expand-btn" @click="open = !open" :aria-expanded="open.toString()" :aria-label="open ? 'Collapse ' + '{{ entity.canonical_name }}' : 'Expand ' + '{{ entity.canonical_name }}'">
+            <span x-text="open ? '▲' : '▼'" aria-hidden="true"></span>
           </button></td>
         </tr>
         <tr x-show="open" x-cloak class="entity-detail-tr">
-          <td colspan="6">
+          <td colspan="5">
             <div class="entity-detail">
               <!-- Contact & profile -->
               <div class="entity-detail-grid">
@@ -344,7 +587,7 @@
                         hx-swap="none"
                         @htmx:after-request="editing = false">
                     <input type="hidden" name="field" value="phone">
-                    <input class="entity-input" type="text" name="value" value="{{ entity.get('phone') or '' }}" placeholder="e.g. 1-800-555-0100">
+                    <input class="entity-input" type="text" name="value" value="{{ entity.get('phone') or '' }}" placeholder="e.g. 1-800-555-0100" aria-label="Phone number">
                     <button class="save-btn" type="submit">Save</button>
                     <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
                   </form>
@@ -363,7 +606,7 @@
                         hx-swap="none"
                         @htmx:after-request="editing = false">
                     <input type="hidden" name="field" value="website">
-                    <input class="entity-input" type="text" name="value" value="{{ entity.get('website') or '' }}" placeholder="e.g. https://att.com">
+                    <input class="entity-input" type="text" name="value" value="{{ entity.get('website') or '' }}" placeholder="e.g. https://att.com" aria-label="Website URL">
                     <button class="save-btn" type="submit">Save</button>
                     <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
                   </form>
@@ -382,34 +625,12 @@
                         hx-swap="none"
                         @htmx:after-request="editing = false">
                     <input type="hidden" name="field" value="email">
-                    <input class="entity-input" type="email" name="value" value="{{ entity.get('email') or '' }}" placeholder="e.g. billing@att.com">
+                    <input class="entity-input" type="email" name="value" value="{{ entity.get('email') or '' }}" placeholder="e.g. billing@att.com" aria-label="Email address">
                     <button class="save-btn" type="submit">Save</button>
                     <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
                   </form>
                 </div>
 
-                <div class="entity-field" x-data="{ editing: false }">
-                  <div class="entity-field-label">Category
-                    {% if 'category' in entity.get('user_verified_fields', []) %}<span class="verified-badge">✓</span>{% endif %}
-                  </div>
-                  <div x-show="!editing" class="entity-field-value">
-                    {{ entity.get('category') or '—' }}
-                    <button class="edit-btn" @click="editing = true">Edit</button>
-                  </div>
-                  <form x-show="editing" class="entity-inline-form"
-                        hx-post="/api/entity/{{ entity.id }}"
-                        hx-swap="none"
-                        @htmx:after-request="editing = false">
-                    <input type="hidden" name="field" value="category">
-                    <select class="entity-input" name="value">
-                      {% for cat in entity_categories %}
-                      <option value="{{ cat }}" {% if cat == entity.get('category') %}selected{% endif %}>{{ cat }}</option>
-                      {% endfor %}
-                    </select>
-                    <button class="save-btn" type="submit">Save</button>
-                    <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
-                  </form>
-                </div>
               </div>
 
               <!-- Address -->
@@ -429,11 +650,11 @@
                       hx-swap="none"
                       @htmx:after-request="editing = false">
                   <input type="hidden" name="field" value="address">
-                  <input class="entity-input" type="text" name="address_street" value="{{ addr.get('street') or '' }}" placeholder="Street">
-                  <input class="entity-input" type="text" name="address_city" value="{{ addr.get('city') or '' }}" placeholder="City">
-                  <input class="entity-input entity-input--sm" type="text" name="address_state" value="{{ addr.get('state') or '' }}" placeholder="State">
-                  <input class="entity-input entity-input--sm" type="text" name="address_zip" value="{{ addr.get('zip') or '' }}" placeholder="ZIP">
-                  <input class="entity-input entity-input--sm" type="text" name="address_country" value="{{ addr.get('country') or '' }}" placeholder="Country">
+                  <input class="entity-input" type="text" name="address_street" value="{{ addr.get('street') or '' }}" placeholder="Street" aria-label="Street address">
+                  <input class="entity-input" type="text" name="address_city" value="{{ addr.get('city') or '' }}" placeholder="City" aria-label="City">
+                  <input class="entity-input entity-input--sm" type="text" name="address_state" value="{{ addr.get('state') or '' }}" placeholder="State" aria-label="State">
+                  <input class="entity-input entity-input--sm" type="text" name="address_zip" value="{{ addr.get('zip') or '' }}" placeholder="ZIP" aria-label="ZIP code">
+                  <input class="entity-input entity-input--sm" type="text" name="address_country" value="{{ addr.get('country') or '' }}" placeholder="Country" aria-label="Country">
                   <button class="save-btn" type="submit">Save</button>
                   <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
                 </form>
@@ -454,7 +675,7 @@
                       hx-post="/api/entity/{{ entity.id }}/add-account"
                       hx-swap="none"
                       @htmx:after-request="adding = false">
-                  <input class="entity-input" type="text" name="account" placeholder="Account number">
+                  <input class="entity-input" type="text" name="account" placeholder="Account number" aria-label="Account number">
                   <button class="save-btn" type="submit">Add</button>
                   <button class="cancel-btn" type="button" @click="adding = false">Cancel</button>
                 </form>
@@ -474,7 +695,7 @@
                       hx-swap="none"
                       @htmx:after-request="editing = false">
                   <input type="hidden" name="field" value="notes">
-                  <textarea class="entity-textarea" name="value" placeholder="Free-form notes...">{{ entity.get('notes') or '' }}</textarea>
+                  <textarea class="entity-textarea" name="value" placeholder="Free-form notes..." aria-label="Notes">{{ entity.get('notes') or '' }}</textarea>
                   <button class="save-btn" type="submit">Save</button>
                   <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
                 </form>
@@ -491,8 +712,8 @@
             </div>
           </td>
         </tr>
-        {% endfor %}
       </tbody>
+      {% endfor %}
     </table>
     {% endif %}
 
@@ -522,7 +743,7 @@
       <button class="entity-fix-btn" @click="open = !open">Wrong entity?</button>
       <div x-show="open" x-cloak class="entity-picker">
         <div class="entity-picker-label">Assign to entity:</div>
-        <input class="entity-picker-search" type="text" placeholder="Search entities&#x2026;" x-model="query" @input="filter()">
+        <input class="entity-picker-search" type="text" placeholder="Search entities&#x2026;" x-model="query" @input="filter()" aria-label="Search entities">
         <div class="entity-picker-list">
           {% for entity in entities %}
           <div class="entity-picker-option"
@@ -541,7 +762,7 @@
           <button class="btn btn-primary btn-sm" @click="save()" :disabled="!selectedId">Save</button>
           <button class="btn btn-secondary btn-sm" @click="open = false">Cancel</button>
         </div>
-        <div x-show="saved" x-cloak class="entity-picker-saved">Saved.</div>
+        <div x-show="saved" x-cloak class="entity-picker-saved" aria-live="polite" role="status">Saved.</div>
       </div>
     </div>
     {% else %}
@@ -562,18 +783,52 @@
     <div class="log-viewer">{% for line in log_lines %}{{ line }}
 {% endfor %}</div>
 
-    {% elif page == 'connections' %}
+    {% if correction_summary %}
+    <div class="collapsible-section" x-data="{ open: false }">
+      <button class="collapsible-toggle" @click="open = !open" :aria-expanded="open.toString()" aria-controls="entity-corrections-panel">
+        <span>Entity Corrections</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" :style="open ? 'transform:rotate(180deg)' : ''"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div id="entity-corrections-panel" x-show="open" x-cloak style="margin-top:12px;">
+        <p class="text-note" style="margin-bottom:12px;">Senders most frequently reassigned to a different entity. High counts suggest adding an alias on the Entities page.</p>
+        <div class="table-wrap">
+          <table class="data-table" aria-label="Entity corrections">
+            <thead>
+              <tr>
+                <th>Original Sender</th>
+                <th>Corrections</th>
+                <th>Assigned To</th>
+                <th>Alias Added</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for row in correction_summary %}
+              <tr>
+                <td>{{ row.original_sender }}</td>
+                <td class="td-center">{{ row.count }}</td>
+                <td>{{ row.entity_names | join(', ') }}</td>
+                <td class="td-center">{% if row.added_alias %}&#10003;{% else %}—{% endif %}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% elif page == 'providers' %}
     <div class="page-title-row">
-      <h1 class="page-title">Connections</h1>
+      <h1 class="page-title">Providers</h1>
       <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false">
-        <button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Connections">?</button>
+        <button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Providers">?</button>
         <div class="help-popover" x-show="open" @click.outside="open = false" x-cloak>
           <p>PostMule connects to external services to read mail, store files, track finances, and send notifications. This page shows all available providers and lets you configure credentials in-app.</p>
           <p>A green <strong>Active</strong> badge means the provider is selected and credentials are ready. An orange <strong>Setup needed</strong> badge means credentials are missing. Grey <strong>Not active</strong> means a different provider is currently selected.</p>
         </div>
       </div>
     </div>
-    <p class="page-subtitle">Configure service connections for email, storage, physical mail, AI, finance, and notifications.</p>
+    <p class="page-subtitle">Browse all supported providers and configure credentials for each service type.</p>
 
     {% if request.args.get('error') %}
     <div class="banner-error">Error: {{ request.args.get('error')|replace('_',' ') }}. Please try again.</div>
@@ -587,21 +842,29 @@
 
     <div class="conn-tabs-wrapper" x-data="{
       tab: new URLSearchParams(window.location.search).get('tab') || 'email',
+      showAll: true,
       setTab(t) { this.tab = t; history.replaceState(null, '', '?tab=' + t); }
-    }" x-cloak>
+    }" :class="{ 'hide-inactive': !showAll }" x-cloak>
 
-      <div class="conn-tabs" role="tablist">
-        <button class="conn-tab" :class="{ active: tab === 'email' }" @click="setTab('email')" role="tab">Email</button>
-        <button class="conn-tab" :class="{ active: tab === 'storage' }" @click="setTab('storage')" role="tab">Storage</button>
-        <button class="conn-tab" :class="{ active: tab === 'spreadsheet' }" @click="setTab('spreadsheet')" role="tab">Spreadsheet</button>
-        <button class="conn-tab" :class="{ active: tab === 'physical' }" @click="setTab('physical')" role="tab">Physical Mail</button>
-        <button class="conn-tab" :class="{ active: tab === 'ai' }" @click="setTab('ai')" role="tab">AI / LLM</button>
-        <button class="conn-tab" :class="{ active: tab === 'finance' }" @click="setTab('finance')" role="tab">Finance</button>
-        <button class="conn-tab" :class="{ active: tab === 'notifications' }" @click="setTab('notifications')" role="tab">Notifications</button>
+      <div class="conn-tabs" role="tablist" aria-label="Provider categories">
+        <button id="conn-tab-email" class="conn-tab" :class="{ active: tab === 'email' }" @click="setTab('email')" role="tab" :aria-selected="(tab==='email').toString()" aria-controls="conn-panel-email">Email</button>
+        <button id="conn-tab-storage" class="conn-tab" :class="{ active: tab === 'storage' }" @click="setTab('storage')" role="tab" :aria-selected="(tab==='storage').toString()" aria-controls="conn-panel-storage">Storage</button>
+        <button id="conn-tab-spreadsheet" class="conn-tab" :class="{ active: tab === 'spreadsheet' }" @click="setTab('spreadsheet')" role="tab" :aria-selected="(tab==='spreadsheet').toString()" aria-controls="conn-panel-spreadsheet">Spreadsheet</button>
+        <button id="conn-tab-physical" class="conn-tab" :class="{ active: tab === 'physical' }" @click="setTab('physical')" role="tab" :aria-selected="(tab==='physical').toString()" aria-controls="conn-panel-physical">Physical Mail</button>
+        <button id="conn-tab-ai" class="conn-tab" :class="{ active: tab === 'ai' }" @click="setTab('ai')" role="tab" :aria-selected="(tab==='ai').toString()" aria-controls="conn-panel-ai">AI / LLM</button>
+        <button id="conn-tab-finance" class="conn-tab" :class="{ active: tab === 'finance' }" @click="setTab('finance')" role="tab" :aria-selected="(tab==='finance').toString()" aria-controls="conn-panel-finance">Finance</button>
+        <button id="conn-tab-notifications" class="conn-tab" :class="{ active: tab === 'notifications' }" @click="setTab('notifications')" role="tab" :aria-selected="(tab==='notifications').toString()" aria-controls="conn-panel-notifications">Notifications</button>
+        <button id="conn-tab-developer" class="conn-tab" :class="{ active: tab === 'developer' }" @click="setTab('developer')" role="tab" :aria-selected="(tab==='developer').toString()" aria-controls="conn-panel-developer">Developer</button>
+      </div>
+
+      <div class="conn-filter-bar">
+        <button class="conn-filter-btn" :class="{ active: !showAll }" @click="showAll = !showAll" :title="showAll ? 'Show configured only' : 'Show all providers'">
+          <span x-text="showAll ? 'All providers' : 'Configured only'"></span>
+        </button>
       </div>
 
       {# ── EMAIL ── #}
-      <div x-show="tab === 'email'" class="conn-provider-list">
+      <div id="conn-panel-email" role="tabpanel" aria-labelledby="conn-tab-email" x-show="tab === 'email'" class="conn-provider-list">
 
         <div class="conn-provider {% if conn.email.type == 'gmail' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
           <div class="conn-provider-header">
@@ -617,7 +880,7 @@
             <div class="conn-provider-actions">
               {% if conn.email.type != 'gmail' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="email"><input type="hidden" name="type" value="gmail"><input type="hidden" name="tab" value="email">
+                <input type="hidden" name="category" value="email"><input type="hidden" name="service" value="gmail"><input type="hidden" name="tab" value="email">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Gmail</button>
               </form>
               {% elif not conn.google %}<a href="/setup/oauth/google" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Connect Google</a>
@@ -640,11 +903,11 @@
               <div class="conn-provider-desc-small">Microsoft email via OAuth or IMAP</div>
             </div>
             {% if conn.email.type == 'outlook' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            {% else %}<span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.email.type != 'outlook' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="email"><input type="hidden" name="type" value="outlook"><input type="hidden" name="tab" value="email">
+                <input type="hidden" name="category" value="email"><input type="hidden" name="service" value="outlook"><input type="hidden" name="tab" value="email">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Outlook</button>
               </form>{% endif %}
             </div>
@@ -659,11 +922,11 @@
               <div class="conn-provider-desc-small">Any IMAP-compatible email account</div>
             </div>
             {% if conn.email.type == 'imap' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            {% else %}<span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.email.type != 'imap' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="email"><input type="hidden" name="type" value="imap"><input type="hidden" name="tab" value="email">
+                <input type="hidden" name="category" value="email"><input type="hidden" name="service" value="imap"><input type="hidden" name="tab" value="email">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to IMAP</button>
               </form>{% endif %}
             </div>
@@ -673,7 +936,11 @@
       </div>
 
       {# ── STORAGE ── #}
-      <div x-show="tab === 'storage'" class="conn-provider-list">
+      <div id="conn-panel-storage" role="tabpanel" aria-labelledby="conn-tab-storage" x-show="tab === 'storage'" class="conn-provider-list">
+
+        <div style="background:#EEF3F9;border:1px solid #C0D0E4;border-radius:6px;padding:10px 14px;font-size:0.8125rem;color:#2C4A6E;line-height:1.5;">
+          <strong>How PostMule stores your data:</strong> Your data is saved as JSON files — those files live inside your cloud storage provider (e.g., Google Drive). The spreadsheet is a generated view only; editing it has no effect on your data. You can always export your data as CSV or JSON from Settings.
+        </div>
 
         <div class="conn-provider {% if conn.storage.type == 'google_drive' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
           <div class="conn-provider-header">
@@ -689,7 +956,7 @@
             <div class="conn-provider-actions">
               {% if conn.storage.type != 'google_drive' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="storage"><input type="hidden" name="type" value="google_drive"><input type="hidden" name="tab" value="storage">
+                <input type="hidden" name="category" value="storage"><input type="hidden" name="service" value="google_drive"><input type="hidden" name="tab" value="storage">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Drive</button>
               </form>
               {% elif not conn.google %}<a href="/setup/oauth/google" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Connect Google</a>{% endif %}
@@ -708,11 +975,11 @@
               <div class="conn-provider-desc-small">AWS S3 bucket storage</div>
             </div>
             {% if conn.storage.type == 's3' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            {% else %}<span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.storage.type != 's3' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="storage"><input type="hidden" name="type" value="s3"><input type="hidden" name="tab" value="storage">
+                <input type="hidden" name="category" value="storage"><input type="hidden" name="service" value="s3"><input type="hidden" name="tab" value="storage">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to S3</button>
               </form>{% endif %}
             </div>
@@ -727,11 +994,11 @@
               <div class="conn-provider-desc-small">Dropbox cloud storage</div>
             </div>
             {% if conn.storage.type == 'dropbox' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            {% else %}<span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.storage.type != 'dropbox' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="storage"><input type="hidden" name="type" value="dropbox"><input type="hidden" name="tab" value="storage">
+                <input type="hidden" name="category" value="storage"><input type="hidden" name="service" value="dropbox"><input type="hidden" name="tab" value="storage">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Dropbox</button>
               </form>{% endif %}
             </div>
@@ -746,12 +1013,126 @@
               <div class="conn-provider-desc-small">Microsoft OneDrive storage</div>
             </div>
             {% if conn.storage.type == 'onedrive' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            {% else %}<span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.storage.type != 'onedrive' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="storage"><input type="hidden" name="type" value="onedrive"><input type="hidden" name="tab" value="storage">
+                <input type="hidden" name="category" value="storage"><input type="hidden" name="service" value="onedrive"><input type="hidden" name="tab" value="storage">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to OneDrive</button>
+              </form>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="conn-provider {% if conn.storage.type == 'box' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#0061D5;color:white;flex-shrink:0;">Bx</div>
+            <div style="flex:1;min-width:0;">
+              <div class="conn-provider-name">Box</div>
+              <div class="conn-provider-desc-small">Box cloud content storage</div>
+            </div>
+            {% if conn.storage.type == 'box' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            <div class="conn-provider-actions">
+              {% if conn.storage.type != 'box' %}
+              <form method="post" action="/api/connection/provider" style="margin:0;">
+                <input type="hidden" name="category" value="storage"><input type="hidden" name="service" value="box"><input type="hidden" name="tab" value="storage">
+                <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Box</button>
+              </form>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="conn-provider {% if conn.storage.type == 'b2' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#E84C30;color:white;flex-shrink:0;">B2</div>
+            <div style="flex:1;min-width:0;">
+              <div class="conn-provider-name">Backblaze B2</div>
+              <div class="conn-provider-desc-small">Backblaze B2 cloud storage</div>
+            </div>
+            {% if conn.storage.type == 'b2' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            <div class="conn-provider-actions">
+              {% if conn.storage.type != 'b2' %}
+              <form method="post" action="/api/connection/provider" style="margin:0;">
+                <input type="hidden" name="category" value="storage"><input type="hidden" name="service" value="b2"><input type="hidden" name="tab" value="storage">
+                <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to B2</button>
+              </form>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="conn-provider {% if conn.storage.type == 'icloud_drive' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#555;color:white;flex-shrink:0;">iC</div>
+            <div style="flex:1;min-width:0;">
+              <div class="conn-provider-name">iCloud Drive</div>
+              <div class="conn-provider-desc-small">Apple iCloud Drive storage</div>
+            </div>
+            {% if conn.storage.type == 'icloud_drive' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            <div class="conn-provider-actions">
+              {% if conn.storage.type != 'icloud_drive' %}
+              <form method="post" action="/api/connection/provider" style="margin:0;">
+                <input type="hidden" name="category" value="storage"><input type="hidden" name="service" value="icloud_drive"><input type="hidden" name="tab" value="storage">
+                <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to iCloud</button>
+              </form>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="conn-provider {% if conn.storage.type == 'mega' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#D9272E;color:white;flex-shrink:0;">Mg</div>
+            <div style="flex:1;min-width:0;">
+              <div class="conn-provider-name">MEGA</div>
+              <div class="conn-provider-desc-small">MEGA encrypted cloud storage</div>
+            </div>
+            {% if conn.storage.type == 'mega' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            <div class="conn-provider-actions">
+              {% if conn.storage.type != 'mega' %}
+              <form method="post" action="/api/connection/provider" style="margin:0;">
+                <input type="hidden" name="category" value="storage"><input type="hidden" name="service" value="mega"><input type="hidden" name="tab" value="storage">
+                <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to MEGA</button>
+              </form>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="conn-provider {% if conn.storage.type == 'pcloud' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#20B2AA;color:white;flex-shrink:0;">pC</div>
+            <div style="flex:1;min-width:0;">
+              <div class="conn-provider-name">pCloud</div>
+              <div class="conn-provider-desc-small">pCloud cloud storage</div>
+            </div>
+            {% if conn.storage.type == 'pcloud' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            <div class="conn-provider-actions">
+              {% if conn.storage.type != 'pcloud' %}
+              <form method="post" action="/api/connection/provider" style="margin:0;">
+                <input type="hidden" name="category" value="storage"><input type="hidden" name="service" value="pcloud"><input type="hidden" name="tab" value="storage">
+                <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to pCloud</button>
+              </form>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="conn-provider {% if conn.storage.type == 'webdav' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#4A6080;color:white;flex-shrink:0;">WD</div>
+            <div style="flex:1;min-width:0;">
+              <div class="conn-provider-name">WebDAV</div>
+              <div class="conn-provider-desc-small">Any WebDAV-compatible server</div>
+            </div>
+            {% if conn.storage.type == 'webdav' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            <div class="conn-provider-actions">
+              {% if conn.storage.type != 'webdav' %}
+              <form method="post" action="/api/connection/provider" style="margin:0;">
+                <input type="hidden" name="category" value="storage"><input type="hidden" name="service" value="webdav"><input type="hidden" name="tab" value="storage">
+                <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to WebDAV</button>
               </form>{% endif %}
             </div>
           </div>
@@ -760,7 +1141,11 @@
       </div>
 
       {# ── SPREADSHEET ── #}
-      <div x-show="tab === 'spreadsheet'" class="conn-provider-list">
+      <div id="conn-panel-spreadsheet" role="tabpanel" aria-labelledby="conn-tab-spreadsheet" x-show="tab === 'spreadsheet'" class="conn-provider-list">
+
+        <div style="background:#FFF8E7;border:1px solid #E8C96A;border-radius:6px;padding:10px 14px;font-size:0.8125rem;color:#6B4A00;line-height:1.5;">
+          <strong>Read-only view.</strong> The spreadsheet is generated from your JSON data files — it is not the database. Editing the spreadsheet directly has no effect on PostMule's data.
+        </div>
 
         <div class="conn-provider {% if conn.spreadsheet.type == 'google_sheets' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
           <div class="conn-provider-header">
@@ -776,7 +1161,7 @@
             <div class="conn-provider-actions">
               {% if conn.spreadsheet.type != 'google_sheets' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="spreadsheet"><input type="hidden" name="type" value="google_sheets"><input type="hidden" name="tab" value="spreadsheet">
+                <input type="hidden" name="category" value="spreadsheet"><input type="hidden" name="service" value="google_sheets"><input type="hidden" name="tab" value="spreadsheet">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Sheets</button>
               </form>
               {% elif not conn.google %}<a href="/setup/oauth/google" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Connect Google</a>{% endif %}
@@ -795,11 +1180,11 @@
               <div class="conn-provider-desc-small">Microsoft Excel via OneDrive</div>
             </div>
             {% if conn.spreadsheet.type == 'excel_online' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            {% else %}<span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.spreadsheet.type != 'excel_online' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="spreadsheet"><input type="hidden" name="type" value="excel_online"><input type="hidden" name="tab" value="spreadsheet">
+                <input type="hidden" name="category" value="spreadsheet"><input type="hidden" name="service" value="excel_online"><input type="hidden" name="tab" value="spreadsheet">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Excel</button>
               </form>{% endif %}
             </div>
@@ -814,11 +1199,11 @@
               <div class="conn-provider-desc-small">Airtable base as spreadsheet backend</div>
             </div>
             {% if conn.spreadsheet.type == 'airtable' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            {% else %}<span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.spreadsheet.type != 'airtable' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="spreadsheet"><input type="hidden" name="type" value="airtable"><input type="hidden" name="tab" value="spreadsheet">
+                <input type="hidden" name="category" value="spreadsheet"><input type="hidden" name="service" value="airtable"><input type="hidden" name="tab" value="spreadsheet">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Airtable</button>
               </form>{% endif %}
             </div>
@@ -837,7 +1222,7 @@
             <div class="conn-provider-actions">
               {% if conn.spreadsheet.type and conn.spreadsheet.type != 'none' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="spreadsheet"><input type="hidden" name="type" value="none"><input type="hidden" name="tab" value="spreadsheet">
+                <input type="hidden" name="category" value="spreadsheet"><input type="hidden" name="service" value="none"><input type="hidden" name="tab" value="spreadsheet">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Disable</button>
               </form>{% endif %}
             </div>
@@ -847,7 +1232,7 @@
       </div>
 
       {# ── PHYSICAL MAIL ── #}
-      <div x-show="tab === 'physical'" class="conn-provider-list">
+      <div id="conn-panel-physical" role="tabpanel" aria-labelledby="conn-tab-physical" x-show="tab === 'physical'" class="conn-provider-list">
 
         <div class="conn-provider {% if conn.mailbox.type == 'vpm' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
           <div class="conn-provider-header">
@@ -863,7 +1248,7 @@
             <div class="conn-provider-actions">
               {% if conn.mailbox.type != 'vpm' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="mailbox"><input type="hidden" name="type" value="vpm"><input type="hidden" name="tab" value="physical">
+                <input type="hidden" name="category" value="mailbox"><input type="hidden" name="service" value="vpm"><input type="hidden" name="tab" value="physical">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to VPM</button>
               </form>{% endif %}
             </div>
@@ -915,11 +1300,11 @@
               <div class="conn-provider-desc-small">EarthClass digital mailbox</div>
             </div>
             {% if conn.mailbox.type == 'earth_class' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            {% else %}<span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.mailbox.type != 'earth_class' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="mailbox"><input type="hidden" name="type" value="earth_class"><input type="hidden" name="tab" value="physical">
+                <input type="hidden" name="category" value="mailbox"><input type="hidden" name="service" value="earth_class"><input type="hidden" name="tab" value="physical">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to EarthClass</button>
               </form>{% endif %}
             </div>
@@ -934,11 +1319,11 @@
               <div class="conn-provider-desc-small">Traveling Mailbox digital service</div>
             </div>
             {% if conn.mailbox.type == 'traveling_mailbox' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            {% else %}<span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.mailbox.type != 'traveling_mailbox' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="mailbox"><input type="hidden" name="type" value="traveling_mailbox"><input type="hidden" name="tab" value="physical">
+                <input type="hidden" name="category" value="mailbox"><input type="hidden" name="service" value="traveling_mailbox"><input type="hidden" name="tab" value="physical">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Traveling Mailbox</button>
               </form>{% endif %}
             </div>
@@ -953,11 +1338,11 @@
               <div class="conn-provider-desc-small">PostScan digital mailbox</div>
             </div>
             {% if conn.mailbox.type == 'postscan' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            {% else %}<span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.mailbox.type != 'postscan' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="mailbox"><input type="hidden" name="type" value="postscan"><input type="hidden" name="tab" value="physical">
+                <input type="hidden" name="category" value="mailbox"><input type="hidden" name="service" value="postscan"><input type="hidden" name="tab" value="physical">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to PostScan</button>
               </form>{% endif %}
             </div>
@@ -967,7 +1352,7 @@
       </div>
 
       {# ── AI / LLM ── #}
-      <div x-show="tab === 'ai'" class="conn-provider-list">
+      <div id="conn-panel-ai" role="tabpanel" aria-labelledby="conn-tab-ai" x-show="tab === 'ai'" class="conn-provider-list">
 
         <div class="conn-provider {% if conn.llm.type == 'gemini' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
           <div class="conn-provider-header">
@@ -983,7 +1368,7 @@
             <div class="conn-provider-actions">
               {% if conn.llm.type != 'gemini' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="llm"><input type="hidden" name="type" value="gemini"><input type="hidden" name="tab" value="ai">
+                <input type="hidden" name="category" value="llm"><input type="hidden" name="service" value="gemini"><input type="hidden" name="tab" value="ai">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Gemini</button>
               </form>
               {% elif not conn.google %}<a href="/setup/oauth/google" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Connect Google</a>{% endif %}
@@ -1008,7 +1393,7 @@
             <div class="conn-provider-actions">
               {% if conn.llm.type != 'anthropic' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="llm"><input type="hidden" name="type" value="anthropic"><input type="hidden" name="tab" value="ai">
+                <input type="hidden" name="category" value="llm"><input type="hidden" name="service" value="anthropic"><input type="hidden" name="tab" value="ai">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Claude</button>
               </form>{% endif %}
             </div>
@@ -1044,7 +1429,7 @@
             <div class="conn-provider-actions">
               {% if conn.llm.type != 'openai' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="llm"><input type="hidden" name="type" value="openai"><input type="hidden" name="tab" value="ai">
+                <input type="hidden" name="category" value="llm"><input type="hidden" name="service" value="openai"><input type="hidden" name="tab" value="ai">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to OpenAI</button>
               </form>{% endif %}
             </div>
@@ -1078,7 +1463,7 @@
             <div class="conn-provider-actions">
               {% if conn.llm.type != 'ollama' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="llm"><input type="hidden" name="type" value="ollama"><input type="hidden" name="tab" value="ai">
+                <input type="hidden" name="category" value="llm"><input type="hidden" name="service" value="ollama"><input type="hidden" name="tab" value="ai">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Ollama</button>
               </form>{% endif %}
             </div>
@@ -1091,7 +1476,7 @@
       </div>
 
       {# ── FINANCE ── #}
-      <div x-show="tab === 'finance'" class="conn-provider-list">
+      <div id="conn-panel-finance" role="tabpanel" aria-labelledby="conn-tab-finance" x-show="tab === 'finance'" class="conn-provider-list">
 
         <div class="conn-provider {% if conn.finance.type == 'ynab' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
           <div class="conn-provider-header">
@@ -1107,7 +1492,7 @@
             <div class="conn-provider-actions">
               {% if conn.finance.type != 'ynab' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="finance"><input type="hidden" name="type" value="ynab"><input type="hidden" name="tab" value="finance">
+                <input type="hidden" name="category" value="finance"><input type="hidden" name="service" value="ynab"><input type="hidden" name="tab" value="finance">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to YNAB</button>
               </form>{% endif %}
             </div>
@@ -1149,7 +1534,7 @@
             <div class="conn-provider-actions">
               {% if conn.finance.type != 'plaid' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="finance"><input type="hidden" name="type" value="plaid"><input type="hidden" name="tab" value="finance">
+                <input type="hidden" name="category" value="finance"><input type="hidden" name="service" value="plaid"><input type="hidden" name="tab" value="finance">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Plaid</button>
               </form>{% endif %}
             </div>
@@ -1168,7 +1553,7 @@
             <div class="conn-provider-actions">
               {% if conn.finance.type != 'simplifi' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="finance"><input type="hidden" name="type" value="simplifi"><input type="hidden" name="tab" value="finance">
+                <input type="hidden" name="category" value="finance"><input type="hidden" name="service" value="simplifi"><input type="hidden" name="tab" value="finance">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Simplifi</button>
               </form>{% endif %}
             </div>
@@ -1187,7 +1572,7 @@
             <div class="conn-provider-actions">
               {% if conn.finance.type != 'monarch' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="finance"><input type="hidden" name="type" value="monarch"><input type="hidden" name="tab" value="finance">
+                <input type="hidden" name="category" value="finance"><input type="hidden" name="service" value="monarch"><input type="hidden" name="tab" value="finance">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Monarch</button>
               </form>{% endif %}
             </div>
@@ -1196,8 +1581,48 @@
 
       </div>
 
+      {# ── DEVELOPER / GITHUB ── #}
+      <div id="conn-panel-developer" role="tabpanel" aria-labelledby="conn-tab-developer" x-show="tab === 'developer'" class="conn-provider-list">
+
+        <div style="background:#EEF3F9;border:1px solid #C0D0E4;border-radius:6px;padding:10px 14px;font-size:0.8125rem;color:#2C4A6E;line-height:1.5;margin-bottom:4px;">
+          A GitHub Personal Access Token (PAT) with <code>issues:write</code> permission lets users submit bug reports and feature requests directly from the app — no GitHub account required. The token is stored in your encrypted credentials vault.
+        </div>
+
+        <div class="conn-provider conn-provider--active">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#24292F;color:white;flex-shrink:0;">GH</div>
+            <div style="flex:1;min-width:0;">
+              <div class="conn-provider-name">GitHub (Feedback)</div>
+              <div class="conn-provider-desc-small">Submit feedback as GitHub issues without a CLI</div>
+            </div>
+          </div>
+          <div class="conn-provider-body">
+            <div class="conn-cred-form">
+              <div class="conn-cred-row">
+                <label for="github-pat">Personal Access Token</label>
+                <form method="post" action="/api/credential" style="display:contents;">
+                  <input type="hidden" name="provider" value="github"><input type="hidden" name="field" value="pat"><input type="hidden" name="tab" value="developer">
+                  <input type="password" id="github-pat" name="value" placeholder="github_pat_…" autocomplete="off">
+                  <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+                </form>
+              </div>
+              <div class="conn-cred-row">
+                <label for="github-repo">Target repo <span style="font-weight:400;color:#8A9BB0;">(optional)</span></label>
+                <form method="post" action="/api/credential" style="display:contents;">
+                  <input type="hidden" name="provider" value="github"><input type="hidden" name="field" value="repo"><input type="hidden" name="tab" value="developer">
+                  <input type="text" id="github-repo" name="value" placeholder="PostMule/app" autocomplete="off">
+                  <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+                </form>
+              </div>
+              <p class="conn-cred-note">Leave target repo blank to use the default <code>PostMule/app</code>. Fork users can point it at their own repo.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
       {# ── NOTIFICATIONS ── #}
-      <div x-show="tab === 'notifications'" class="conn-provider-list">
+      <div id="conn-panel-notifications" role="tabpanel" aria-labelledby="conn-tab-notifications" x-show="tab === 'notifications'" class="conn-provider-list">
 
         <div class="conn-provider conn-provider--active">
           <div class="conn-provider-header">
@@ -1244,20 +1669,20 @@
     <p class="text-note">Saved to <code class="code-tag">config.yaml</code>. API keys and passwords live in the encrypted credentials file and are not shown here.</p>
 
     <form method="post" action="/api/settings">
-    <div class="s-tabs">
-      <button type="button" class="s-tab active" onclick="sTab('general',this)">General</button>
-      <button type="button" class="s-tab" onclick="sTab('notifications',this)">Notifications</button>
-      <button type="button" class="s-tab" onclick="sTab('mail',this)">Mail Intake</button>
-      <button type="button" class="s-tab" onclick="sTab('finance',this)">Finance</button>
-      <button type="button" class="s-tab" onclick="sTab('ai',this)">AI</button>
-      <button type="button" class="s-tab" onclick="sTab('storage',this)">Storage</button>
-      <button type="button" class="s-tab" onclick="sTab('system',this)">System</button>
+    <div class="s-tabs" role="tablist" aria-label="Settings categories">
+      <button id="stab-btn-general" type="button" class="s-tab active" role="tab" aria-selected="true" aria-controls="stab-general" onclick="sTab('general',this)">General</button>
+      <button id="stab-btn-notifications" type="button" class="s-tab" role="tab" aria-selected="false" aria-controls="stab-notifications" onclick="sTab('notifications',this)">Notifications</button>
+      <button id="stab-btn-mail" type="button" class="s-tab" role="tab" aria-selected="false" aria-controls="stab-mail" onclick="sTab('mail',this)">Mail Intake</button>
+      <button id="stab-btn-finance" type="button" class="s-tab" role="tab" aria-selected="false" aria-controls="stab-finance" onclick="sTab('finance',this)">Finance</button>
+      <button id="stab-btn-ai" type="button" class="s-tab" role="tab" aria-selected="false" aria-controls="stab-ai" onclick="sTab('ai',this)">AI</button>
+      <button id="stab-btn-storage" type="button" class="s-tab" role="tab" aria-selected="false" aria-controls="stab-storage" onclick="sTab('storage',this)">Storage</button>
+      <button id="stab-btn-system" type="button" class="s-tab" role="tab" aria-selected="false" aria-controls="stab-system" onclick="sTab('system',this)">System</button>
     </div>
 
     <!-- ── TAB: General ─────────────────────────────────── -->
-    <div id="stab-general" class="s-pane active">
+    <div id="stab-general" class="s-pane active" role="tabpanel" aria-labelledby="stab-btn-general">
       <div class="s-card">
-        <h3>Application</h3>
+        <h3>Application <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Application">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>Controls top-level app behavior. Enable Dry Run to simulate a full run without moving files, sending emails, or writing any data — safe for testing your setup.</p></div></div></h3>
         <div class="s-row">
           <div class="s-label">Dry Run
             <div class="s-help">Simulate all actions — no files moved, no emails sent. Safe for testing.</div>
@@ -1269,7 +1694,7 @@
         </div>
       </div>
       <div class="s-card">
-        <h3>Schedule</h3>
+        <h3>Schedule <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Schedule">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>When the daily pipeline runs automatically. The time and timezone are written into Windows Task Scheduler — change them here and save to update the schedule.</p></div></div></h3>
         <div class="s-row">
           <div class="s-label">Daily Run Time
             <div class="s-help">24-hour time for the automatic daily run. Configured in Windows Task Scheduler.</div>
@@ -1290,7 +1715,7 @@
         </div>
       </div>
       <div class="s-card">
-        <h3>Logging</h3>
+        <h3>Logging <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Logging">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>Controls how much detail is written to log files. Verbose logs roll daily and are kept for a configurable number of days. Processing logs are kept per year. Use the Logs page to read recent entries.</p></div></div></h3>
         <div class="s-row">
           <div class="s-label">Log Level
             <div class="s-help">Verbosity of log output. INFO is recommended for normal use.</div>
@@ -1320,16 +1745,24 @@
     </div>
 
     <!-- ── TAB: Notifications ───────────────────────────── -->
-    <div id="stab-notifications" class="s-pane">
+    <div id="stab-notifications" class="s-pane" role="tabpanel" aria-labelledby="stab-btn-notifications">
       <div class="s-card">
-        <h3>Alerts</h3>
+        <h3>Alerts <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Alerts">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>Where PostMule sends daily summaries and urgent notifications (e.g. ForwardToMe items, overdue bills). The secondary email is CC'd on all alerts. Bill due alerts fire this many days before a bill's due date.</p></div></div></h3>
         <div class="s-row">
-          <div class="s-label">Alert Email
+          <div class="s-label">Primary Alert Email
             <div class="s-help">Where PostMule sends the daily summary and urgent alerts.</div>
           </div>
           <input class="s-input" type="email" name="notifications_alert_email"
                  placeholder="you@example.com"
                  value="{{ cfg.get('notifications',{}).get('alert_email','') }}">
+        </div>
+        <div class="s-row">
+          <div class="s-label">Secondary Alert Email
+            <div class="s-help">Optional second recipient for all alerts (e.g. a spouse or accountant).</div>
+          </div>
+          <input class="s-input" type="email" name="notifications_alert_email_secondary"
+                 placeholder="other@example.com"
+                 value="{{ cfg.get('notifications',{}).get('alert_email_secondary','') }}">
         </div>
         <div class="s-row">
           <div class="s-label">Urgent Forward-To-Me Alert
@@ -1355,9 +1788,9 @@
     </div>
 
     <!-- ── TAB: Mail Intake ──────────────────────────────── -->
-    <div id="stab-mail" class="s-pane">
+    <div id="stab-mail" class="s-pane" role="tabpanel" aria-labelledby="stab-btn-mail">
       <div class="s-card">
-        <h3>Physical Mailbox Provider</h3>
+        <h3>Physical Mailbox Provider <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Physical Mailbox Provider">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>Your virtual mailbox service — the company that receives and scans your physical mail. PostMule polls its notification emails to detect new scans. VirtualPostMail (VPM) is the default.</p></div></div></h3>
         <div class="s-row">
           <div class="s-label">Provider Type
             <div class="s-help">Your virtual mailbox service.</div>
@@ -1393,77 +1826,15 @@
         </div>
       </div>
       <div class="s-card">
-        <h3>Email — Mailbox Notifications Account</h3>
-        {% set embox = email_by_role.get('mailbox_notifications', {}) %}
-        <div class="s-row">
-          <div class="s-label">Provider Type</div>
-          <select class="s-select" name="email_mbox_type">
-            {% set emt = embox.get('type','gmail') %}
-            {% for t,l in [('gmail','Gmail'),('outlook','Outlook / Microsoft 365'),('imap','Generic IMAP')] %}
-            <option value="{{ t }}" {% if emt == t %}selected{% endif %}>{{ l }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="s-row">
-          <div class="s-label">Enabled</div>
-          <div class="s-check">
-            <input type="checkbox" name="email_mbox_enabled" {% if embox.get('enabled',True) %}checked{% endif %}>
-          </div>
-        </div>
-        <div class="s-row">
-          <div class="s-label">Email Address
-            <div class="s-help">The Gmail/Outlook account that receives mailbox scan notifications.</div>
-          </div>
-          <input class="s-input" type="email" name="email_mbox_address" placeholder="YourMailManagement@gmail.com"
-                 value="{{ embox.get('address','') }}">
-        </div>
-        <div class="s-row">
-          <div class="s-label">Label
-            <div class="s-help">Gmail label applied to processed scan notification emails.</div>
-          </div>
-          <input class="s-input s-input--wide" type="text" name="email_mbox_label"
-                 value="{{ embox.get('label','PostMule') }}">
-        </div>
-      </div>
-      <div class="s-card">
-        <h3>Email — Bill Intake Account <span class="s-meta">(Phase 23 — optional)</span></h3>
-        {% set ebills = email_by_role.get('bill_intake', {}) %}
-        <div class="s-row">
-          <div class="s-label">Provider Type</div>
-          <select class="s-select" name="email_bills_type">
-            {% set ebt = ebills.get('type','gmail') %}
-            {% for t,l in [('gmail','Gmail'),('outlook','Outlook / Microsoft 365'),('imap','Generic IMAP')] %}
-            <option value="{{ t }}" {% if ebt == t %}selected{% endif %}>{{ l }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="s-row">
-          <div class="s-label">Enabled
-            <div class="s-help">Enable once you have a dedicated bills inbox and billers sending PDFs directly.</div>
-          </div>
-          <div class="s-check">
-            <input type="checkbox" name="email_bills_enabled" {% if ebills.get('enabled',False) %}checked{% endif %}>
-          </div>
-        </div>
-        <div class="s-row">
-          <div class="s-label">Email Address
-            <div class="s-help">Dedicated inbox for biller-sent PDF attachments, e.g. bills@yourdomain.com.</div>
-          </div>
-          <input class="s-input" type="email" name="email_bills_address" placeholder="bills@yourdomain.com"
-                 value="{{ ebills.get('address','') }}">
-        </div>
-        <div class="s-row">
-          <div class="s-label">Label</div>
-          <input class="s-input s-input--wide" type="text" name="email_bills_label"
-                 value="{{ ebills.get('label','PostMule-Bills') }}">
-        </div>
+        <h3>Email Accounts <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Email Accounts">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>Email accounts PostMule monitors. "Mailbox notifications" receives scan alerts from your virtual mailbox. "Bill intake" receives PDF bills directly from billers. Multiple accounts per role are supported.</p></div></div></h3>
+        <p class="text-note">Email account connections (mailbox notifications and bill intake) are managed on the <a href="/providers">Providers page</a>.</p>
       </div>
     </div>
 
     <!-- ── TAB: Finance ──────────────────────────────────── -->
-    <div id="stab-finance" class="s-pane">
+    <div id="stab-finance" class="s-pane" role="tabpanel" aria-labelledby="stab-btn-finance">
       <div class="s-card">
-        <h3>Finance Providers</h3>
+        <h3>Finance Providers <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Finance Providers">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>Connects PostMule to your bank transactions for bill matching. YNAB is recommended (uses the official API). Simplifi and Monarch use web scraping and are marked experimental.</p></div></div></h3>
         <p class="text-note">Enable the provider(s) you use. Credentials (access tokens, API keys) are configured in the encrypted credentials file — not here.</p>
 
         {% set ynab = finance_by_type.get('ynab', {}) %}
@@ -1515,7 +1886,7 @@
       </div>
 
       <div class="s-card">
-        <h3>Bill Matching</h3>
+        <h3>Bill Matching <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Bill Matching">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>Rules for matching bills to bank transactions. Matching uses exact amount + date — company name is intentionally excluded because bank descriptors are often unreliable. Manual approval (default) means you confirm each match before it's applied.</p></div></div></h3>
         {% set bm = cfg.get('finance',{}).get('bill_matching',{}) %}
         <div class="s-row">
           <div class="s-label">Require Manual Approval
@@ -1541,9 +1912,9 @@
     </div>
 
     <!-- ── TAB: AI ──────────────────────────────────────── -->
-    <div id="stab-ai" class="s-pane">
+    <div id="stab-ai" class="s-pane" role="tabpanel" aria-labelledby="stab-btn-ai">
       <div class="s-card">
-        <h3>AI / LLM Provider</h3>
+        <h3>AI / LLM Provider <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for AI LLM Provider">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>The AI model used to classify mail and extract bill data. Gemini 1.5 Flash (default) is free up to 1,500 requests/day. OpenAI and Anthropic are supported alternatives. Set your API key on the Connections page.</p></div></div></h3>
         <div class="s-row">
           <div class="s-label">Provider
             <div class="s-help">AI service used to classify mail. API keys go in the credentials file.</div>
@@ -1575,7 +1946,7 @@
       </div>
 
       <div class="s-card">
-        <h3>API Safety Limits</h3>
+        <h3>API Safety Limits <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for API Safety Limits">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>Hard caps on AI API usage to prevent unexpected charges. PostMule warns at 80% and stops processing if a limit is hit. Defaults keep usage within Gemini's free tier (1,500 req/day, 1M tokens/day).</p></div></div></h3>
         <div class="s-row">
           <div class="s-label">Daily Request Limit
             <div class="s-help">Hard stop — PostMule will not make more API calls than this per day. Gemini free tier: 1500/day.</div>
@@ -1613,16 +1984,16 @@
       </div>
 
       <div class="s-card">
-        <h3>Classification — Forward-To-Me Keywords</h3>
+        <h3>Classification — Forward-To-Me Keywords <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Classification">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>Words or phrases that, if found in a scanned mail item, force it to be classified as ForwardToMe — overriding AI classification. Use this for keywords like "check", "gift card", or "credit card" that always require physical forwarding.</p></div></div></h3>
         <div class="s-provider-desc" style="margin-bottom:12px;">Items matching these keywords are always classified as ForwardToMe regardless of AI confidence. One keyword per line.</div>
         <textarea class="s-input s-input--mono" name="classification_keywords" rows="8">{{ cfg.get('classification',{}).get('forward_to_me_keywords',[]) | join('\n') }}</textarea>
       </div>
     </div>
 
     <!-- ── TAB: Storage ──────────────────────────────────── -->
-    <div id="stab-storage" class="s-pane">
+    <div id="stab-storage" class="s-pane" role="tabpanel" aria-labelledby="stab-btn-storage">
       <div class="s-card">
-        <h3>File Storage</h3>
+        <h3>File Storage <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for File Storage">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>Where PostMule stores your PDF files. Google Drive is the default — it provides resilience against local PC failure and enables reinstall recovery. The root folder name determines the top-level folder created in your Drive.</p></div></div></h3>
         <div class="s-row">
           <div class="s-label">Provider
             <div class="s-help">Where PostMule stores PDFs and JSON data. Cloud storage is strongly recommended — files survive PC failure.</div>
@@ -1644,7 +2015,7 @@
       </div>
 
       <div class="s-card">
-        <h3>Spreadsheet (Dashboard View)</h3>
+        <h3>Spreadsheet (Dashboard View) <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Spreadsheet">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>An optional read-only spreadsheet view of your data. Google Sheets is the default. This is a generated export — JSON files are the source of truth and are never written from the spreadsheet.</p></div></div></h3>
         <p class="text-note">The spreadsheet is a generated view only — it is rebuilt from JSON data and is never the source of truth.</p>
         <div class="s-row">
           <div class="s-label">Provider</div>
@@ -1664,9 +2035,9 @@
     </div>
 
     <!-- ── TAB: System ───────────────────────────────────── -->
-    <div id="stab-system" class="s-pane">
+    <div id="stab-system" class="s-pane" role="tabpanel" aria-labelledby="stab-btn-system">
       <div class="s-card">
-        <h3>File Naming</h3>
+        <h3>File Naming <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for File Naming">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>Controls how PDFs are renamed after classification. The standard format is <code>YYYY-MM-DD_Recipients_Sender_Category.pdf</code>. This makes files sortable by date and searchable by sender in Drive.</p></div></div></h3>
         <div class="s-row">
           <div class="s-label">Date Format
             <div class="s-help">strftime format for dates in file names. Default: <code>%Y-%m-%d</code> → 2025-03-15.</div>
@@ -1687,7 +2058,7 @@
       </div>
 
       <div class="s-card">
-        <h3>Entity Matching</h3>
+        <h3>Entity Matching <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Entity Matching">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>How PostMule recognises sender names across variations. Fuzzy matching proposes aliases when two names are similar (above the threshold). Pending matches auto-approve after N days unless you deny them on the Pending page.</p></div></div></h3>
         <div class="s-row">
           <div class="s-label">Fuzzy Match Threshold
             <div class="s-help">Minimum similarity score (0.0–1.0) to propose an alias match. 0.85 = 85% similar.</div>
@@ -1708,7 +2079,7 @@
       </div>
 
       <div class="s-card">
-        <h3>Data Protection</h3>
+        <h3>Data Protection <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Data Protection">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>Safety limits on automated operations. PostMule never permanently deletes anything — files go to Trash first and are held for the retention period. The max files per run cap prevents runaway processing.</p></div></div></h3>
         <div class="s-row">
           <div class="s-label">Soft Deletes Only
             <div class="s-help">Never permanently delete files automatically. Items are moved to Trash and flagged for manual review. Strongly recommended.</div>
@@ -1748,7 +2119,7 @@
       </div>
 
       <div class="s-card">
-        <h3>Backups</h3>
+        <h3>Backups <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Backups">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>Daily encrypted backups of all JSON data, your config, and encrypted credentials — uploaded to Drive <code>_System/backups/</code>. Old backups are pruned automatically based on the retention period. Use "Backup Now" to create one immediately.</p></div></div></h3>
         <div class="s-row">
           <div class="s-label">Backups Enabled</div>
           <div class="s-check">
@@ -1766,10 +2137,40 @@
             <span class="s-unit">days</span>
           </div>
         </div>
+        <div class="s-row">
+          <div class="s-label">Last Backup
+            <div class="s-help">Timestamp of the most recent successful backup.</div>
+          </div>
+          <div class="s-value" id="backup-last-ts">
+            {% if last_backup %}
+              {{ last_backup.get('timestamp','')[:19].replace('T',' ') }} UTC
+              &nbsp;·&nbsp; {{ last_backup.get('backup_name','') }}
+            {% else %}
+              <span style="color:#8A9BB0">No backups yet</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="s-row">
+          <div class="s-label">On-Demand Backup
+            <div class="s-help">Create a backup now and upload it to cloud storage.</div>
+          </div>
+          <div>
+            <button type="button" class="btn btn--sm"
+                    id="backup-now-btn"
+                    hx-post="/api/backup"
+                    hx-target="#backup-now-result"
+                    hx-swap="innerHTML"
+                    hx-indicator="#backup-now-btn"
+                    hx-on::after-request="document.getElementById('backup-now-btn').disabled=false">
+              Backup Now
+            </button>
+            <span id="backup-now-result" style="margin-left:10px;font-size:0.8125rem;color:#2E7D32" aria-live="polite" role="status"></span>
+          </div>
+        </div>
       </div>
 
       <div class="s-card">
-        <h3>Integrity Checks</h3>
+        <h3>Integrity Checks <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Integrity Checks">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>Automated agents that verify your data stays consistent over time. They detect missed processing runs, find date gaps in mail history, confirm Drive file counts match records, and flag duplicate PDFs.</p></div></div></h3>
         {% set ic = cfg.get('integrity',{}) %}
         <div class="s-row">
           <div class="s-label">Run Monitor
@@ -1826,7 +2227,7 @@
       </div>
 
       <div class="s-card">
-        <h3>Deployment</h3>
+        <h3>Deployment <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false"><button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Deployment">?</button><div class="help-popover" x-show="open" @click.outside="open = false" x-cloak><p>Runtime deployment options. Update checks compare the running version against the latest GitHub release and show a notice in the header when an update is available.</p></div></div></h3>
         <div class="s-row">
           <div class="s-label">Dashboard Port
             <div class="s-help">Local port the web dashboard listens on. Default: 5000.</div>
@@ -1851,6 +2252,16 @@
           <input class="s-input" type="text" name="dep_task_name"
                  value="{{ cfg.get('deployment',{}).get('task_scheduler_task_name','PostMule Daily Run') }}">
         </div>
+        <div class="s-row">
+          <div class="s-label">Update Check
+            <div class="s-help">Check GitHub for new PostMule releases and show a banner when an update is available.</div>
+          </div>
+          <div class="s-check">
+            <input type="checkbox" name="dep_update_check"
+                   {% if cfg.get('deployment',{}).get('update_check_enabled',True) %}checked{% endif %}>
+            <span class="s-check-label">Enable update notifications</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1863,88 +2274,104 @@
     </div>
     </form>
 
+    <div class="s-card" style="margin-top:24px;" x-data="exportPanel()">
+      <h3>Export Data</h3>
+      <p style="font-size:0.8125rem;color:#5A7090;margin:0 0 16px;">Download your PostMule data as CSV or JSON. Your source of truth is always the JSON files on your cloud storage — these exports are portable snapshots.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div>
+          <label style="display:block;font-size:0.75rem;font-weight:600;color:#0F2044;margin-bottom:4px;">Data Type</label>
+          <select x-model="dtype" class="form-control" style="font-size:0.8125rem;">
+            <option value="all">All types</option>
+            <option value="bills">Bills only</option>
+            <option value="notices">Notices only</option>
+            <option value="entities">Entities only</option>
+            <option value="forward_to_me">Forward To Me only</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:0.75rem;font-weight:600;color:#0F2044;margin-bottom:4px;">Format</label>
+          <select x-model="fmt" class="form-control" style="font-size:0.8125rem;">
+            <option value="csv">CSV</option>
+            <option value="json">JSON</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:0.75rem;font-weight:600;color:#0F2044;margin-bottom:4px;">From date <span style="font-weight:400;color:#8A9BB0;">(optional)</span></label>
+          <input type="date" x-model="fromDate" class="form-control" style="font-size:0.8125rem;">
+        </div>
+        <div>
+          <label style="display:block;font-size:0.75rem;font-weight:600;color:#0F2044;margin-bottom:4px;">To date <span style="font-weight:400;color:#8A9BB0;">(optional)</span></label>
+          <input type="date" x-model="toDate" class="form-control" style="font-size:0.8125rem;">
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+        <a :href="exportUrl()" class="btn btn-primary" style="font-size:0.8125rem;">Download Export</a>
+      </div>
+
+      <div style="border-top:1px solid #DDE3EC;padding-top:16px;margin-top:4px;">
+        <div style="font-size:0.75rem;font-weight:600;color:#0F2044;margin-bottom:10px;">Additional Exports</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;">
+          <a href="/api/export/config" class="btn btn-secondary" style="font-size:0.8125rem;">Config (YAML, redacted)</a>
+          <a href="/api/export/connections-summary" class="btn btn-secondary" style="font-size:0.8125rem;">Connections Summary (TXT)</a>
+        </div>
+        <p style="font-size:0.75rem;color:#8A9BB0;margin:10px 0 0;">PDFs are in your cloud storage — download them directly from Google Drive.</p>
+      </div>
+    </div>
+
+    <script>
+    function exportPanel() {
+      return {
+        dtype: 'all',
+        fmt: 'csv',
+        fromDate: '',
+        toDate: '',
+        exportUrl() {
+          let url = '/api/export?format=' + this.fmt + '&type=' + this.dtype;
+          if (this.fromDate) url += '&from_date=' + this.fromDate;
+          if (this.toDate) url += '&to_date=' + this.toDate;
+          return url;
+        }
+      };
+    }
+    </script>
+
     <script>
     function sTab(name, btn) {
       document.querySelectorAll('.s-pane').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.s-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.s-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
       document.getElementById('stab-' + name).classList.add('active');
       btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
     }
     </script>
-    {% endif %}
-
-    {% elif page == 'corrections' %}
-    <div class="page-title-row">
-      <h1 class="page-title">Entity Corrections</h1>
-      <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false">
-        <button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Entity Corrections">?</button>
-        <div class="help-popover" x-show="open" @click.outside="open = false" x-cloak>
-          <p>A log of every time you used <strong>Wrong entity?</strong> to manually reassign a mail item to the correct sender.</p>
-          <p>Senders that appear here frequently indicate that PostMule's automatic matching needs improvement — consider adding their name as an alias to the correct entity on the Entities page.</p>
-        </div>
-      </div>
-    </div>
-    <p class="text-note">Manual entity overrides log — shows senders that have been reassigned to a different entity. Used to improve the entity matcher over time.</p>
-
-    {% if correction_summary %}
-    <h2 class="section-title">Top Corrected Senders</h2>
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Original Sender</th>
-            <th>Corrections</th>
-            <th>Assigned To</th>
-          </tr>
-        </thead>
-        <tbody>
-        {% for row in correction_summary %}
-          <tr>
-            <td>{{ row.original_sender }}</td>
-            <td class="td-center">{{ row.count }}</td>
-            <td>{{ row.entity_names | join(', ') }}</td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <h2 class="section-title" style="margin-top:32px;">Full Correction Log</h2>
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Original Sender</th>
-            <th>Corrected Entity</th>
-            <th>Alias Added</th>
-          </tr>
-        </thead>
-        <tbody>
-        {% for c in corrections %}
-          <tr>
-            <td>{{ c.correction_date }}</td>
-            <td><span class="badge badge--{{ c.mail_type | lower }}">{{ c.mail_type }}</span></td>
-            <td>{{ c.original_sender }}</td>
-            <td>{{ c.corrected_entity_name }}</td>
-            <td class="td-center">{% if c.added_alias %}&#10003;{% else %}—{% endif %}</td>
-          </tr>
-        {% else %}
-          <tr><td colspan="5" class="td-center">No corrections recorded yet.</td></tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% else %}
-    <div class="text-muted">No corrections recorded yet. Use the &ldquo;Wrong entity?&rdquo; button on any mail item to reassign it.</div>
     {% endif %}
 
     {% endif %}
 
   </main>
 
+  <!-- Update available banner (shown by JS when a newer release is detected) -->
+  <div id="update-banner" class="update-banner" hidden>
+    <span class="update-banner-text">Update available: <strong id="update-banner-version"></strong></span>
+    <a id="update-banner-notes" href="https://github.com/PostMule/app/releases" target="_blank" rel="noopener" class="update-banner-link">See what's new</a>
+    <button class="update-banner-close" onclick="document.getElementById('update-banner').hidden=true" aria-label="Dismiss">&times;</button>
+  </div>
+
+  <footer class="app-footer">
+    <span class="app-footer-version">PostMule v{{ app_version }}</span>
+  </footer>
+
   <script>
+  // Entity search filter for the Entities page.
+  function filterEntities(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('.entity-group').forEach(function(grp) {
+      grp.hidden = !!(q && !grp.dataset.search.includes(q));
+    });
+  }
+
   // Entity data for the picker — rendered once, shared across all picker instances.
   // _ENTITY_LIST is populated by the inline script tag below (only on pages that pass `entities`).
   window._ENTITY_LIST = window._ENTITY_LIST || [];
@@ -1998,5 +2425,162 @@
   }));
   </script>
   {% endif %}
+
+  {% if update_check_enabled %}
+  <script>
+  (function() {
+    var current = '{{ app_version }}';
+    function semverGt(a, b) {
+      var pa = a.replace(/^v/,'').split('.').map(Number);
+      var pb = b.replace(/^v/,'').split('.').map(Number);
+      for (var i = 0; i < 3; i++) {
+        if ((pa[i]||0) > (pb[i]||0)) return true;
+        if ((pa[i]||0) < (pb[i]||0)) return false;
+      }
+      return false;
+    }
+    fetch('https://api.github.com/repos/PostMule/app/releases/latest', {cache: 'no-store'})
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data || !data.tag_name) return;
+        var latest = data.tag_name;
+        if (semverGt(latest, current)) {
+          var banner = document.getElementById('update-banner');
+          if (banner) {
+            document.getElementById('update-banner-version').textContent = latest;
+            document.getElementById('update-banner-notes').href = data.html_url || '#';
+            banner.hidden = false;
+          }
+        }
+      })
+      .catch(function() {});
+  })();
+  </script>
+  {% endif %}
+
+  <!-- Feedback modal -->
+  <div id="feedbackModal" class="feedback-modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="feedbackModalTitle">
+    <div class="feedback-modal" id="feedbackModalBox">
+      <div class="feedback-modal-header">
+        <h2 class="feedback-modal-title" id="feedbackModalTitle">Send Feedback</h2>
+        <button class="feedback-modal-close" aria-label="Close feedback" onclick="closeFeedbackModal()">&times;</button>
+      </div>
+      <div id="feedbackForm">
+        <div class="feedback-field">
+          <label class="feedback-label" for="feedbackType">Type</label>
+          <select class="form-control" id="feedbackType" onchange="updateFeedbackType(this.value)">
+            <option value="general">General feedback</option>
+            <option value="bug">Bug report</option>
+            <option value="feature">Feature request</option>
+          </select>
+        </div>
+        <div class="feedback-field">
+          <label class="feedback-label" for="feedbackTitle">Title <span class="feedback-required">*</span></label>
+          <input type="text" class="form-control" id="feedbackTitle" placeholder="Short summary" maxlength="200">
+        </div>
+        <div class="feedback-field">
+          <label class="feedback-label" for="feedbackDesc">Description <span class="feedback-required">*</span></label>
+          <textarea class="form-control feedback-textarea" id="feedbackDesc" rows="4" placeholder="Describe the issue or request in detail…"></textarea>
+        </div>
+        <div class="feedback-field" id="feedbackStepsRow" hidden>
+          <label class="feedback-label" for="feedbackSteps">Steps to reproduce</label>
+          <textarea class="form-control feedback-textarea" id="feedbackSteps" rows="3" placeholder="1. Go to…&#10;2. Click…&#10;3. See error…"></textarea>
+        </div>
+        <div class="feedback-field">
+          <label class="feedback-label" for="feedbackContact">Your email <span class="feedback-optional">(optional, for follow-up)</span></label>
+          <input type="email" class="form-control" id="feedbackContact" placeholder="you@example.com">
+        </div>
+        <div id="feedbackError" class="feedback-error" hidden></div>
+        <div class="feedback-actions">
+          <button class="btn btn-secondary" onclick="closeFeedbackModal()" type="button">Cancel</button>
+          <button class="btn btn-primary" onclick="submitFeedback()" type="button" id="feedbackSubmitBtn">Submit</button>
+        </div>
+      </div>
+      <div id="feedbackSuccess" class="feedback-success" hidden>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" aria-hidden="true" style="margin-bottom:8px;"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11.5 14.5 15 10"/></svg>
+        <p class="feedback-success-msg">Thanks for your feedback!</p>
+        <p id="feedbackSuccessLink" style="font-size:0.8125rem;color:#5A7090;"></p>
+        <button class="btn btn-secondary" onclick="closeFeedbackModal()" style="margin-top:12px;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  function closeFeedbackModal() {
+    document.getElementById('feedbackModal').setAttribute('hidden', '');
+    document.getElementById('feedbackForm').hidden = false;
+    document.getElementById('feedbackSuccess').hidden = true;
+    document.getElementById('feedbackError').hidden = true;
+    document.getElementById('feedbackTitle').value = '';
+    document.getElementById('feedbackDesc').value = '';
+    document.getElementById('feedbackSteps').value = '';
+    document.getElementById('feedbackContact').value = '';
+    document.getElementById('feedbackType').value = 'general';
+    document.getElementById('feedbackStepsRow').hidden = true;
+    document.getElementById('feedbackSubmitBtn').disabled = false;
+    document.getElementById('feedbackSubmitBtn').textContent = 'Submit';
+  }
+  function updateFeedbackType(val) {
+    document.getElementById('feedbackStepsRow').hidden = val !== 'bug';
+  }
+  document.getElementById('feedbackModal').addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeFeedbackModal();
+  });
+  function submitFeedback() {
+    var title = document.getElementById('feedbackTitle').value.trim();
+    var desc = document.getElementById('feedbackDesc').value.trim();
+    var errEl = document.getElementById('feedbackError');
+    if (!title || !desc) {
+      errEl.textContent = 'Title and description are required.';
+      errEl.hidden = false;
+      return;
+    }
+    errEl.hidden = true;
+    var btn = document.getElementById('feedbackSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    var payload = {
+      type: document.getElementById('feedbackType').value,
+      title: title,
+      description: desc,
+      steps: document.getElementById('feedbackSteps').value.trim(),
+      contact: document.getElementById('feedbackContact').value.trim(),
+    };
+    fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, status: r.status, data: d}; }); })
+    .then(function(res) {
+      if (res.ok) {
+        document.getElementById('feedbackForm').hidden = true;
+        var successLink = document.getElementById('feedbackSuccessLink');
+        if (res.data.url) {
+          successLink.innerHTML = 'Issue <a href="' + res.data.url + '" target="_blank" rel="noopener">#' + res.data.number + '</a> created — you can track it on GitHub.';
+        } else {
+          successLink.textContent = '';
+        }
+        document.getElementById('feedbackSuccess').hidden = false;
+      } else if (res.status === 503 && res.data.error === 'not_configured') {
+        errEl.innerHTML = res.data.message + ' <a href="https://github.com/PostMule/app/issues" target="_blank" rel="noopener">Open GitHub Issues</a>';
+        errEl.hidden = false;
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+      } else {
+        errEl.textContent = 'Submission failed. Please try again or report directly on GitHub.';
+        errEl.hidden = false;
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+      }
+    })
+    .catch(function() {
+      errEl.textContent = 'Network error. Please check your connection and try again.';
+      errEl.hidden = false;
+      btn.disabled = false;
+      btn.textContent = 'Submit';
+    });
+  }
+  </script>
 </body>
 </html>

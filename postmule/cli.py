@@ -13,7 +13,8 @@ Usage:
   postmule --set-master-password    Store master password in the system keyring
   postmule --update-config          Open config.yaml in default editor
   postmule --update-credentials     Open credentials.yaml in default editor
-  postmule --uninstall              Remove PostMule and all scheduled tasks
+  postmule uninstall                Remove PostMule and all scheduled tasks
+  postmule uninstall --keep-data    Remove PostMule but keep JSON data + credentials.enc
 """
 
 from __future__ import annotations
@@ -214,6 +215,126 @@ def logs(lines: int) -> None:
             click.echo("".join(all_lines[-lines:]))
             return
     click.echo(f"No verbose log found for today ({today}).")
+
+
+@main.command("backup")
+@click.option("--config", default=str(DEFAULT_CONFIG), help="Path to config.yaml")
+@click.option("--dry-run", is_flag=True, help="Build the ZIP but don't upload it.")
+def backup(config: str, dry_run: bool) -> None:
+    """Create an on-demand backup and upload it to cloud storage."""
+    from postmule.agents.backup import run_backup
+    from postmule.core.credentials import CredentialsError, load_credentials
+
+    cfg = _setup(Path(config))
+    install_dir = Path(cfg.get("app", "install_dir", default="."))
+    data_dir = install_dir / "data"
+    enc_path = install_dir / cfg.get("credentials", "enc_file", default="credentials.enc")
+    config_path = Path(config)
+
+    try:
+        credentials = load_credentials(enc_path)
+    except CredentialsError:
+        credentials = {}
+        click.echo("[WARNING] credentials.enc not found — backup may fail.")
+
+    if dry_run:
+        click.echo("[DRY RUN] No files will be uploaded.")
+
+    result = run_backup(cfg, credentials, data_dir, config_path, enc_path, dry_run=dry_run)
+
+    if result["status"] == "ok":
+        size_kb = result["bytes_uploaded"] / 1024
+        click.echo(f"Backup complete: {result['backup_name']} ({size_kb:.1f} KB, {len(result['files_included'])} files)")
+        if result["pruned_count"]:
+            click.echo(f"Pruned {result['pruned_count']} old backup(s).")
+    else:
+        click.echo(f"Backup failed: {result['error']}", err=True)
+        sys.exit(1)
+
+
+@main.command("restore")
+@click.option("--config", default=str(DEFAULT_CONFIG), help="Path to config.yaml")
+@click.option("--from-backup", "backup_name", default=None, help="Exact backup filename or 'latest'.")
+@click.option("--list", "list_only", is_flag=True, help="List available backups without restoring.")
+@click.option("--dry-run", is_flag=True, help="Show what would be restored without extracting files.")
+def restore(config: str, backup_name: str | None, list_only: bool, dry_run: bool) -> None:
+    """Restore PostMule data from a cloud backup."""
+    from postmule.agents.backup import list_backups, run_restore
+    from postmule.core.credentials import CredentialsError, load_credentials
+
+    cfg = _setup(Path(config))
+    install_dir = Path(cfg.get("app", "install_dir", default="."))
+    data_dir = install_dir / "data"
+    enc_path = install_dir / cfg.get("credentials", "enc_file", default="credentials.enc")
+
+    try:
+        credentials = load_credentials(enc_path)
+    except CredentialsError:
+        credentials = {}
+        click.echo("[WARNING] credentials.enc not found — restore may fail.")
+
+    if list_only:
+        backups = list_backups(cfg, credentials)
+        if not backups:
+            click.echo("No backups found in cloud storage.")
+            return
+        click.echo(f"{'Backup Name':<42}  {'Date':<20}  Size")
+        click.echo("-" * 72)
+        for b in backups:
+            size_kb = b["size_bytes"] / 1024
+            click.echo(f"{b['name']:<42}  {b['date']:<20}  {size_kb:.1f} KB")
+        return
+
+    if not backup_name:
+        click.echo("Specify --from-backup <name> or 'latest', or use --list to see available backups.", err=True)
+        sys.exit(1)
+
+    if dry_run:
+        click.echo("[DRY RUN] No files will be written.")
+
+    if not click.confirm(f"Restore from '{backup_name}'? This will overwrite local data files."):
+        click.echo("Cancelled.")
+        return
+
+    result = run_restore(cfg, credentials, backup_name, data_dir, dry_run=dry_run)
+
+    if result["status"] == "ok":
+        click.echo(f"Restore complete: {result['backup_name']} ({len(result['files_restored'])} files restored)")
+    else:
+        click.echo(f"Restore failed: {result['error']}", err=True)
+        sys.exit(1)
+
+
+@main.command("uninstall")
+@click.option("--install-dir", default="C:\\ProgramData\\PostMule", help="Installation directory to remove.")
+@click.option("--keep-data", is_flag=True, help="Keep JSON data files and credentials.enc.")
+def uninstall(install_dir: str, keep_data: bool) -> None:
+    """Remove PostMule, the scheduled task, and the PATH entry."""
+    import subprocess
+    from pathlib import Path as _Path
+
+    script = _Path(__file__).parent.parent / "installer" / "uninstall.ps1"
+    if not script.exists():
+        click.echo(f"Uninstall script not found at {script}.", err=True)
+        sys.exit(1)
+
+    click.echo("This will remove PostMule from your system.")
+    click.echo(f"  Install dir : {install_dir}")
+    click.echo(f"  Keep data   : {keep_data}")
+    if not click.confirm("\nContinue?"):
+        click.echo("Cancelled.")
+        return
+
+    args = [
+        "powershell.exe", "-ExecutionPolicy", "Bypass",
+        "-File", str(script),
+        "-InstallDir", install_dir,
+    ]
+    if keep_data:
+        args.append("-KeepData")
+
+    result = subprocess.run(args)
+    sys.exit(result.returncode)
 
 
 if __name__ == "__main__":

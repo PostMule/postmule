@@ -10,7 +10,7 @@ Routes:
   GET  /entities       Entity list
   GET  /settings       Config editor
   GET  /logs           Log viewer
-  GET  /connections                  Service connection status and management
+  GET  /providers                    Provider catalog and credential management
   GET  /corrections                  Entity correction log summary
   GET  /setup/oauth/google           Start Google OAuth flow (uses baked-in client credentials)
   GET  /setup/oauth/google/callback  OAuth callback — saves refresh token to system keychain
@@ -65,16 +65,11 @@ _SESSION_TIMEOUT = 8 * 3600  # 8 hours
 _failed_attempts: dict[str, list[float]] = defaultdict(list)
 
 _NAV_ITEMS = [
-    ("home", "/", "Home"),
-    ("mail", "/mail", "Mail"),
-    ("bills", "/bills", "Bills"),
-    ("forward", "/forward", "Forward To Me"),
-    ("pending", "/pending", "Pending"),
+    ("mail", "/", "Mail"),
     ("entities", "/entities", "Entities"),
-    ("corrections", "/corrections", "Corrections"),
     ("settings", "/settings", "Settings"),
     ("logs", "/logs", "Logs"),
-    ("connections", "/connections", "Connections"),
+    ("providers", "/providers", "Providers"),
 ]
 
 

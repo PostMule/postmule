@@ -61,7 +61,7 @@ def setup_oauth_google_callback():
 
     state = session.get("setup_google_oauth_state")
     if not state:
-        return redirect(url_for("pages.connections") + "?error=session_expired")
+        return redirect(url_for("pages.providers") + "?error=session_expired")
 
     client_config = {
         "web": {
@@ -83,38 +83,38 @@ def setup_oauth_google_callback():
         flow.fetch_token(authorization_response=request.url)
     except Exception as exc:
         log.error(f"Google OAuth token exchange failed: {exc}")
-        return redirect(url_for("pages.connections") + "?error=oauth_failed")
+        return redirect(url_for("pages.providers") + "?error=oauth_failed")
 
     creds = flow.credentials
     if not creds.refresh_token:
-        return redirect(url_for("pages.connections") + "?error=no_refresh_token")
+        return redirect(url_for("pages.providers") + "?error=no_refresh_token")
 
     try:
         from postmule.core.credentials import save_google_refresh_token
         save_google_refresh_token(creds.refresh_token)
     except Exception as exc:
         log.error(f"Failed to save Google refresh token: {exc}")
-        return redirect(url_for("pages.connections") + "?error=keychain_save_failed")
+        return redirect(url_for("pages.providers") + "?error=keychain_save_failed")
 
     log.info("Google OAuth refresh token saved to system keychain")
     session.pop("setup_google_oauth_state", None)
-    return redirect(url_for("pages.connections") + "?google_ok=1")
+    return redirect(url_for("pages.providers") + "?google_ok=1")
 
 
 @connections_bp.route("/api/connection/provider", methods=["POST"])
 def set_connection_provider():
     """Switch active provider for a config category. Updates config.yaml in-place."""
     category = request.form.get("category", "").strip()
-    provider_type = request.form.get("type", "").strip()
+    provider_type = request.form.get("service", "").strip()
     tab = request.form.get("tab", category)
 
     _VALID = {"mailbox", "email", "storage", "spreadsheet", "llm", "finance"}
     if category not in _VALID:
-        return redirect(url_for("pages.connections") + f"?tab={tab}&error=invalid_category")
+        return redirect(url_for("pages.providers") + f"?tab={tab}&error=invalid_category")
 
     config_path = _app._config_path
     if not config_path or not config_path.exists():
-        return redirect(url_for("pages.connections") + f"?tab={tab}&error=no_config")
+        return redirect(url_for("pages.providers") + f"?tab={tab}&error=no_config")
 
     try:
         with open(config_path, encoding="utf-8") as f:
@@ -122,7 +122,7 @@ def set_connection_provider():
         providers = raw.setdefault(category, {}).setdefault("providers", [{}])
         if not providers:
             providers.append({})
-        providers[0]["type"] = provider_type
+        providers[0]["service"] = provider_type
         with open(config_path, "w", encoding="utf-8") as f:
             yaml.dump(raw, f, allow_unicode=True, default_flow_style=False)
         _app._config_raw = raw
@@ -133,9 +133,9 @@ def set_connection_provider():
             pass
     except Exception as exc:
         log.error(f"Failed to update provider: {exc}")
-        return redirect(url_for("pages.connections") + f"?tab={tab}&error=save_failed")
+        return redirect(url_for("pages.providers") + f"?tab={tab}&error=save_failed")
 
-    return redirect(url_for("pages.connections") + f"?tab={tab}&saved=1")
+    return redirect(url_for("pages.providers") + f"?tab={tab}&saved=1")
 
 
 @connections_bp.route("/api/credential", methods=["POST"])
@@ -147,9 +147,9 @@ def save_credential():
     tab = request.form.get("tab", "")
 
     if not provider or not field:
-        return redirect(url_for("pages.connections") + f"?tab={tab}&error=missing_fields")
+        return redirect(url_for("pages.providers") + f"?tab={tab}&error=missing_fields")
     if not value:
-        return redirect(url_for("pages.connections") + f"?tab={tab}&error=empty_value")
+        return redirect(url_for("pages.providers") + f"?tab={tab}&error=empty_value")
 
     enc_path = _app._enc_path
     try:
@@ -164,7 +164,7 @@ def save_credential():
 
         master_pw = load_master_password()
         if not master_pw:
-            return redirect(url_for("pages.connections") + f"?tab={tab}&error=no_master_password")
+            return redirect(url_for("pages.providers") + f"?tab={tab}&error=no_master_password")
 
         try:
             creds: dict = decrypt_credentials(enc_path, master_pw)
@@ -183,6 +183,6 @@ def save_credential():
 
     except Exception as exc:
         log.error(f"Failed to save credential: {exc}")
-        return redirect(url_for("pages.connections") + f"?tab={tab}&error=cred_save_failed")
+        return redirect(url_for("pages.providers") + f"?tab={tab}&error=cred_save_failed")
 
-    return redirect(url_for("pages.connections") + f"?tab={tab}&saved=1")
+    return redirect(url_for("pages.providers") + f"?tab={tab}&saved=1")

@@ -41,6 +41,8 @@ class ProcessedMail:
     # Computed after classification
     suggested_filename: str = ""
     destination_folder: str = ""
+    statement_date: str | None = None
+    ach_descriptor: str | None = None
 
 
 CATEGORY_FOLDERS = {
@@ -107,6 +109,8 @@ def classify_pdf(
         amount_due=result.amount_due,
         due_date=result.due_date,
         account_number=result.account_number,
+        statement_date=result.statement_date,
+        ach_descriptor=result.ach_descriptor,
         summary=result.summary,
         ocr_text=ocr_text,
         ocr_method=ocr_method,

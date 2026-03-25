@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<!--
+  PostMule — Daily Notification Email MOCKUP
+  ==========================================
+  This is the design reference for the daily summary email.
+  It shows two states side-by-side:
+    1. "Active day" — items were processed, some need attention
+    2. "Quiet day" — nothing new today
+
+  Production notes:
+  - All CSS in the <style> block will be inlined before sending (e.g. via premailer)
+  - No external fonts, images, or assets — email clients block them
+  - Table-based layout for Outlook compatibility
+  - prefers-color-scheme media query included for Apple Mail / Gmail dark mode
+  - Plain-text fallback must be generated alongside this HTML template
+
+  Brand palette:
+    Navy Seal  #0F2044   header, CTA
+    Brass      #E8A020   accent, logo "Mule", badges
+    Steel Blue #7A9CC4   subheadings, secondary
+    Linen      #F5F6F8   page / email background
+    Smoke      #DDE3EC   borders, dividers
+    Red        #C62828   overdue / urgent
+    Green      #2E7D32   ok / delivered
+-->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <title>PostMule Daily Summary — Email Mockup</title>
+  <style>
+    /* ── Mockup chrome (not part of actual email) ─────────────────── */
+    body {
+      margin: 0;
+      padding: 40px 16px 60px;
+      background: #CBD5E0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    }
+    .mockup-page-title {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #4A5568;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin: 0 auto 8px;
+    }
+    .mockup-page-subtitle {
+      text-align: center;
+      font-size: 12px;
+      color: #718096;
+      margin: 0 auto 32px;
+    }
+    .mockup-state-label {
+      max-width: 600px;
+      margin: 0 auto 10px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #718096;
+    }
+    .mockup-divider {
+      max-width: 600px;
+      margin: 48px auto 40px;
+      border: none;
+      border-top: 2px dashed #A0AEC0;
+    }
+
+    /* ── Email reset ──────────────────────────────────────────────── */
+    .email-wrapper {
+      margin: 0 auto;
+      max-width: 600px;
+    }
+    table {
+      border-collapse: collapse;
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
+    td {
+      padding: 0;
+    }
+    img {
+      border: 0;
+      display: block;
+      line-height: 100%;
+      outline: none;
+      text-decoration: none;
+    }
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* ── Email component styles (all inlined before send) ─────────── */
+
+    /* Header */
+    .email-header {
+      background-color: #0F2044;
+      padding: 24px 32px;
+    }
+    .email-logo-post {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+    .email-logo-mule {
+      color: #E8A020;
+    }
+    .email-logo-tagline {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10px;
+      color: #7A9CC4;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .email-header-date {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      color: #7A9CC4;
+      text-align: right;
+      line-height: 1.4;
+    }
+
+    /* Body wrapper */
+    .email-body {
+      background-color: #F5F6F8;
+      padding: 0 0 24px;
+    }
+
+    /* Summary bar */
+    .email-summary {
+      background-color: #FFFFFF;
+      border-bottom: 1px solid #DDE3EC;
+      padding: 20px 32px;
+    }
+    .email-summary-text {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: #0F2044;
+      margin: 0;
+      line-height: 1.4;
+    }
+    .email-summary-sub {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      color: #5A7090;
+      margin: 4px 0 0;
+    }
+
+    /* Section: Action Required */
+    .email-section {
+      margin: 20px 24px 0;
+    }
+    .email-section-header {
+      padding: 10px 16px;
+      border-radius: 6px 6px 0 0;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .email-section-header--urgent {
+      background-color: #FFF3CD;
+      color: #7A5C00;
+      border: 1px solid #F0C850;
+      border-bottom: none;
+    }
+    .email-section-header--items {
+      background-color: #EDF2FA;
+      color: #2C4A6E;
+      border: 1px solid #D0DCEE;
+      border-bottom: none;
+    }
+    .email-card-list {
+      background-color: #FFFFFF;
+      border: 1px solid #DDE3EC;
+      border-radius: 0 0 6px 6px;
+      overflow: hidden;
+    }
+
+    /* Item row */
+    .email-item {
+      border-bottom: 1px solid #EEF2F7;
+      padding: 14px 16px;
+    }
+    .email-item:last-child {
+      border-bottom: none;
+    }
+    .email-item-badge {
+      display: inline-block;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 3px;
+      margin-bottom: 6px;
+    }
+    .badge--bill    { background-color: #FFF3CD; color: #7A5C00; border: 1px solid #F0C850; }
+    .badge--notice  { background-color: #E8F0FC; color: #1E4A8A; border: 1px solid #C0D4F4; }
+    .badge--forward { background-color: #FCE8E8; color: #8A1A1A; border: 1px solid #F4C0C0; }
+    .badge--overdue { background-color: #FCE8E8; color: #C62828; border: 1px solid #F4C0C0; }
+
+    .email-item-sender {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #0F2044;
+      margin: 0 0 3px;
+    }
+    .email-item-detail {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      color: #5A7090;
+      margin: 0;
+      line-height: 1.5;
+    }
+    .email-item-amount {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #0F2044;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .email-item-amount--overdue {
+      color: #C62828;
+    }
+    .email-urgent-pill {
+      display: inline-block;
+      background-color: #C62828;
+      color: #FFFFFF;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    /* Last run status */
+    .email-run-status {
+      margin: 20px 24px 0;
+      background-color: #FFFFFF;
+      border: 1px solid #DDE3EC;
+      border-radius: 6px;
+      padding: 14px 16px;
+    }
+    .email-run-status-title {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #8A9BB0;
+      margin: 0 0 8px;
+    }
+    .email-run-status-row {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      color: #5A7090;
+      line-height: 1.6;
+    }
+    .email-run-ok { color: #2E7D32; font-weight: 600; }
+    .email-run-warn { color: #D57A00; font-weight: 600; }
+
+    /* CTA button */
+    .email-cta-wrap {
+      text-align: center;
+      margin: 20px 24px 0;
+    }
+    .email-cta {
+      display: inline-block;
+      background-color: #0F2044;
+      color: #FFFFFF;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 12px 28px;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+
+    /* Quiet day */
+    .email-quiet {
+      text-align: center;
+      padding: 40px 32px;
+      background-color: #FFFFFF;
+      border: 1px solid #DDE3EC;
+      border-radius: 6px;
+      margin: 20px 24px 0;
+    }
+    .email-quiet-icon {
+      font-size: 32px;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+    .email-quiet-title {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: #0F2044;
+      margin: 0 0 6px;
+    }
+    .email-quiet-sub {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      color: #8A9BB0;
+      margin: 0;
+    }
+
+    /* Footer */
+    .email-footer {
+      background-color: #0F2044;
+      padding: 20px 32px;
+      text-align: center;
+    }
+    .email-footer-text {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      color: #5A7CA4;
+      line-height: 1.7;
+      margin: 0;
+    }
+    .email-footer-link {
+      color: #7A9CC4;
+      text-decoration: underline;
+    }
+
+    /* ── Dark mode overrides (Apple Mail, Gmail app, some Outlook) ── */
+    @media (prefers-color-scheme: dark) {
+      .email-body       { background-color: #1A2740 !important; }
+      .email-summary    { background-color: #1E2F4A !important; border-color: #2C4060 !important; }
+      .email-summary-text { color: #E8EFF8 !important; }
+      .email-summary-sub  { color: #8A9BB0 !important; }
+      .email-card-list  { background-color: #1E2F4A !important; border-color: #2C4060 !important; }
+      .email-item       { border-color: #2C4060 !important; }
+      .email-item-sender { color: #E8EFF8 !important; }
+      .email-item-detail { color: #8A9BB0 !important; }
+      .email-item-amount { color: #E8EFF8 !important; }
+      .email-run-status { background-color: #1E2F4A !important; border-color: #2C4060 !important; }
+      .email-run-status-title { color: #5A7CA4 !important; }
+      .email-quiet      { background-color: #1E2F4A !important; border-color: #2C4060 !important; }
+      .email-quiet-title { color: #E8EFF8 !important; }
+    }
+
+    /* ── Mobile ───────────────────────────────────────────────────── */
+    @media screen and (max-width: 480px) {
+      .email-header   { padding: 20px 20px !important; }
+      .email-summary  { padding: 16px 20px !important; }
+      .email-section  { margin: 16px 12px 0 !important; }
+      .email-run-status { margin: 16px 12px 0 !important; }
+      .email-cta-wrap { margin: 16px 12px 0 !important; }
+      .email-quiet    { margin: 16px 12px 0 !important; padding: 28px 20px !important; }
+      .email-footer   { padding: 16px 20px !important; }
+      .email-header-date { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ================================================================
+     MOCKUP CHROME
+     ================================================================ -->
+<p class="mockup-page-title">PostMule — Daily Email Mockup</p>
+<p class="mockup-page-subtitle">Design reference only. All CSS will be inlined before sending. Two states shown below.</p>
+
+
+<!-- ================================================================
+     STATE 1: ACTIVE DAY — items processed, some needing attention
+     ================================================================ -->
+
+<p class="mockup-state-label">State 1 — Active day (items received, action required)</p>
+
+<div class="email-wrapper">
+  <!--[if mso]><table width="600" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td><![endif]-->
+
+  <!-- Header -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0F2044;border-radius:8px 8px 0 0;">
+    <tr>
+      <td class="email-header" style="padding:24px 32px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="vertical-align:middle;">
+              <div class="email-logo-post" style="font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:700;color:#FFFFFF;letter-spacing:-0.5px;line-height:1;">Post<span class="email-logo-mule" style="color:#E8A020;">Mule</span></div>
+              <div class="email-logo-tagline" style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7A9CC4;letter-spacing:2px;text-transform:uppercase;margin-top:4px;">Smart mail management</div>
+            </td>
+            <td class="email-header-date" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7A9CC4;text-align:right;vertical-align:middle;line-height:1.4;">
+              Daily Summary<br>
+              Monday, March 23, 2026
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Summary bar -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FFFFFF;border-left:1px solid #DDE3EC;border-right:1px solid #DDE3EC;">
+    <tr>
+      <td class="email-summary" style="padding:20px 32px;background-color:#FFFFFF;border-bottom:1px solid #DDE3EC;">
+        <p class="email-summary-text" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:600;color:#0F2044;margin:0;line-height:1.4;">4 items processed today.</p>
+        <p class="email-summary-sub" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;margin:4px 0 0;">2 bills &middot; 1 notice &middot; 1 forward to you</p>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Body -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" class="email-body" style="background-color:#F5F6F8;border-left:1px solid #DDE3EC;border-right:1px solid #DDE3EC;padding-bottom:24px;">
+
+    <!-- ACTION REQUIRED section -->
+    <tr>
+      <td class="email-section" style="padding:20px 24px 0;">
+        <div class="email-section-header email-section-header--urgent" style="padding:10px 16px;background-color:#FFF3CD;color:#7A5C00;border:1px solid #F0C850;border-bottom:none;border-radius:6px 6px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">
+          Action Required
+        </div>
+        <div class="email-card-list" style="background-color:#FFFFFF;border:1px solid #DDE3EC;border-radius:0 0 6px 6px;overflow:hidden;">
+
+          <!-- ForwardToMe item -->
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td class="email-item" style="padding:14px 16px;border-bottom:1px solid #EEF2F7;vertical-align:top;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="vertical-align:top;">
+                      <span class="email-item-badge badge--forward" style="display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:3px;margin-bottom:6px;background-color:#FCE8E8;color:#8A1A1A;border:1px solid #F4C0C0;">Forward To Me</span>
+                      <span class="email-urgent-pill" style="display:inline-block;background-color:#C62828;color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:3px;margin-left:6px;vertical-align:middle;">Urgent</span>
+                      <p class="email-item-sender" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#0F2044;margin:0 0 3px;">Chase Bank</p>
+                      <p class="email-item-detail" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;margin:0;line-height:1.5;">New credit card &mdash; contact VPM to ship to you<br>Received Mar 23, 2026</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <!-- Overdue bill -->
+            <tr>
+              <td class="email-item" style="padding:14px 16px;vertical-align:top;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="vertical-align:top;">
+                      <span class="email-item-badge badge--overdue" style="display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:3px;margin-bottom:6px;background-color:#FCE8E8;color:#C62828;border:1px solid #F4C0C0;">Overdue Bill</span>
+                      <p class="email-item-sender" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#0F2044;margin:0 0 3px;">AT&amp;T</p>
+                      <p class="email-item-detail" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;margin:0;line-height:1.5;">Due Mar 15, 2026 &mdash; <strong style="color:#C62828;">8 days overdue</strong></p>
+                    </td>
+                    <td style="vertical-align:middle;text-align:right;white-space:nowrap;padding-left:12px;">
+                      <span class="email-item-amount email-item-amount--overdue" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#C62828;">$94.50</span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </td>
+    </tr>
+
+    <!-- NEW ITEMS section -->
+    <tr>
+      <td class="email-section" style="padding:20px 24px 0;">
+        <div class="email-section-header email-section-header--items" style="padding:10px 16px;background-color:#EDF2FA;color:#2C4A6E;border:1px solid #D0DCEE;border-bottom:none;border-radius:6px 6px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">
+          New Items
+        </div>
+        <div class="email-card-list" style="background-color:#FFFFFF;border:1px solid #DDE3EC;border-radius:0 0 6px 6px;overflow:hidden;">
+
+          <!-- Bill: AT&T -->
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td class="email-item" style="padding:14px 16px;border-bottom:1px solid #EEF2F7;vertical-align:top;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="vertical-align:top;">
+                      <span class="email-item-badge badge--bill" style="display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:3px;margin-bottom:6px;background-color:#FFF3CD;color:#7A5C00;border:1px solid #F0C850;">Bill</span>
+                      <p class="email-item-sender" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#0F2044;margin:0 0 3px;">AT&amp;T</p>
+                      <p class="email-item-detail" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;margin:0;line-height:1.5;">Received Mar 23 &middot; Due Apr 5, 2026 &middot; 13 days remaining</p>
+                    </td>
+                    <td style="vertical-align:middle;text-align:right;white-space:nowrap;padding-left:12px;">
+                      <span class="email-item-amount" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#0F2044;">$127.00</span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Bill: Pacific Gas & Electric -->
+            <tr>
+              <td class="email-item" style="padding:14px 16px;border-bottom:1px solid #EEF2F7;vertical-align:top;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="vertical-align:top;">
+                      <span class="email-item-badge badge--bill" style="display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:3px;margin-bottom:6px;background-color:#FFF3CD;color:#7A5C00;border:1px solid #F0C850;">Bill</span>
+                      <p class="email-item-sender" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#0F2044;margin:0 0 3px;">Pacific Gas &amp; Electric</p>
+                      <p class="email-item-detail" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;margin:0;line-height:1.5;">Received Mar 23 &middot; Due Apr 12, 2026 &middot; 20 days remaining</p>
+                    </td>
+                    <td style="vertical-align:middle;text-align:right;white-space:nowrap;padding-left:12px;">
+                      <span class="email-item-amount" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#0F2044;">$218.45</span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Notice: IRS -->
+            <tr>
+              <td class="email-item" style="padding:14px 16px;border-bottom:1px solid #EEF2F7;vertical-align:top;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="vertical-align:top;">
+                      <span class="email-item-badge badge--notice" style="display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:3px;margin-bottom:6px;background-color:#E8F0FC;color:#1E4A8A;border:1px solid #C0D4F4;">Notice</span>
+                      <p class="email-item-sender" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#0F2044;margin:0 0 3px;">Internal Revenue Service</p>
+                      <p class="email-item-detail" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;margin:0;line-height:1.5;">CP2000 Notice &mdash; Automated underreporter inquiry<br>Received Mar 23, 2026</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- ForwardToMe -->
+            <tr>
+              <td class="email-item" style="padding:14px 16px;vertical-align:top;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="vertical-align:top;">
+                      <span class="email-item-badge badge--forward" style="display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:3px;margin-bottom:6px;background-color:#FCE8E8;color:#8A1A1A;border:1px solid #F4C0C0;">Forward To Me</span>
+                      <p class="email-item-sender" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#0F2044;margin:0 0 3px;">Chase Bank</p>
+                      <p class="email-item-detail" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;margin:0;line-height:1.5;">New credit card — physical envelope<br>Received Mar 23, 2026</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </td>
+    </tr>
+
+    <!-- Last run status -->
+    <tr>
+      <td class="email-run-status" style="margin:20px 24px 0;padding:0 24px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FFFFFF;border:1px solid #DDE3EC;border-radius:6px;margin-top:20px;">
+          <tr>
+            <td style="padding:14px 16px;">
+              <p class="email-run-status-title" style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8A9BB0;margin:0 0 8px;">Last Run</p>
+              <p class="email-run-status-row" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;line-height:1.7;margin:0;">
+                Completed at 2:04 AM Pacific &nbsp;&middot;&nbsp; <span class="email-run-ok" style="color:#2E7D32;font-weight:600;">4 items processed</span> &nbsp;&middot;&nbsp; 0 errors<br>
+                Next run: Tuesday, March 24 at 2:00 AM Pacific
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Dashboard CTA -->
+    <tr>
+      <td class="email-cta-wrap" style="text-align:center;padding:20px 24px 0;">
+        <a href="http://localhost:5000" class="email-cta" style="display:inline-block;background-color:#0F2044;color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;padding:12px 28px;border-radius:6px;text-decoration:none;">Open Dashboard &rarr;</a>
+      </td>
+    </tr>
+
+  </table>
+
+  <!-- Footer -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" class="email-footer" style="background-color:#0F2044;border-radius:0 0 8px 8px;">
+    <tr>
+      <td style="padding:20px 32px;text-align:center;">
+        <p class="email-footer-text" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5A7CA4;line-height:1.7;margin:0;">
+          You're receiving this because PostMule is configured to send daily summaries.<br>
+          To stop, disable notifications in <a href="http://localhost:5000/settings" class="email-footer-link" style="color:#7A9CC4;text-decoration:underline;">Settings &rarr; Notifications</a>.<br>
+          PostMule v0.1.0 &nbsp;&middot;&nbsp; <a href="https://github.com/PostMule/app" class="email-footer-link" style="color:#7A9CC4;text-decoration:underline;">github.com/PostMule/app</a>
+        </p>
+      </td>
+    </tr>
+  </table>
+
+  <!--[if mso]></td></tr></table><![endif]-->
+</div>
+
+
+<!-- ================================================================
+     DIVIDER
+     ================================================================ -->
+<hr class="mockup-divider" style="max-width:600px;margin:48px auto 40px;border:none;border-top:2px dashed #A0AEC0;">
+<p class="mockup-state-label">State 2 — Quiet day (no new items)</p>
+
+
+<!-- ================================================================
+     STATE 2: QUIET DAY — nothing new
+     ================================================================ -->
+
+<div class="email-wrapper">
+  <!--[if mso]><table width="600" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td><![endif]-->
+
+  <!-- Header -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0F2044;border-radius:8px 8px 0 0;">
+    <tr>
+      <td style="padding:24px 32px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="vertical-align:middle;">
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:700;color:#FFFFFF;letter-spacing:-0.5px;line-height:1;">Post<span style="color:#E8A020;">Mule</span></div>
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7A9CC4;letter-spacing:2px;text-transform:uppercase;margin-top:4px;">Smart mail management</div>
+            </td>
+            <td class="email-header-date" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7A9CC4;text-align:right;vertical-align:middle;line-height:1.4;">
+              Daily Summary<br>
+              Tuesday, March 24, 2026
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Summary bar -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FFFFFF;border-left:1px solid #DDE3EC;border-right:1px solid #DDE3EC;">
+    <tr>
+      <td style="padding:20px 32px;background-color:#FFFFFF;border-bottom:1px solid #DDE3EC;">
+        <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:600;color:#0F2044;margin:0;line-height:1.4;">Nothing new today.</p>
+        <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;margin:4px 0 0;">No mail was received or processed during this run.</p>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Body -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F5F6F8;border-left:1px solid #DDE3EC;border-right:1px solid #DDE3EC;padding-bottom:24px;">
+
+    <!-- Quiet state card -->
+    <tr>
+      <td style="padding:20px 24px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FFFFFF;border:1px solid #DDE3EC;border-radius:6px;">
+          <tr>
+            <td style="text-align:center;padding:40px 32px;">
+              <div style="font-size:32px;line-height:1;margin-bottom:12px;">&#128231;</div>
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:600;color:#0F2044;margin:0 0 6px;">All clear.</p>
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#8A9BB0;margin:0;">No new mail arrived. PostMule will check again tomorrow.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Pending items reminder (if any exist in the system) -->
+    <tr>
+      <td style="padding:16px 24px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FFFFFF;border:1px solid #DDE3EC;border-radius:6px;">
+          <tr>
+            <td style="padding:14px 16px;">
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8A9BB0;margin:0 0 8px;">Pending</p>
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;line-height:1.7;margin:0;">
+                2 unpaid bills &nbsp;&middot;&nbsp; 1 unmatched bank transaction &nbsp;&middot;&nbsp;
+                <a href="http://localhost:5000/bills" style="color:#7A9CC4;text-decoration:underline;">View in dashboard &rarr;</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Last run status -->
+    <tr>
+      <td style="padding:16px 24px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FFFFFF;border:1px solid #DDE3EC;border-radius:6px;">
+          <tr>
+            <td style="padding:14px 16px;">
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8A9BB0;margin:0 0 8px;">Last Run</p>
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;line-height:1.7;margin:0;">
+                Completed at 2:02 AM Pacific &nbsp;&middot;&nbsp; <span style="color:#2E7D32;font-weight:600;">No new items</span> &nbsp;&middot;&nbsp; 0 errors<br>
+                Next run: Wednesday, March 25 at 2:00 AM Pacific
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+  </table>
+
+  <!-- Footer -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0F2044;border-radius:0 0 8px 8px;">
+    <tr>
+      <td style="padding:20px 32px;text-align:center;">
+        <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5A7CA4;line-height:1.7;margin:0;">
+          You're receiving this because PostMule is configured to send daily summaries.<br>
+          To stop, disable notifications in <a href="http://localhost:5000/settings" style="color:#7A9CC4;text-decoration:underline;">Settings &rarr; Notifications</a>.<br>
+          PostMule v0.1.0 &nbsp;&middot;&nbsp; <a href="https://github.com/PostMule/app" style="color:#7A9CC4;text-decoration:underline;">github.com/PostMule/app</a>
+        </p>
+      </td>
+    </tr>
+  </table>
+
+  <!--[if mso]></td></tr></table><![endif]-->
+</div>
+
+</body>
+</html>

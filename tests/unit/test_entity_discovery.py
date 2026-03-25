@@ -54,3 +54,62 @@ def test_fuzzy_match_proposes_alias(tmp_path):
     )
     # Should propose as alias (not exact match)
     assert len(result["proposed"]) >= 0  # may match depending on threshold
+
+
+# ---------------------------------------------------------------------------
+# Account-number primary matching
+# ---------------------------------------------------------------------------
+
+def test_account_number_match_returns_matched(tmp_path):
+    """Known account number → matched, skips name-based logic entirely."""
+    add_entity(tmp_path, "AT&T Mobility LLC", "biller",
+               friendly_name="AT&T Mobile", account_number="A1B2C3D4")
+    result = run_entity_discovery(
+        ["AT&T", "Alice Smith"],
+        tmp_path,
+        account_number="X9Y9A1B2C3D4",  # last4 = D4 matches
+    )
+    assert len(result["matched"]) == 1
+    assert result["matched"][0]["match_type"] == "account_number"
+    assert result["matched"][0]["name"] == "AT&T Mobile"
+    # unassigned/proposed/new should all be empty (returned early)
+    assert result["unassigned"] == []
+    assert result["proposed"] == []
+    assert result["new"] == []
+
+
+def test_unknown_account_number_routes_to_unassigned(tmp_path):
+    """Unrecognized account number → unassigned, even if name would fuzzy-match."""
+    add_entity(tmp_path, "AT&T Mobility LLC", "biller", account_number="KNOWN001")
+    result = run_entity_discovery(
+        ["AT&T"],  # name matches, but account is different
+        tmp_path,
+        account_number="UNKNOWN999",
+    )
+    assert len(result["unassigned"]) == 1
+    assert result["unassigned"][0]["reason"] == "unrecognized_account"
+    assert result["matched"] == []
+
+
+def test_no_account_number_falls_through_to_name_matching(tmp_path):
+    """No account_number provided → normal name-based matching."""
+    add_entity(tmp_path, "AT&T Mobility LLC", "biller")
+    result = run_entity_discovery(["AT&T Mobility LLC"], tmp_path)
+    assert len(result["matched"]) == 1
+    assert result["matched"][0]["match_type"] == "exact"
+
+
+def test_friendly_name_is_exact_matchable(tmp_path):
+    """friendly_name can be used as an exact match trigger."""
+    add_entity(tmp_path, "AT&T Mobility LLC", "biller", friendly_name="AT&T Mobile")
+    result = run_entity_discovery(["AT&T Mobile"], tmp_path)
+    assert len(result["matched"]) == 1
+    assert result["matched"][0]["match_type"] == "exact"
+
+
+def test_empty_account_number_string_falls_through_to_name(tmp_path):
+    """Empty string for account_number is treated as absent."""
+    add_entity(tmp_path, "Verizon", "biller")
+    result = run_entity_discovery(["Verizon"], tmp_path, account_number="")
+    assert len(result["matched"]) == 1
+    assert result["matched"][0]["match_type"] == "exact"

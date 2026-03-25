@@ -55,6 +55,19 @@ class Config:
         return self.require("notifications", "alert_email")
 
     @property
+    def alert_email_secondary(self) -> str:
+        return self.get("notifications", "alert_email_secondary", default="") or ""
+
+    @property
+    def alert_recipients(self) -> list[str]:
+        """All alert recipient addresses (primary + optional secondary)."""
+        recipients = [self.alert_email]
+        secondary = self.alert_email_secondary
+        if secondary and secondary not in recipients:
+            recipients.append(secondary)
+        return recipients
+
+    @property
     def confidence_threshold(self) -> float:
         return float(self.get("llm", "classification_confidence_threshold", default=0.80))
 

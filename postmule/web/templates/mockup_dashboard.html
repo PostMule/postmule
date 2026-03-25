@@ -63,6 +63,15 @@
     .logo-accent { color: #E8A020; }
     .logo-tagline { font-size: 11px; color: #5A7CA4; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
     .header-date { color: #5A7CA4; font-size: 11px; }
+    .feedback-nav-btn { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); color: #fff; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.4px; padding: 5px 12px; border-radius: 5px; cursor: pointer; white-space: nowrap; }
+    .feedback-nav-btn:hover { background: rgba(255,255,255,0.2); }
+    .header-user { position: relative; flex-shrink: 0; }
+    .header-user-btn { display: flex; align-items: center; gap: 5px; color: #5A7CA4; font-size: 12px; background: none; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+    .header-user-btn:hover { background: #1a3060; color: #A0BFDF; }
+    .header-user-menu { position: absolute; right: 0; top: calc(100% + 4px); background: #1a3060; border: 1px solid #2a4a80; border-radius: 6px; min-width: 130px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 100; overflow: hidden; display: none; }
+    .header-user:hover .header-user-menu { display: block; }
+    .header-user-menu-item { display: flex; align-items: center; gap: 7px; color: #A0BFDF; font-size: 13px; text-decoration: none; padding: 9px 14px; }
+    .header-user-menu-item:hover { background: #243d70; color: white; }
     nav { display: flex; gap: 4px; flex: 1; }
     .nav-link { color: #5A7CA4; font-size: 13px; padding: 6px 12px; border-radius: 4px; text-decoration: none; }
     .nav-link:hover, .nav-link.active { background: #1a3060; color: white; }
@@ -91,15 +100,41 @@
     .banner-error { background: #FFEBEE; border: 1px solid #FFCDD2; border-radius: 8px; padding: 14px 18px; color: #C62828; margin-bottom: 20px; max-width: 480px; }
     .banner-warning { background: #FFF3E0; border: 1px solid #FFE0B2; border-radius: 8px; padding: 20px; color: #E65100; }
 
+    /* ── Home — Last Run card ───────────────────────────────────────── */
+    .last-run-card { display: flex; align-items: stretch; background: white; border-radius: 8px; border: 1px solid #DDE3EC; margin-bottom: 16px; overflow: hidden; }
+    .last-run-indicator { width: 4px; flex-shrink: 0; background: #DDE3EC; }
+    .last-run-card--ok .last-run-indicator { background: #2E7D32; }
+    .last-run-card--warning .last-run-indicator { background: #E8A020; }
+    .last-run-card--error .last-run-indicator { background: #C62828; }
+    .last-run-body { padding: 14px 18px; }
+    .last-run-label { font-size: 11px; color: #7A90A8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .last-run-time { font-size: 16px; font-weight: 600; color: #0F2044; margin-bottom: 4px; }
+    .last-run-detail { font-size: 13px; color: #5A7090; }
+    .last-run-status { font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
+    .last-run-status--ok { color: #2E7D32; }
+    .last-run-status--warning { color: #E8A020; }
+    .last-run-status--error { color: #C62828; }
     /* ── Home — stats ──────────────────────────────────────────────── */
-    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
     .stat-label { font-size: 11px; color: #7A90A8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
     .stat-value         { font-size: 14px; color: #0F2044; font-weight: 600; }
     .stat-value--number { font-size: 22px; font-weight: 600; }
     .stat-value--alert   { color: #C62828; }
     .stat-value--ok      { color: #2E7D32; }
     .stat-value--warning { color: #E8A020; }
-    .run-grid { display: flex; gap: 12px; }
+    .stat-card-link { text-decoration: none; display: block; }
+    .stat-card-link:hover { border-color: #7A9CC4; }
+    .stat-card-hint { font-size: 12px; color: #7A90A8; margin-top: 4px; }
+    .run-grid { display: flex; gap: 12px; margin-bottom: 24px; }
+    /* ── Home — Recent activity ─────────────────────────────────────── */
+    .recent-activity { background: white; border-radius: 8px; border: 1px solid #DDE3EC; padding: 16px 20px; }
+    .recent-activity-header { font-size: 11px; font-weight: 700; color: #7A90A8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .recent-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F0F3F7; }
+    .recent-item:last-of-type { border-bottom: none; }
+    .recent-item-body { flex: 1; min-width: 0; }
+    .recent-item-sender { font-size: 13px; font-weight: 600; color: #0F2044; }
+    .recent-item-summary { font-size: 12px; color: #5A7090; margin-top: 2px; }
+    .recent-item-date { font-size: 12px; color: #8A9BB0; flex-shrink: 0; white-space: nowrap; }
 
     /* ── Mail items ────────────────────────────────────────────────── */
     .mail-item { background: white; border-radius: 8px; border: 1px solid #DDE3EC; margin-bottom: 8px; display: flex; overflow: hidden; }
@@ -149,10 +184,15 @@
 
     /* ── Entities ──────────────────────────────────────────────────── */
     .entity-row { background: white; border-radius: 8px; border: 1px solid #DDE3EC; padding: 12px 16px; margin-bottom: 8px; }
-    .entity-header { display: flex; gap: 8px; align-items: center; }
-    .entity-name { font-weight: 600; color: #0F2044; }
-    .entity-type { font-size: 10px; background: #EEF3F9; color: #2C4A6E; padding: 2px 8px; border-radius: 4px; border: 1px solid #C0D0E4; }
-    .entity-aliases { font-size: 11px; color: #7A90A8; margin-top: 4px; }
+    .entity-search-input { display:block; width:100%; max-width:360px; margin-bottom:12px; padding:7px 11px; font-size:0.8125rem; border:1px solid #DDE3EC; border-radius:6px; background:white; color:#1C2E44; outline:none; }
+    .entity-table { width:100%; border-collapse:collapse; background:white; border-radius:8px; overflow:hidden; border:1px solid #DDE3EC; font-size:0.8125rem; }
+    .entity-table thead th { background:#F0F4F9; color:#2C4A6E; font-weight:600; font-size:0.6875rem; text-transform:uppercase; letter-spacing:0.04em; padding:8px 12px; text-align:left; border-bottom:1px solid #DDE3EC; }
+    .entity-tr td { padding:10px 12px; border-bottom:1px solid #F0F4F9; vertical-align:middle; color:#1C2E44; }
+    .entity-name-cell { font-weight:600; color:#0F2044; }
+    .entity-aliases-cell, .entity-accounts-cell, .entity-lastseen-cell { color:#7A90A8; font-size:0.75rem; }
+    .entity-expand-btn { background:none; border:1px solid #DDE3EC; border-radius:4px; padding:2px 8px; cursor:pointer; font-size:0.6875rem; color:#7A90A8; }
+    .entity-detail-tr td { padding:0; border-bottom:1px solid #DDE3EC; }
+    .entity-detail { padding:16px; }
 
     /* ── Forward-to-me ─────────────────────────────────────────────── */
     .forward-item { background: white; border-radius: 8px; border: 1px solid #FFCDD2; padding: 14px 16px; margin-bottom: 8px; }
@@ -182,7 +222,8 @@
     .s-pane { display: none; }
     .s-pane.active { display: block; }
     .s-card { background: white; border-radius: 8px; border: 1px solid #DDE3EC; padding: 20px; margin-bottom: 16px; }
-    .s-card h3 { font-size: 13px; font-weight: 700; color: #0F2044; margin: 0 0 16px; padding-bottom: 10px; border-bottom: 1px solid #EEF3F9; text-transform: uppercase; letter-spacing: 0.5px; }
+    .s-card h3 { font-size: 13px; font-weight: 700; color: #0F2044; margin: 0 0 16px; padding-bottom: 10px; border-bottom: 1px solid #EEF3F9; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; }
+    .help-btn { width: 1.375rem; height: 1.375rem; border-radius: 50%; border: 1px solid #B8C8D8; background: #EEF2F7; color: #5A7090; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; text-transform: none; letter-spacing: 0; }
     .s-row { display: grid; grid-template-columns: 220px 1fr; gap: 16px; align-items: start; margin-bottom: 14px; }
     .s-row:last-child { margin-bottom: 0; }
     .s-label { font-size: 13px; font-weight: 500; color: #2C4A6E; padding-top: 7px; }
@@ -233,6 +274,48 @@
     .section-title { font-size: 14px; font-weight: 600; color: #0F2044; margin: 24px 0 12px; }
     .section-title:first-child { margin-top: 0; }
 
+    /* ── App footer ─────────────────────────────────────────────────── */
+    .app-footer { text-align: center; padding: 16px 24px; font-size: 12px; color: #8A9BB0; border-top: 1px solid #DDE3EC; background: #F5F6F8; margin-top: 32px; }
+
+    /* ── Update banner ──────────────────────────────────────────────── */
+    .update-banner { position: fixed; bottom: 20px; right: 20px; z-index: 9000; display: flex; align-items: center; gap: 12px; background: #0F2044; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; box-shadow: 0 4px 16px rgba(15,32,68,0.25); max-width: 360px; }
+    .update-banner-text { flex: 1; }
+    .update-banner-link { color: #E8A020; font-weight: 600; text-decoration: none; white-space: nowrap; }
+    .update-banner-link:hover { text-decoration: underline; }
+    .update-banner-close { background: none; border: none; color: #8A9BB0; font-size: 18px; line-height: 1; cursor: pointer; padding: 0 2px; }
+
+    /* ── Mail Hub ───────────────────────────────────────────────────── */
+    .mail-status-bar { display: flex; align-items: center; gap: 16px; background: white; border: 1px solid #DDE3EC; border-radius: 8px; padding: 10px 16px; margin-bottom: 14px; flex-wrap: wrap; }
+    .mail-status-run { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+    .mail-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .mail-status-dot--ok { background: #2E7D32; }
+    .mail-status-dot--warning { background: #E8A020; }
+    .mail-status-dot--error { background: #C62828; }
+    .mail-status-dot--none { background: #DDE3EC; }
+    .mail-status-label { font-size: 13px; color: #5A7090; white-space: nowrap; }
+    .mail-status-logslink { font-size: 12px; color: #7A9CC4; text-decoration: none; white-space: nowrap; }
+    .mail-status-logslink:hover { text-decoration: underline; }
+    .mail-status-counts { display: flex; gap: 8px; }
+    .mail-status-count { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+    .mail-status-count--alert { background: #FEECEC; color: #8A1010; border: 1px solid #FFCDD2; }
+    .mail-status-count--warning { background: #FDF3E0; color: #7A4C08; border: 1px solid #E8C96A; }
+    .mail-status-actions { display: flex; gap: 8px; }
+    .mail-filter-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
+    .mail-filter-tabs { display: flex; gap: 2px; border-bottom: 2px solid #DDE3EC; flex: 1; }
+    .mail-filter-tab { padding: 7px 14px; border: none; background: none; cursor: pointer; font-size: 13px; color: #5A7090; border-bottom: 2px solid transparent; margin-bottom: -2px; font-family: inherit; white-space: nowrap; }
+    .mail-filter-tab.active { color: #0F2044; font-weight: 600; border-bottom-color: #0F2044; }
+    .mail-filter-tab--unassigned.active { color: #E8A020; border-bottom-color: #E8A020; }
+    .mail-filter-badge { display: inline-block; background: #C62828; color: white; font-size: 10px; font-weight: 700; border-radius: 8px; padding: 1px 5px; margin-left: 4px; vertical-align: middle; }
+    .mail-year-select { padding: 5px 8px; border: 1px solid #DDE3EC; border-radius: 6px; font-size: 12px; color: #5A7090; background: white; flex-shrink: 0; }
+    .mail-due-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; font-size: 12px; }
+    .mail-due-label { color: #7A90A8; }
+    .mail-due-amount { font-weight: 600; color: #0F2044; }
+    .mail-due-overdue { color: #C62828; font-weight: 600; }
+    .mail-forward-alert { margin-top: 6px; font-size: 12px; font-weight: 600; color: #C62828; background: #FFF3E0; border: 1px solid #FFE0B2; border-radius: 4px; padding: 3px 8px; display: inline-block; }
+    .mail-unassigned-row { background: #FFF8E1; border: 1px solid #FFE082; border-radius: 6px; padding: 8px 12px; margin-top: 8px; display: flex; align-items: center; gap: 10px; }
+    .mail-unassigned-label { font-size: 12px; color: #5A7090; flex: 1; }
+    .mail-unassigned-label strong { color: #0F2044; }
+
     /* ── Connections — tabbed provider list ────────────────────────── */
     .conn-tabs { display: flex; gap: 2px; border-bottom: 2px solid #DDE3EC; margin-bottom: 20px; flex-wrap: wrap; }
     .conn-tab { padding: 8px 16px; border: none; background: none; cursor: pointer; font-size: 13px; color: #5A7090; border-bottom: 2px solid transparent; margin-bottom: -2px; font-family: inherit; }
@@ -266,16 +349,11 @@
 <div id="mockup-bar">
   <span class="m-label" title="Design reference only — this bar is not in the real app">Page Switcher</span>
   <span class="m-sep">|</span>
-  <button class="m-btn" data-sec="login"     onclick="showSection('login')">Login</button>
-  <button class="m-btn active" data-sec="home" onclick="showSection('home')">Home</button>
-  <button class="m-btn" data-sec="mail"      onclick="showSection('mail')">Mail</button>
-  <button class="m-btn" data-sec="bills"     onclick="showSection('bills')">Bills</button>
-  <button class="m-btn" data-sec="forward"        onclick="showSection('forward')">Forward To Me</button>
-  <button class="m-btn" data-sec="pending"        onclick="showSection('pending')">Pending</button>
+  <button class="m-btn" data-sec="login"       onclick="showSection('login')">Login</button>
+  <button class="m-btn active" data-sec="mail" onclick="showSection('mail')">Mail</button>
   <button class="m-btn" data-sec="entities"    onclick="showSection('entities')">Entities</button>
-  <button class="m-btn" data-sec="corrections" onclick="showSection('corrections')">Corrections</button>
   <button class="m-btn" data-sec="logs"        onclick="showSection('logs')">Logs</button>
-  <button class="m-btn" data-sec="connections" onclick="showSection('connections')">Connections</button>
+  <button class="m-btn" data-sec="providers" onclick="showSection('providers')">Providers</button>
   <button class="m-btn" data-sec="settings"    onclick="showSection('settings')">Settings</button>
 </div>
 
@@ -330,356 +408,316 @@
         </div>
       </a>
       <nav>
-        <a href="#" id="nav-home"     class="nav-link active"  onclick="showSection('home');return false;">Home</a>
-        <a href="#" id="nav-mail"     class="nav-link"         onclick="showSection('mail');return false;">Mail</a>
-        <a href="#" id="nav-bills"    class="nav-link"         onclick="showSection('bills');return false;">Bills</a>
-        <a href="#" id="nav-forward"      class="nav-link"         onclick="showSection('forward');return false;">Forward To Me</a>
-        <a href="#" id="nav-pending"      class="nav-link"         onclick="showSection('pending');return false;">Pending</a>
-        <a href="#" id="nav-entities"     class="nav-link"         onclick="showSection('entities');return false;">Entities</a>
-        <a href="#" id="nav-corrections"  class="nav-link"         onclick="showSection('corrections');return false;">Corrections</a>
-        <a href="#" id="nav-settings"     class="nav-link"         onclick="showSection('settings');return false;">Settings</a>
-        <a href="#" id="nav-logs"         class="nav-link"         onclick="showSection('logs');return false;">Logs</a>
-        <a href="#" id="nav-connections"  class="nav-link"         onclick="showSection('connections');return false;">Connections</a>
+        <a href="#" id="nav-mail"        class="nav-link active" onclick="showSection('mail');return false;">Mail</a>
+        <a href="#" id="nav-entities"    class="nav-link"        onclick="showSection('entities');return false;">Entities</a>
+        <a href="#" id="nav-settings"    class="nav-link"        onclick="showSection('settings');return false;">Settings</a>
+        <a href="#" id="nav-logs"        class="nav-link"        onclick="showSection('logs');return false;">Logs</a>
+        <a href="#" id="nav-providers" class="nav-link"        onclick="showSection('providers');return false;">Providers</a>
       </nav>
       <div class="header-date">2026-03-22</div>
+      <button class="feedback-nav-btn" onclick="return false;">Feedback</button>
+      <div class="header-user">
+        <button class="header-user-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+          Admin
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div class="header-user-menu">
+          <a href="#" class="header-user-menu-item" onclick="return false;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Sign out
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Content -->
   <div class="content">
 
-    <!-- ── HOME ──────────────────────────────────────────────────── -->
-    <div id="sec-home" class="section">
-      <h1 class="page-title">Dashboard</h1>
-      <div class="stat-grid">
-        <div class="card">
-          <div class="stat-label">Last Run</div>
-          <div class="stat-value">2026-03-22 02:03 &mdash; OK</div>
-        </div>
-        <div class="card">
-          <div class="stat-label">Awaiting Forwarding</div>
-          <div class="stat-value--number stat-value--ok">0</div>
-        </div>
-        <div class="card">
-          <div class="stat-label">Pending Bills</div>
-          <div class="stat-value--number stat-value--warning">3</div>
-        </div>
-      </div>
-      <div class="run-grid">
-        <button class="btn btn-primary">Run Now</button>
-        <button class="btn btn-secondary">Dry Run</button>
-      </div>
-    </div>
-
-    <!-- ── MAIL ──────────────────────────────────────────────────── -->
-    <div id="sec-mail" class="section" style="display:none;">
+    <!-- ── MAIL HUB ───────────────────────────────────────────────── -->
+    <div id="sec-mail" class="section">
       <h1 class="page-title">Mail</h1>
 
-      <div class="mail-item">
-        <div class="mail-bar mail-bar--bill"></div>
-        <div class="mail-body">
-          <div class="mail-header">
-            <div class="mail-sender">Verizon Wireless</div>
-            <div class="mail-date">2026-03-20</div>
+      <!-- Status bar -->
+      <div class="mail-status-bar">
+        <div class="mail-status-run">
+          <span class="mail-status-dot mail-status-dot--ok"></span>
+          <span class="mail-status-label">Last run: 2026-03-22 02:03 &mdash; SUCCESS &middot; 4 items</span>
+          <a href="#" class="mail-status-logslink" onclick="showSection('logs');return false;">Logs &rarr;</a>
+        </div>
+        <div class="mail-status-counts">
+          <span class="mail-status-count mail-status-count--alert">1 forward pending</span>
+          <span class="mail-status-count mail-status-count--warning">3 bills unmatched</span>
+        </div>
+        <div class="mail-status-actions">
+          <button class="btn btn-primary btn-sm">Run Now</button>
+          <button class="btn btn-secondary btn-sm">Dry Run</button>
+        </div>
+      </div>
+
+      <!-- Filter bar with tab switcher -->
+      <div class="mail-filter-bar">
+        <div class="mail-filter-tabs" id="mail-tabs">
+          <button class="mail-filter-tab active" onclick="mailTab('all',this)">All</button>
+          <button class="mail-filter-tab" onclick="mailTab('bill',this)">Bills</button>
+          <button class="mail-filter-tab" onclick="mailTab('notice',this)">Notices</button>
+          <button class="mail-filter-tab" onclick="mailTab('forward',this)">Forward To Me</button>
+          <button class="mail-filter-tab mail-filter-tab--unassigned" onclick="mailTab('unassigned',this)">
+            Unassigned <span class="mail-filter-badge">3</span>
+          </button>
+        </div>
+        <select class="mail-year-select">
+          <option selected>2026</option>
+          <option>2025</option>
+          <option>2024</option>
+        </select>
+      </div>
+
+      <!-- Unassigned section — shown when Unassigned tab is active -->
+      <div id="mail-pane-unassigned" style="display:none;">
+        <div class="match-row">
+          <div class="match-row__body">
+            <div class="match-name">&ldquo;Verizon Wireless Inc&rdquo;</div>
+            <div class="match-detail">Looks like: <strong>Verizon Wireless</strong> &mdash; similarity 92%</div>
+            <div class="match-auto">Auto-approves: 2026-03-29</div>
           </div>
-          <div class="mail-summary">Monthly account statement &mdash; balance due $94.00</div>
-          <span class="badge badge--bill">BILL &middot; APR 5</span>
+          <button class="btn btn-primary btn-sm">Approve</button>
+          <button class="btn btn-danger btn-sm">Deny</button>
         </div>
-      </div>
-
-      <div class="mail-item">
-        <div class="mail-bar mail-bar--forward"></div>
-        <div class="mail-body">
-          <div class="mail-header">
-            <div class="mail-sender">Chase Bank</div>
-            <div class="mail-date">2026-03-19</div>
+        <div class="match-row">
+          <div class="match-row__body">
+            <div class="match-name">&ldquo;AT&amp;T Mobility LLC&rdquo;</div>
+            <div class="match-detail">Looks like: <strong>AT&amp;T</strong> &mdash; similarity 88%</div>
+            <div class="match-auto">Auto-approves: 2026-03-29</div>
           </div>
-          <div class="mail-summary">New credit card enclosed &mdash; physical item requires forwarding</div>
-          <span class="badge badge--forward">FORWARD TO ME</span>
+          <button class="btn btn-primary btn-sm">Approve</button>
+          <button class="btn btn-danger btn-sm">Deny</button>
         </div>
-      </div>
-
-      <div class="mail-item">
-        <div class="mail-bar mail-bar--bill"></div>
-        <div class="mail-body">
-          <div class="mail-header">
-            <div class="mail-sender">AT&amp;T</div>
-            <div class="mail-date">2026-03-18</div>
+        <div class="match-row">
+          <div class="match-row__body">
+            <div class="match-name">&ldquo;Pacific Gas Electric Co&rdquo;</div>
+            <div class="match-detail">Looks like: <strong>PG&amp;E</strong> &mdash; similarity 81%</div>
+            <div class="match-auto">Auto-approves: 2026-03-29</div>
           </div>
-          <div class="mail-summary">Wireless service statement &mdash; $182.50 past due</div>
-          <span class="badge badge--bill">BILL &middot; MAR 15 (OVERDUE)</span>
+          <button class="btn btn-primary btn-sm">Approve</button>
+          <button class="btn btn-danger btn-sm">Deny</button>
         </div>
       </div>
 
-      <div class="mail-item">
-        <div class="mail-bar mail-bar--notice"></div>
-        <div class="mail-body">
-          <div class="mail-header">
-            <div class="mail-sender">IRS</div>
-            <div class="mail-date">2026-03-12</div>
+      <!-- Unified mail item list -->
+      <div id="mail-pane-items">
+
+        <!-- Bill item — with due date row and inline unassigned match -->
+        <div class="mail-item" data-type="bill">
+          <div class="mail-bar mail-bar--bill"></div>
+          <div class="mail-body">
+            <div class="mail-header">
+              <div class="mail-sender">Verizon Wireless</div>
+              <div class="mail-date">2026-03-20</div>
+            </div>
+            <div class="mail-summary">Monthly account statement &mdash; balance due $94.00</div>
+            <div class="mail-due-row">
+              <span class="badge badge--bill">BILL</span>
+              <span class="mail-due-label">Due</span>
+              <span class="mail-due-amount">Apr 5, 2026</span>
+              <span class="mail-due-label">&middot;</span>
+              <span class="mail-due-amount">$94.00</span>
+            </div>
+            <!-- Inline unassigned match proposal for this sender -->
+            <div class="mail-unassigned-row">
+              <span class="mail-unassigned-label">New name: <strong>"Verizon Wireless Inc"</strong> &mdash; looks like Verizon Wireless (92%)</span>
+              <button class="btn btn-primary btn-sm">Approve</button>
+              <button class="btn btn-danger btn-sm">Deny</button>
+            </div>
           </div>
-          <div class="mail-summary">Tax refund status update &mdash; your refund has been approved</div>
-          <span class="badge badge--notice">NOTICE</span>
         </div>
-      </div>
 
-      <div class="mail-item">
-        <div class="mail-bar mail-bar--notice"></div>
-        <div class="mail-body">
-          <div class="mail-header">
-            <div class="mail-sender">State DMV</div>
-            <div class="mail-date">2026-03-10</div>
+        <!-- ForwardToMe item — with urgent alert -->
+        <div class="mail-item" data-type="forward">
+          <div class="mail-bar mail-bar--forward"></div>
+          <div class="mail-body">
+            <div class="mail-header">
+              <div class="mail-sender">Chase Bank</div>
+              <div class="mail-date">2026-03-19</div>
+            </div>
+            <div class="mail-summary">New credit card enclosed &mdash; physical item requires forwarding</div>
+            <span class="badge badge--forward">FORWARD</span>
+            <div class="mail-forward-alert">&#9888; ACTION REQUIRED — contact VPM to forward this item</div>
           </div>
-          <div class="mail-summary">Vehicle registration renewal notice &mdash; due May 1, 2026</div>
-          <span class="badge badge--notice">NOTICE</span>
         </div>
-      </div>
 
-      <div class="mail-item">
-        <div class="mail-bar mail-bar--default"></div>
-        <div class="mail-body">
-          <div class="mail-header">
-            <div class="mail-sender--read">Pottery Barn</div>
-            <div class="mail-date">2026-03-15</div>
+        <!-- Overdue bill item -->
+        <div class="mail-item" data-type="bill">
+          <div class="mail-bar mail-bar--bill"></div>
+          <div class="mail-body">
+            <div class="mail-header">
+              <div class="mail-sender">AT&amp;T</div>
+              <div class="mail-date">2026-03-18</div>
+            </div>
+            <div class="mail-summary">Wireless service statement &mdash; $182.50 past due</div>
+            <div class="mail-due-row">
+              <span class="badge badge--bill">BILL</span>
+              <span class="mail-due-label">Due</span>
+              <span class="mail-due-overdue">Mar 15, 2026 (OVERDUE)</span>
+              <span class="mail-due-label">&middot;</span>
+              <span class="mail-due-amount">$182.50</span>
+            </div>
           </div>
-          <div class="mail-summary">Spring sale &mdash; 40% off everything this weekend</div>
-          <span class="badge badge--junk">JUNK</span>
         </div>
-      </div>
 
-      <div class="mail-item">
-        <div class="mail-bar mail-bar--default"></div>
-        <div class="mail-body">
-          <div class="mail-header">
-            <div class="mail-sender--read">Williams Sonoma</div>
-            <div class="mail-date">2026-03-14</div>
+        <!-- Notice item -->
+        <div class="mail-item" data-type="notice">
+          <div class="mail-bar mail-bar--notice"></div>
+          <div class="mail-body">
+            <div class="mail-header">
+              <div class="mail-sender">IRS</div>
+              <div class="mail-date">2026-03-12</div>
+            </div>
+            <div class="mail-summary">Tax refund status update &mdash; your refund has been approved</div>
+            <span class="badge badge--notice">NOTICE</span>
           </div>
-          <div class="mail-summary">Your exclusive catalog is inside</div>
-          <span class="badge badge--junk">JUNK</span>
         </div>
-      </div>
 
-      <div class="mail-item">
-        <div class="mail-bar mail-bar--default"></div>
-        <div class="mail-body">
-          <div class="mail-header">
-            <div class="mail-sender">Unknown Sender</div>
-            <div class="mail-date">2026-03-21</div>
+        <!-- Notice item -->
+        <div class="mail-item" data-type="notice">
+          <div class="mail-bar mail-bar--notice"></div>
+          <div class="mail-body">
+            <div class="mail-header">
+              <div class="mail-sender">State DMV</div>
+              <div class="mail-date">2026-03-10</div>
+            </div>
+            <div class="mail-summary">Vehicle registration renewal notice &mdash; due May 1, 2026</div>
+            <span class="badge badge--notice">NOTICE</span>
           </div>
-          <div class="mail-summary">Unrecognized document &mdash; classification confidence 0.61</div>
-          <span class="badge badge--needs-review">NEEDS REVIEW</span>
         </div>
-      </div>
-    </div>
 
-    <!-- ── BILLS ──────────────────────────────────────────────────── -->
-    <div id="sec-bills" class="section" style="display:none;">
-      <h1 class="page-title">Bills</h1>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Sender</th>
-              <th>Amount</th>
-              <th>Due</th>
-              <th>Status</th>
-              <th>Source</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="td-sender">AT&amp;T</td>
-              <td class="td-amount">$182.50</td>
-              <td class="td-due--overdue">Mar 15, 2026</td>
-              <td><span class="status-badge status-badge--overdue">OVERDUE</span></td>
-              <td><a href="#" class="pdf-link">View PDF</a></td>
-            </tr>
-            <tr>
-              <td class="td-sender">Verizon Wireless</td>
-              <td class="td-amount">$94.00</td>
-              <td class="td-due">Apr 5, 2026</td>
-              <td><span class="status-badge">PENDING</span></td>
-              <td><a href="#" class="pdf-link">View PDF</a></td>
-            </tr>
-            <tr>
-              <td class="td-sender">Amazon Prime</td>
-              <td class="td-amount">$14.99</td>
-              <td class="td-due">Apr 1, 2026</td>
-              <td><span class="status-badge">PENDING</span></td>
-              <td>—</td>
-            </tr>
-            <tr>
-              <td class="td-sender">PG&amp;E</td>
-              <td class="td-amount">$61.00</td>
-              <td class="td-due">Apr 12, 2026</td>
-              <td><span class="status-badge status-badge--matched">MATCHED</span></td>
-              <td><a href="#" class="pdf-link">View PDF</a></td>
-            </tr>
-            <tr>
-              <td class="td-sender">Comcast</td>
-              <td class="td-amount">$89.99</td>
-              <td class="td-due">Mar 28, 2026</td>
-              <td><span class="status-badge status-badge--matched">MATCHED</span></td>
-              <td><a href="#" class="pdf-link">View PDF</a></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ── FORWARD TO ME ──────────────────────────────────────────── -->
-    <div id="sec-forward" class="section" style="display:none;">
-      <h1 class="page-title">Forward To Me</h1>
-
-      <div class="forward-item">
-        <div class="forward-urgent">&#9888; ACTION REQUIRED</div>
-        <div class="forward-sender">Chase Bank</div>
-        <div class="forward-summary">New credit card enclosed &mdash; must be forwarded to your current address to activate</div>
-        <div class="forward-date">Received: 2026-03-19</div>
-        <a href="#" class="pdf-link">View PDF</a>
-      </div>
-
-      <div class="forward-item">
-        <div class="forward-urgent">&#9888; ACTION REQUIRED</div>
-        <div class="forward-sender">County Tax Assessor</div>
-        <div class="forward-summary">Final notice for property tax payment &mdash; $2,840.00 overdue, certified mail</div>
-        <div class="forward-date">Received: 2026-03-08</div>
-        <a href="#" class="pdf-link">View PDF</a>
-      </div>
-    </div>
-
-    <!-- ── PENDING REVIEWS ───────────────────────────────────────── -->
-    <div id="sec-pending" class="section" style="display:none;">
-      <h1 class="page-title">Pending Reviews</h1>
-
-      <div class="match-row">
-        <div class="match-row__body">
-          <div class="match-name">&ldquo;Verizon Wireless Inc&rdquo;</div>
-          <div class="match-detail">Looks like: Verizon Wireless &mdash; similarity 92%</div>
-          <div class="match-auto">Auto-approves: 2026-03-29</div>
+        <!-- Junk items (read state) -->
+        <div class="mail-item" data-type="junk">
+          <div class="mail-bar mail-bar--default"></div>
+          <div class="mail-body">
+            <div class="mail-header">
+              <div class="mail-sender--read">Pottery Barn</div>
+              <div class="mail-date">2026-03-15</div>
+            </div>
+            <div class="mail-summary">Spring sale &mdash; 40% off everything this weekend</div>
+            <span class="badge badge--junk">JUNK</span>
+          </div>
         </div>
-        <button class="btn btn-primary btn-sm">Approve</button>
-        <button class="btn btn-danger btn-sm">Deny</button>
-      </div>
 
-      <div class="match-row">
-        <div class="match-row__body">
-          <div class="match-name">&ldquo;AT&amp;T Mobility LLC&rdquo;</div>
-          <div class="match-detail">Looks like: AT&amp;T &mdash; similarity 88%</div>
-          <div class="match-auto">Auto-approves: 2026-03-29</div>
+        <!-- NeedsReview item -->
+        <div class="mail-item" data-type="review">
+          <div class="mail-bar mail-bar--default"></div>
+          <div class="mail-body">
+            <div class="mail-header">
+              <div class="mail-sender">Unknown Sender</div>
+              <div class="mail-date">2026-03-21</div>
+            </div>
+            <div class="mail-summary">Unrecognized document &mdash; classification confidence 0.61</div>
+            <span class="badge badge--needs-review">NEEDS REVIEW</span>
+          </div>
         </div>
-        <button class="btn btn-primary btn-sm">Approve</button>
-        <button class="btn btn-danger btn-sm">Deny</button>
-      </div>
 
-      <div class="match-row">
-        <div class="match-row__body">
-          <div class="match-name">&ldquo;Pacific Gas Electric Co&rdquo;</div>
-          <div class="match-detail">Looks like: PG&amp;E &mdash; similarity 81%</div>
-          <div class="match-auto">Auto-approves: 2026-03-29</div>
-        </div>
-        <button class="btn btn-primary btn-sm">Approve</button>
-        <button class="btn btn-danger btn-sm">Deny</button>
-      </div>
+      </div><!-- #mail-pane-items -->
     </div>
 
     <!-- ── ENTITIES ──────────────────────────────────────────────── -->
     <div id="sec-entities" class="section" style="display:none;">
       <h1 class="page-title">Entities</h1>
 
-      <div class="entity-row">
-        <div class="entity-header">
-          <span class="entity-name">Verizon Wireless</span>
-          <span class="entity-type">biller</span>
-        </div>
-        <div class="entity-aliases">Aliases: Verizon Wireless Inc, VZW, Verizon</div>
-      </div>
+      <input type="text" class="entity-search-input" placeholder="Filter entities&#x2026;" oninput="filterEntities(this.value)" autocomplete="off">
 
-      <div class="entity-row">
-        <div class="entity-header">
-          <span class="entity-name">AT&amp;T</span>
-          <span class="entity-type">biller</span>
-        </div>
-        <div class="entity-aliases">Aliases: AT&amp;T Mobility LLC, AT&amp;T Internet, AT&amp;T Services</div>
-      </div>
-
-      <div class="entity-row">
-        <div class="entity-header">
-          <span class="entity-name">PG&amp;E</span>
-          <span class="entity-type">biller</span>
-        </div>
-        <div class="entity-aliases">Aliases: Pacific Gas Electric Co, Pacific Gas &amp; Electric</div>
-      </div>
-
-      <div class="entity-row">
-        <div class="entity-header">
-          <span class="entity-name">Chase Bank</span>
-          <span class="entity-type">financial</span>
-        </div>
-        <div class="entity-aliases">Aliases: JPMorgan Chase, Chase Bank USA</div>
-      </div>
-
-      <div class="entity-row">
-        <div class="entity-header">
-          <span class="entity-name">IRS</span>
-          <span class="entity-type">government</span>
-        </div>
-        <div class="entity-aliases">Aliases: Internal Revenue Service, U.S. Treasury &mdash; IRS</div>
-      </div>
-
-      <div class="entity-row">
-        <div class="entity-header">
-          <span class="entity-name">Amazon</span>
-          <span class="entity-type">biller</span>
-        </div>
-        <div class="entity-aliases">Aliases: Amazon Prime, Amazon.com, Amazon Web Services</div>
-      </div>
-
-      <div class="entity-row">
-        <div class="entity-header">
-          <span class="entity-name">Comcast</span>
-          <span class="entity-type">biller</span>
-        </div>
-        <div class="entity-aliases">Aliases: Xfinity, Comcast Cable Communications</div>
-      </div>
-    </div>
-
-    <!-- ── CORRECTIONS ──────────────────────────────────────────── -->
-    <div id="sec-corrections" class="section" style="display:none;">
-      <h1 class="page-title">Entity Corrections</h1>
-      <p class="page-subtitle">Tracks every time an unrecognized sender name was corrected to a known entity. Used to train future matching and audit alias coverage.</p>
-
-      <p class="section-title">Top Corrected Senders</p>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr><th>Original Sender</th><th>Corrections</th><th>Assigned To</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>VERIZON WIRELESS</td><td>14</td><td>Verizon Wireless</td></tr>
-            <tr><td>Comcast Cable Comm</td><td>11</td><td>Comcast</td></tr>
-            <tr><td>PG&amp;E</td><td>9</td><td>PG&amp;E</td></tr>
-            <tr><td>CHASE BANK USA NA</td><td>7</td><td>Chase Bank</td></tr>
-            <tr><td>Amazon.com Services</td><td>5</td><td>Amazon</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <p class="section-title">Full Correction Log</p>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr><th>Date</th><th>Type</th><th>Original Sender</th><th>Corrected Entity</th><th>Alias Added</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>2026-03-20</td><td>Bill</td><td>VERIZON WIRELESS</td><td>Verizon Wireless</td><td><input type="checkbox" checked disabled></td></tr>
-            <tr><td>2026-03-18</td><td>Notice</td><td>Comcast Cable Comm</td><td>Comcast</td><td><input type="checkbox" checked disabled></td></tr>
-            <tr><td>2026-03-15</td><td>Bill</td><td>PG&amp;E</td><td>PG&amp;E</td><td><input type="checkbox" disabled></td></tr>
-            <tr><td>2026-03-12</td><td>Bill</td><td>CHASE BANK USA NA</td><td>Chase Bank</td><td><input type="checkbox" checked disabled></td></tr>
-            <tr><td>2026-03-10</td><td>ForwardToMe</td><td>Amazon.com Services</td><td>Amazon</td><td><input type="checkbox" checked disabled></td></tr>
-          </tbody>
-        </table>
-      </div>
+      <table class="entity-table" style="margin-top:0;">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Aliases</th>
+            <th>Accounts</th>
+            <th>Last Seen</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody class="entity-group" data-search="verizon wireless verizon wireless inc vzw verizon">
+          <tr class="entity-tr">
+            <td class="entity-name-cell">Verizon Wireless</td>
+            <td class="entity-aliases-cell">Verizon Wireless Inc, VZW, Verizon</td>
+            <td class="entity-accounts-cell">1</td>
+            <td class="entity-lastseen-cell"><a href="#" class="pdf-link">View</a></td>
+            <td><button class="entity-expand-btn">▼</button></td>
+          </tr>
+          <tr class="entity-detail-tr" style="display:none;">
+            <td colspan="5"><div class="entity-detail"><div class="entity-meta">Phone: 1-800-922-0204 &nbsp;·&nbsp; Website: verizon.com &nbsp;·&nbsp; Created: 2026-01-04</div></div></td>
+          </tr>
+        </tbody>
+        <tbody class="entity-group" data-search="at&amp;t at&amp;t mobility llc at&amp;t internet">
+          <tr class="entity-tr">
+            <td class="entity-name-cell">AT&amp;T</td>
+            <td class="entity-aliases-cell">AT&amp;T Mobility LLC, AT&amp;T Internet, AT&amp;T Services</td>
+            <td class="entity-accounts-cell">2</td>
+            <td class="entity-lastseen-cell"><a href="#" class="pdf-link">View</a></td>
+            <td><button class="entity-expand-btn">▼</button></td>
+          </tr>
+          <tr class="entity-detail-tr" style="display:none;"><td colspan="5"></td></tr>
+        </tbody>
+        <tbody class="entity-group" data-search="pg&amp;e pacific gas electric co pacific gas &amp; electric">
+          <tr class="entity-tr">
+            <td class="entity-name-cell">PG&amp;E</td>
+            <td class="entity-aliases-cell">Pacific Gas Electric Co, Pacific Gas &amp; Electric</td>
+            <td class="entity-accounts-cell">1</td>
+            <td class="entity-lastseen-cell">&mdash;</td>
+            <td><button class="entity-expand-btn">▼</button></td>
+          </tr>
+          <tr class="entity-detail-tr" style="display:none;"><td colspan="5"></td></tr>
+        </tbody>
+        <tbody class="entity-group" data-search="chase bank jpmorgan chase chase bank usa">
+          <tr class="entity-tr">
+            <td class="entity-name-cell">Chase Bank</td>
+            <td class="entity-aliases-cell">JPMorgan Chase, Chase Bank USA</td>
+            <td class="entity-accounts-cell">0</td>
+            <td class="entity-lastseen-cell">&mdash;</td>
+            <td><button class="entity-expand-btn">▼</button></td>
+          </tr>
+          <tr class="entity-detail-tr" style="display:none;"><td colspan="5"></td></tr>
+        </tbody>
+        <tbody class="entity-group" data-search="irs internal revenue service u.s. treasury">
+          <tr class="entity-tr">
+            <td class="entity-name-cell">IRS</td>
+            <td class="entity-aliases-cell">Internal Revenue Service, U.S. Treasury &mdash; IRS</td>
+            <td class="entity-accounts-cell">0</td>
+            <td class="entity-lastseen-cell">&mdash;</td>
+            <td><button class="entity-expand-btn">▼</button></td>
+          </tr>
+          <tr class="entity-detail-tr" style="display:none;"><td colspan="5"></td></tr>
+        </tbody>
+        <tbody class="entity-group" data-search="amazon amazon prime amazon.com amazon web services">
+          <tr class="entity-tr">
+            <td class="entity-name-cell">Amazon</td>
+            <td class="entity-aliases-cell">Amazon Prime, Amazon.com, Amazon Web Services</td>
+            <td class="entity-accounts-cell">0</td>
+            <td class="entity-lastseen-cell"><a href="#" class="pdf-link">View</a></td>
+            <td><button class="entity-expand-btn">▼</button></td>
+          </tr>
+          <tr class="entity-detail-tr" style="display:none;"><td colspan="5"></td></tr>
+        </tbody>
+        <tbody class="entity-group" data-search="comcast xfinity comcast cable communications">
+          <tr class="entity-tr">
+            <td class="entity-name-cell">Comcast</td>
+            <td class="entity-aliases-cell">Xfinity, Comcast Cable Communications</td>
+            <td class="entity-accounts-cell">0</td>
+            <td class="entity-lastseen-cell">&mdash;</td>
+            <td><button class="entity-expand-btn">▼</button></td>
+          </tr>
+          <tr class="entity-detail-tr" style="display:none;"><td colspan="5"></td></tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- ── LOGS ──────────────────────────────────────────────────── -->
@@ -711,11 +749,35 @@
 2026-03-22 02:03:16 INFO  Daily summary email sent to user@example.com
 2026-03-22 02:03:16 INFO  Run complete — 3 scans processed, 2 bills matched, 1 ForwardToMe alert sent
 2026-03-22 02:03:16 INFO  Duration: 15.2s | API requests: 6 | Tokens used: 4,821</div>
+
+      <details class="collapsible-section" style="margin-top:24px;border:1px solid #DDE3EC;border-radius:8px;overflow:hidden;">
+        <summary style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:white;cursor:pointer;font-size:13px;font-weight:600;color:#0F2044;list-style:none;">
+          Entity Corrections
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div style="padding:0 16px 16px;background:white;">
+          <p style="font-size:12px;color:#5A7090;margin:12px 0;">Senders most frequently reassigned. High counts suggest adding an alias on the Entities page.</p>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr><th>Original Sender</th><th>Corrections</th><th>Assigned To</th><th>Alias Added</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>VERIZON WIRELESS</td><td>14</td><td>Verizon Wireless</td><td>&#10003;</td></tr>
+                <tr><td>Comcast Cable Comm</td><td>11</td><td>Comcast</td><td>&#10003;</td></tr>
+                <tr><td>PG&amp;E</td><td>9</td><td>PG&amp;E</td><td>—</td></tr>
+                <tr><td>CHASE BANK USA NA</td><td>7</td><td>Chase Bank</td><td>&#10003;</td></tr>
+                <tr><td>Amazon.com Services</td><td>5</td><td>Amazon</td><td>&#10003;</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
     </div>
 
-    <!-- ── CONNECTIONS ───────────────────────────────────────────── -->
-    <div id="sec-connections" class="section" style="display:none;">
-      <h1 class="page-title" style="margin-bottom:8px;">Connections</h1>
+    <!-- ── PROVIDERS ────────────────────────────────────────────── -->
+    <div id="sec-providers" class="section" style="display:none;">
+      <h1 class="page-title" style="margin-bottom:8px;">Providers</h1>
       <p class="page-subtitle">Configure the providers PostMule uses for each service category.</p>
 
       <div class="conn-tabs" id="conn-tabs">
@@ -726,6 +788,7 @@
         <button class="conn-tab" onclick="connTab('ai',this)">AI / LLM</button>
         <button class="conn-tab" onclick="connTab('finance',this)">Finance</button>
         <button class="conn-tab" onclick="connTab('notifications',this)">Notifications</button>
+        <button class="conn-tab" onclick="connTab('developer',this)">Developer</button>
       </div>
 
       <!-- TAB: Email -->
@@ -756,6 +819,9 @@
 
       <!-- TAB: Storage -->
       <div id="ctab-storage" class="conn-pane">
+        <div style="background:#EEF3F9;border:1px solid #C0D0E4;border-radius:6px;padding:10px 14px;font-size:0.8125rem;color:#2C4A6E;line-height:1.5;">
+          <strong>How PostMule stores your data:</strong> Your data is saved as JSON files — those files live inside your cloud storage provider. The spreadsheet is a generated view only. You can export your data as CSV or JSON from Settings.
+        </div>
         <div class="conn-provider conn-provider--active">
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-google">G</div>
@@ -769,10 +835,63 @@
         <div class="conn-provider">
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-aws">S3</div>
-            <div>
-              <div class="conn-provider-name">Amazon S3</div>
-              <div class="conn-provider-desc-small">Not configured</div>
-            </div>
+            <div><div class="conn-provider-name">Amazon S3</div></div>
+            <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
+          </div>
+        </div>
+        <div class="conn-provider">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#0061FF;color:white;">Db</div>
+            <div><div class="conn-provider-name">Dropbox</div></div>
+            <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
+          </div>
+        </div>
+        <div class="conn-provider">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#0078D4;color:white;">OD</div>
+            <div><div class="conn-provider-name">OneDrive</div></div>
+            <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
+          </div>
+        </div>
+        <div class="conn-provider">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#0061D5;color:white;">Bx</div>
+            <div><div class="conn-provider-name">Box</div></div>
+            <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
+          </div>
+        </div>
+        <div class="conn-provider">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#E84C30;color:white;">B2</div>
+            <div><div class="conn-provider-name">Backblaze B2</div></div>
+            <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
+          </div>
+        </div>
+        <div class="conn-provider">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#555;color:white;">iC</div>
+            <div><div class="conn-provider-name">iCloud Drive</div></div>
+            <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
+          </div>
+        </div>
+        <div class="conn-provider">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#D9272E;color:white;">Mg</div>
+            <div><div class="conn-provider-name">MEGA</div></div>
+            <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
+          </div>
+        </div>
+        <div class="conn-provider">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#20B2AA;color:white;">pC</div>
+            <div><div class="conn-provider-name">pCloud</div></div>
+            <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
+          </div>
+        </div>
+        <div class="conn-provider">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#4A6080;color:white;">WD</div>
+            <div><div class="conn-provider-name">WebDAV</div></div>
             <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
         </div>
@@ -780,6 +899,9 @@
 
       <!-- TAB: Spreadsheet -->
       <div id="ctab-spreadsheet" class="conn-pane">
+        <div style="background:#FFF8E7;border:1px solid #E8C96A;border-radius:6px;padding:10px 14px;font-size:0.8125rem;color:#6B4A00;line-height:1.5;">
+          <strong>Read-only view.</strong> The spreadsheet is generated from your JSON data files — it is not the database. Editing it directly has no effect on PostMule's data.
+        </div>
         <div class="conn-provider conn-provider--active">
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-google">G</div>
@@ -793,10 +915,7 @@
         <div class="conn-provider">
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-ms">Ms</div>
-            <div>
-              <div class="conn-provider-name">Excel Online</div>
-              <div class="conn-provider-desc-small">Not configured</div>
-            </div>
+            <div><div class="conn-provider-name">Excel Online</div></div>
             <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
         </div>
@@ -891,6 +1010,38 @@
         </div>
       </div>
 
+      <!-- TAB: Developer -->
+      <div id="ctab-developer" class="conn-pane" style="display:none;">
+        <div style="background:#EEF3F9;border:1px solid #C0D0E4;border-radius:6px;padding:10px 14px;font-size:0.8125rem;color:#2C4A6E;line-height:1.5;margin-bottom:4px;">
+          A GitHub Personal Access Token (PAT) with <code>issues:write</code> permission lets users submit feedback without a GitHub account.
+        </div>
+        <div class="conn-provider conn-provider--active">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#24292F;color:white;flex-shrink:0;">GH</div>
+            <div>
+              <div class="conn-provider-name">GitHub (Feedback)</div>
+              <div class="conn-provider-desc-small">Submit feedback as GitHub issues</div>
+            </div>
+            <span class="conn-provider-badge conn-provider-badge--warn">Setup needed</span>
+          </div>
+          <div class="conn-provider-body" style="display:block;">
+            <div class="conn-cred-form">
+              <div class="conn-cred-row">
+                <label>Personal Access Token</label>
+                <input type="password" class="form-control" placeholder="github_pat_…" style="flex:1;">
+                <button class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Save</button>
+              </div>
+              <div class="conn-cred-row">
+                <label>Target repo</label>
+                <input type="text" class="form-control" placeholder="PostMule/app" style="flex:1;">
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Save</button>
+              </div>
+              <p class="conn-cred-note">Leave target repo blank to use the default PostMule/app.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- ── SETTINGS ──────────────────────────────────────────────── -->
@@ -914,7 +1065,7 @@
       <!-- TAB: General -->
       <div id="stab-general" class="s-pane active">
         <div class="s-card">
-          <h3>Application</h3>
+          <h3>Application <span class="help-btn" title="Controls top-level app behavior.">?</span></h3>
           <div class="s-row">
             <div class="s-label">Dry Run
               <div class="s-help">Simulate all actions — no files moved, no emails sent. Safe for testing.</div>
@@ -926,7 +1077,7 @@
           </div>
         </div>
         <div class="s-card">
-          <h3>Schedule</h3>
+          <h3>Schedule <span class="help-btn" title="When the daily pipeline runs automatically.">?</span></h3>
           <div class="s-row">
             <div class="s-label">Daily Run Time
               <div class="s-help">24-hour time for the automatic daily run. Configured in Windows Task Scheduler.</div>
@@ -947,7 +1098,7 @@
           </div>
         </div>
         <div class="s-card">
-          <h3>Logging</h3>
+          <h3>Logging <span class="help-btn" title="Controls how much detail is written to log files.">?</span></h3>
           <div class="s-row">
             <div class="s-label">Log Level
               <div class="s-help">Verbosity of log output. INFO is recommended for normal use.</div>
@@ -977,12 +1128,18 @@
       <!-- TAB: Notifications -->
       <div id="stab-notifications" class="s-pane">
         <div class="s-card">
-          <h3>Alerts</h3>
+          <h3>Alerts <span class="help-btn" title="Where PostMule sends daily summaries and urgent notifications.">?</span></h3>
           <div class="s-row">
-            <div class="s-label">Alert Email
+            <div class="s-label">Primary Alert Email
               <div class="s-help">Where PostMule sends the daily summary and urgent alerts.</div>
             </div>
             <input class="s-input" type="email" placeholder="you@example.com" value="user@example.com">
+          </div>
+          <div class="s-row">
+            <div class="s-label">Secondary Alert Email
+              <div class="s-help">Optional second recipient for all alerts (e.g. a spouse or accountant).</div>
+            </div>
+            <input class="s-input" type="email" placeholder="other@example.com" value="">
           </div>
           <div class="s-row">
             <div class="s-label">Urgent Forward-To-Me Alert
@@ -1008,7 +1165,7 @@
       <!-- TAB: Mail Intake -->
       <div id="stab-mail" class="s-pane">
         <div class="s-card">
-          <h3>Physical Mailbox Provider</h3>
+          <h3>Physical Mailbox Provider <span class="help-btn" title="Your virtual mailbox service.">?</span></h3>
           <div class="s-row">
             <div class="s-label">Provider Type
               <div class="s-help">Your virtual mailbox service.</div>
@@ -1042,57 +1199,15 @@
           </div>
         </div>
         <div class="s-card">
-          <h3>Email — Mailbox Notifications Account</h3>
-          <div class="s-row">
-            <div class="s-label">Provider Type</div>
-            <select class="s-select">
-              <option selected>Gmail</option>
-              <option>Outlook / Microsoft 365</option>
-              <option>Generic IMAP</option>
-            </select>
-          </div>
-          <div class="s-row">
-            <div class="s-label">Enabled</div>
-            <div class="s-check"><input type="checkbox" checked></div>
-          </div>
-          <div class="s-row">
-            <div class="s-label">Email Address
-              <div class="s-help">The Gmail/Outlook account that receives mailbox scan notifications.</div>
-            </div>
-            <input class="s-input" type="email" placeholder="YourMailManagement@gmail.com" value="mailmgmt@gmail.com">
-          </div>
-          <div class="s-row">
-            <div class="s-label">Label
-              <div class="s-help">Gmail label applied to processed scan notification emails.</div>
-            </div>
-            <input class="s-input s-input--wide" type="text" value="PostMule">
-          </div>
-        </div>
-        <div class="s-card">
-          <h3>Email — Bill Intake Account <span class="s-meta">(Phase 23 — optional)</span></h3>
-          <div class="s-row">
-            <div class="s-label">Provider Type</div>
-            <select class="s-select"><option selected>Gmail</option></select>
-          </div>
-          <div class="s-row">
-            <div class="s-label">Enabled
-              <div class="s-help">Enable once you have a dedicated bills inbox and billers sending PDFs directly.</div>
-            </div>
-            <div class="s-check"><input type="checkbox"></div>
-          </div>
-          <div class="s-row">
-            <div class="s-label">Email Address
-              <div class="s-help">Dedicated inbox for biller-sent PDF attachments.</div>
-            </div>
-            <input class="s-input" type="email" placeholder="bills@yourdomain.com">
-          </div>
+          <h3>Email Accounts <span class="help-btn" title="Email accounts PostMule monitors.">?</span></h3>
+          <p class="text-note">Email account connections (mailbox notifications and bill intake) are managed on the <a href="#">Providers page</a>.</p>
         </div>
       </div>
 
       <!-- TAB: Finance -->
       <div id="stab-finance" class="s-pane">
         <div class="s-card">
-          <h3>Finance Providers</h3>
+          <h3>Finance Providers <span class="help-btn" title="Connects PostMule to your bank transactions for bill matching.">?</span></h3>
           <p class="text-note">Enable the provider(s) you use. Credentials are configured in the encrypted credentials file — not here.</p>
           <div class="s-provider">
             <div class="s-provider-header">
@@ -1134,7 +1249,7 @@
           </div>
         </div>
         <div class="s-card">
-          <h3>Bill Matching</h3>
+          <h3>Bill Matching <span class="help-btn" title="Rules for matching bills to bank transactions.">?</span></h3>
           <div class="s-row">
             <div class="s-label">Require Manual Approval
               <div class="s-help">When a bill is matched to a bank transaction, require you to approve it in the Pending tab before marking as paid.</div>
@@ -1159,7 +1274,7 @@
       <!-- TAB: AI & OCR -->
       <div id="stab-ai" class="s-pane">
         <div class="s-card">
-          <h3>AI / LLM Provider</h3>
+          <h3>AI / LLM Provider <span class="help-btn" title="The AI model used to classify mail and extract bill data.">?</span></h3>
           <div class="s-row">
             <div class="s-label">Provider
               <div class="s-help">AI service used to classify mail. API keys go in the credentials file.</div>
@@ -1188,7 +1303,7 @@
           </div>
         </div>
         <div class="s-card">
-          <h3>API Safety Limits</h3>
+          <h3>API Safety Limits <span class="help-btn" title="Hard caps on AI API usage to prevent unexpected charges.">?</span></h3>
           <div class="s-row">
             <div class="s-label">Daily Request Limit
               <div class="s-help">Hard stop — PostMule will not make more API calls than this per day. Gemini free tier: 1500/day.</div>
@@ -1221,7 +1336,7 @@
           </div>
         </div>
         <div class="s-card">
-          <h3>Classification — Forward-To-Me Keywords</h3>
+          <h3>Classification — Forward-To-Me Keywords <span class="help-btn" title="Keywords that force ForwardToMe classification, overriding AI.">?</span></h3>
           <div class="s-provider-desc" style="margin-bottom:12px;">Items matching these keywords are always classified as ForwardToMe regardless of AI confidence. One keyword per line.</div>
           <textarea class="s-input s-input--mono" rows="8">credit card
 debit card
@@ -1238,7 +1353,7 @@ government id</textarea>
       <!-- TAB: Storage -->
       <div id="stab-storage" class="s-pane">
         <div class="s-card">
-          <h3>File Storage</h3>
+          <h3>File Storage <span class="help-btn" title="Where PostMule stores your PDF files.">?</span></h3>
           <div class="s-row">
             <div class="s-label">Provider
               <div class="s-help">Where PostMule stores PDFs and JSON data. Cloud storage is strongly recommended.</div>
@@ -1259,7 +1374,7 @@ government id</textarea>
           </div>
         </div>
         <div class="s-card">
-          <h3>Spreadsheet (Dashboard View)</h3>
+          <h3>Spreadsheet (Dashboard View) <span class="help-btn" title="An optional read-only spreadsheet view of your data.">?</span></h3>
           <p class="text-note">The spreadsheet is a generated view only — it is rebuilt from JSON data and is never the source of truth.</p>
           <div class="s-row">
             <div class="s-label">Provider</div>
@@ -1280,7 +1395,7 @@ government id</textarea>
       <!-- TAB: System -->
       <div id="stab-system" class="s-pane">
         <div class="s-card">
-          <h3>File Naming</h3>
+          <h3>File Naming <span class="help-btn" title="Controls how PDFs are renamed after classification.">?</span></h3>
           <div class="s-row">
             <div class="s-label">Date Format
               <div class="s-help">strftime format for dates in file names. Default: %Y-%m-%d → 2025-03-15.</div>
@@ -1297,7 +1412,7 @@ government id</textarea>
           </div>
         </div>
         <div class="s-card">
-          <h3>Entity Matching</h3>
+          <h3>Entity Matching <span class="help-btn" title="How PostMule recognises sender names across variations.">?</span></h3>
           <div class="s-row">
             <div class="s-label">Fuzzy Match Threshold
               <div class="s-help">Minimum similarity score (0.0–1.0) to propose an alias match.</div>
@@ -1315,7 +1430,7 @@ government id</textarea>
           </div>
         </div>
         <div class="s-card">
-          <h3>Data Protection</h3>
+          <h3>Data Protection <span class="help-btn" title="Safety limits on automated operations.">?</span></h3>
           <div class="s-row">
             <div class="s-label">Soft Deletes Only
               <div class="s-help">Never permanently delete files automatically. Items are moved to Trash and flagged for manual review.</div>
@@ -1346,7 +1461,38 @@ government id</textarea>
           </div>
         </div>
         <div class="s-card">
-          <h3>Deployment</h3>
+          <h3>Backups <span class="help-btn" title="Daily encrypted backups uploaded to Drive.">?</span></h3>
+          <div class="s-row">
+            <div class="s-label">Backups Enabled</div>
+            <div class="s-check"><input type="checkbox" checked></div>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Retain Backups For
+              <div class="s-help">Days of daily encrypted backups to keep. 180 = 6 months.</div>
+            </div>
+            <div class="s-inline-gap">
+              <input class="s-input s-input--sm" type="number" value="180">
+              <span class="s-unit">days</span>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-label">Last Backup
+              <div class="s-help">Timestamp of the most recent successful backup.</div>
+            </div>
+            <div class="s-value">2026-03-23 02:04:11 UTC &nbsp;·&nbsp; backup-2026-03-23-020411.zip</div>
+          </div>
+          <div class="s-row">
+            <div class="s-label">On-Demand Backup
+              <div class="s-help">Create a backup now and upload it to cloud storage.</div>
+            </div>
+            <div>
+              <button type="button" class="btn btn--sm">Backup Now</button>
+              <span style="margin-left:10px;font-size:0.8125rem;color:#2E7D32">Backup complete: 47.3 KB, 12 files</span>
+            </div>
+          </div>
+        </div>
+        <div class="s-card">
+          <h3>Deployment <span class="help-btn" title="Runtime deployment options.">?</span></h3>
           <div class="s-row">
             <div class="s-label">Dashboard Port
               <div class="s-help">Local port the web dashboard listens on. Default: 5000.</div>
@@ -1368,6 +1514,15 @@ government id</textarea>
             </div>
             <input class="s-input" type="text" value="PostMule Daily Run">
           </div>
+          <div class="s-row">
+            <div class="s-label">Update Check
+              <div class="s-help">Check GitHub for new PostMule releases and show a banner when an update is available.</div>
+            </div>
+            <div class="s-check">
+              <input type="checkbox" checked>
+              <span class="s-check-label">Enable update notifications</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1377,6 +1532,52 @@ government id</textarea>
         <span class="s-save-note">Saving rewrites config.yaml — YAML comments will be removed. Keep a backup if your comments are important.</span>
       </div>
       </form>
+
+      <div class="s-card" style="margin-top:24px;">
+        <h3>Export Data</h3>
+        <p style="font-size:0.8125rem;color:#5A7090;margin:0 0 16px;">Download your PostMule data as CSV or JSON. Your source of truth is always the JSON files on your cloud storage — these exports are portable snapshots.</p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div>
+            <label style="display:block;font-size:0.75rem;font-weight:600;color:#0F2044;margin-bottom:4px;">Data Type</label>
+            <select class="form-control" style="font-size:0.8125rem;">
+              <option>All types</option>
+              <option>Bills only</option>
+              <option>Notices only</option>
+              <option>Entities only</option>
+              <option>Forward To Me only</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:0.75rem;font-weight:600;color:#0F2044;margin-bottom:4px;">Format</label>
+            <select class="form-control" style="font-size:0.8125rem;">
+              <option>CSV</option>
+              <option>JSON</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:0.75rem;font-weight:600;color:#0F2044;margin-bottom:4px;">From date <span style="font-weight:400;color:#8A9BB0;">(optional)</span></label>
+            <input type="date" class="form-control" style="font-size:0.8125rem;">
+          </div>
+          <div>
+            <label style="display:block;font-size:0.75rem;font-weight:600;color:#0F2044;margin-bottom:4px;">To date <span style="font-weight:400;color:#8A9BB0;">(optional)</span></label>
+            <input type="date" class="form-control" style="font-size:0.8125rem;">
+          </div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+          <a href="#" class="btn btn-primary" style="font-size:0.8125rem;">Download Export</a>
+        </div>
+
+        <div style="border-top:1px solid #DDE3EC;padding-top:16px;margin-top:4px;">
+          <div style="font-size:0.75rem;font-weight:600;color:#0F2044;margin-bottom:10px;">Additional Exports</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;">
+            <a href="#" class="btn btn-secondary" style="font-size:0.8125rem;">Config (YAML, redacted)</a>
+            <a href="#" class="btn btn-secondary" style="font-size:0.8125rem;">Connections Summary (TXT)</a>
+          </div>
+          <p style="font-size:0.75rem;color:#8A9BB0;margin:10px 0 0;">PDFs are in your cloud storage — download them directly from Google Drive.</p>
+        </div>
+      </div>
     </div>
 
   </div><!-- .content -->
@@ -1384,10 +1585,16 @@ government id</textarea>
 
 <script>
   const NAV_MAP = {
-    home: 'home', mail: 'mail', bills: 'bills', forward: 'forward',
-    pending: 'pending', entities: 'entities', corrections: 'corrections',
-    logs: 'logs', connections: 'connections', settings: 'settings'
+    mail: 'mail', entities: 'entities',
+    logs: 'logs', providers: 'providers', settings: 'settings'
   };
+
+  function filterEntities(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('.entity-group').forEach(function(grp) {
+      grp.hidden = !!(q && !grp.dataset.search.includes(q));
+    });
+  }
 
   function showSection(name) {
     // Update switcher buttons
@@ -1417,6 +1624,19 @@ government id</textarea>
     btn.classList.add('active');
   }
 
+  function mailTab(name, btn) {
+    document.querySelectorAll('.mail-filter-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    var isUnassigned = name === 'unassigned';
+    document.getElementById('mail-pane-unassigned').style.display = isUnassigned ? '' : 'none';
+    document.getElementById('mail-pane-items').style.display = isUnassigned ? 'none' : '';
+    if (!isUnassigned) {
+      document.querySelectorAll('#mail-pane-items .mail-item').forEach(function(item) {
+        item.style.display = (name === 'all' || item.dataset.type === name) ? '' : 'none';
+      });
+    }
+  }
+
   function connTab(name, btn) {
     document.querySelectorAll('.conn-pane').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.conn-tab').forEach(t => t.classList.remove('active'));
@@ -1424,5 +1644,16 @@ government id</textarea>
     btn.classList.add('active');
   }
 </script>
+
+<!-- Update available banner (example: shown when newer release detected) -->
+<div id="update-banner" class="update-banner">
+  <span class="update-banner-text">Update available: <strong>v0.2.0</strong></span>
+  <a href="#" class="update-banner-link">See what's new</a>
+  <button class="update-banner-close" onclick="this.closest('.update-banner').hidden=true" aria-label="Dismiss">&times;</button>
+</div>
+
+<footer class="app-footer">
+  <span class="app-footer-version">PostMule v0.1.0</span>
+</footer>
 </body>
 </html>

@@ -28,5 +28,12 @@ class EmailProvider(Protocol):
     ) -> list[EmailMessage]:
         ...
 
+    def list_emails_with_pdf_attachments(self) -> list[EmailMessage]:
+        """Return all unprocessed emails that contain at least one PDF attachment.
+
+        Used for the bill_intake pipeline step (Phase 23).
+        """
+        ...
+
     def mark_as_processed(self, message_id: str) -> None:
         ...

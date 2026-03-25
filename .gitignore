@@ -199,6 +199,12 @@ config.yaml
 /data/
 /logs/
 
+# Claude Code — local user overrides only; project settings.json is committed
+.claude/settings.local.json
+
+# Test artifacts
+coverage.json
+
 # PyPI configuration file
 .pypirc
 

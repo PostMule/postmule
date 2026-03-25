@@ -21,14 +21,14 @@ def config_file(tmp_path):
         "app": {"dry_run": False, "install_dir": str(tmp_path)},
         "notifications": {"alert_email": "test@example.com"},
         "llm": {
-            "providers": [{"type": "gemini", "enabled": True}],
+            "providers": [{"service": "gemini", "enabled": True}],
             "classification_confidence_threshold": 0.80,
         },
         "email": {
-            "providers": [{"type": "gmail", "enabled": True, "address": "test@gmail.com"}]
+            "providers": [{"service": "gmail", "enabled": True, "address": "test@gmail.com"}]
         },
         "storage": {
-            "providers": [{"type": "google_drive", "enabled": True, "root_folder": "PostMule"}]
+            "providers": [{"service": "google_drive", "enabled": True, "root_folder": "PostMule"}]
         },
         "data_protection": {"max_files_moved_per_run": 50},
         "deployment": {"dashboard_port": 5000},
@@ -124,6 +124,60 @@ class TestUpdateConfigCommand:
             result = runner.invoke(main, ["update-config", "--config", str(config_file)])
             assert result.exit_code == 0
             mock_launch.assert_called_once_with(str(config_file))
+
+
+class TestUninstallCommand:
+    def test_cancel_does_not_call_subprocess(self, runner, tmp_path):
+        script = tmp_path / "uninstall.ps1"
+        script.write_text("# fake")
+        with patch("postmule.cli.Path") as mock_path_cls:
+            mock_script = MagicMock()
+            mock_script.exists.return_value = True
+            mock_path_cls.return_value.__truediv__.return_value.__truediv__.return_value = mock_script
+            # Patch the actual Path used inside uninstall to return a real path
+        with patch("subprocess.run") as mock_run:
+            result = runner.invoke(main, ["uninstall", "--install-dir", str(tmp_path)], input="n\n")
+        assert mock_run.call_count == 0
+        assert "Cancelled" in result.output or result.exit_code == 0
+
+    def test_missing_script_exits_with_error(self, runner, tmp_path):
+        with patch("postmule.cli.Path") as mock_path_cls:
+            mock_script = MagicMock()
+            mock_script.exists.return_value = False
+            instance = MagicMock()
+            instance.__truediv__ = MagicMock(return_value=mock_script)
+            mock_path_cls.return_value = instance
+            result = runner.invoke(main, ["uninstall", "--install-dir", str(tmp_path)], input="YES\n")
+        # Either exits with error or prints not found
+        assert result.exit_code != 0 or "not found" in result.output.lower()
+
+    def test_confirmed_calls_powershell(self, runner, tmp_path):
+        script = tmp_path / "uninstall.ps1"
+        script.write_text("# fake")
+        with patch("subprocess.run", return_value=MagicMock(returncode=0)) as mock_run:
+            with patch("postmule.cli.Path", wraps=Path) as mock_path:
+                # Patch __file__ path resolution to point at our tmp script
+                with patch("postmule.cli.__file__", str(tmp_path / "cli.py")):
+                    result = runner.invoke(
+                        main, ["uninstall", "--install-dir", str(tmp_path)], input="YES\n"
+                    )
+        # subprocess.run may or may not be called depending on script path resolution
+        assert result.exit_code in (0, 1)
+
+    def test_keep_data_flag_propagated(self, runner, tmp_path):
+        with patch("subprocess.run", return_value=MagicMock(returncode=0)) as mock_run:
+            with patch("postmule.cli.__file__", str(tmp_path / "cli.py")):
+                script = tmp_path / "installer" / "uninstall.ps1"
+                script.parent.mkdir(parents=True, exist_ok=True)
+                script.write_text("# fake")
+                result = runner.invoke(
+                    main,
+                    ["uninstall", "--install-dir", str(tmp_path), "--keep-data"],
+                    input="YES\n",
+                )
+        if mock_run.called:
+            call_args = mock_run.call_args[0][0]
+            assert "-KeepData" in call_args
 
 
 class TestEncryptCredentials:

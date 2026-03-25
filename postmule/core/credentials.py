@@ -243,6 +243,37 @@ def load_google_refresh_token() -> str:
     return value
 
 
+def save_credential(enc_path: "Path", provider: str, field: str, value: str) -> None:
+    """
+    Update a single nested credential value in credentials.enc without touching
+    any other values.  The updated dict is re-encrypted in place.
+
+    Args:
+        enc_path: Path to credentials.enc
+        provider: Top-level key, e.g. ``"vpm"`` or ``"anthropic"``
+        field:    Sub-key, e.g. ``"password"`` or ``"api_key"``
+        value:    New string value
+    """
+    from pathlib import Path as _Path
+    master_password = load_master_password()
+    # Load existing — create empty dict if file doesn't exist yet
+    if enc_path.exists():
+        creds = decrypt_credentials(enc_path, master_password)
+    else:
+        creds = {}
+
+    if not isinstance(creds.get(provider), dict):
+        creds[provider] = {}
+    creds[provider][field] = value
+
+    # Re-encrypt and write back
+    plaintext = yaml.safe_dump(creds, allow_unicode=True, default_flow_style=False).encode("utf-8")
+    salt = os.urandom(_SALT_LEN)
+    key = _derive_key(master_password, salt)
+    token = Fernet(key).encrypt(plaintext)
+    enc_path.write_bytes(salt + token)
+
+
 def google_credentials_available() -> bool:
     """Return True if a Google refresh token exists in the system keychain."""
     try:

@@ -78,11 +78,12 @@ class TestMailRoute:
 
 
 class TestBillsRoute:
-    def test_bills_returns_200(self, client):
+    def test_bills_redirects_to_mail(self, client):
         response = client.get("/bills")
-        assert response.status_code == 200
+        assert response.status_code == 302
+        assert "/mail" in response.headers["Location"]
 
-    def test_bills_shows_bill_data(self, client, data_dir):
+    def test_bills_shows_bill_data_via_redirect(self, client, data_dir):
         from datetime import date
         today = date.today().isoformat()
         bills_data.add_bill(data_dir, {
@@ -92,29 +93,33 @@ class TestBillsRoute:
             "due_date": today,
             "status": "pending",
         })
-        response = client.get("/bills")
+        response = client.get("/bills", follow_redirects=True)
+        assert response.status_code == 200
         assert b"Comcast" in response.data
 
 
 class TestForwardRoute:
-    def test_forward_returns_200(self, client):
+    def test_forward_redirects_to_mail(self, client):
         response = client.get("/forward")
-        assert response.status_code == 200
+        assert response.status_code == 302
+        assert "/mail" in response.headers["Location"]
 
-    def test_forward_shows_pending_items(self, client, data_dir):
+    def test_forward_shows_pending_items_via_redirect(self, client, data_dir):
         ftm_data.add_item(data_dir, {"sender": "Chase", "forwarding_status": "pending", "summary": "New card"})
-        response = client.get("/forward")
+        response = client.get("/forward", follow_redirects=True)
+        assert response.status_code == 200
         assert b"Chase" in response.data
 
 
 class TestPendingRoute:
-    def test_pending_returns_200(self, client):
+    def test_pending_redirects_to_mail(self, client):
         response = client.get("/pending")
-        assert response.status_code == 200
+        assert response.status_code == 302
+        assert "/mail" in response.headers["Location"]
 
-    def test_pending_shows_empty_when_no_matches(self, client):
+    def test_pending_redirects_to_unassigned_tab(self, client):
         response = client.get("/pending")
-        assert b"No pending" in response.data or response.status_code == 200
+        assert b"unassigned" in response.headers["Location"].encode()
 
 
 class TestEntitiesRoute:
@@ -133,19 +138,24 @@ class TestLogsRoute:
         assert b"No log file found" in response.data or response.status_code == 200
 
 
-class TestConnectionsRoute:
-    def test_connections_returns_200(self, client):
-        response = client.get("/connections")
+class TestProvidersRoute:
+    def test_providers_returns_200(self, client):
+        response = client.get("/providers")
         assert response.status_code == 200
 
-    def test_connections_shows_page(self, client):
-        response = client.get("/connections")
-        assert b"Connections" in response.data
+    def test_providers_shows_page(self, client):
+        response = client.get("/providers")
+        assert b"Providers" in response.data
 
-    def test_setup_redirects_to_connections(self, client):
+    def test_connections_redirects_to_providers(self, client):
+        response = client.get("/connections")
+        assert response.status_code == 301
+        assert "/providers" in response.headers["Location"]
+
+    def test_setup_redirects_to_providers(self, client):
         response = client.get("/setup")
         assert response.status_code == 302
-        assert "/connections" in response.headers["Location"]
+        assert "/providers" in response.headers["Location"]
 
 
 class TestApiApprove:

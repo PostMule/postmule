@@ -22,32 +22,37 @@ pages_bp = Blueprint("pages", __name__)
 
 @pages_bp.app_context_processor
 def inject_nav():
-    return {"nav_items": _app._NAV_ITEMS}
+    from postmule import __version__
+    update_check_enabled = _app._config_raw.get("deployment", {}).get("update_check_enabled", True)
+    return {
+        "nav_items": _app._NAV_ITEMS,
+        "app_version": __version__,
+        "update_check_enabled": update_check_enabled,
+    }
+
+
+@pages_bp.route("/home")
+def home():
+    return redirect(url_for("pages.mail"))
 
 
 @pages_bp.route("/")
-def home():
-    last_run = run_log_data.get_last_run(_app._data_dir)
-    pending_ftm = ftm_data.get_pending_items(_app._data_dir)
-    bills_this_year = bills_data.load_bills(_app._data_dir)
-    pending_bills = [b for b in bills_this_year if b.get("status") == "pending"]
-    return render_template(
-        "page.html",
-        page="home",
-        title="Home",
-        last_run=last_run,
-        pending_ftm_count=len(pending_ftm),
-        pending_bills_count=len(pending_bills),
-        today=date.today().isoformat(),
-    )
-
-
 @pages_bp.route("/mail")
 def mail():
     year = request.args.get("year", date.today().year, type=int)
+    initial_tab = request.args.get("tab", "all")
     all_bills = bills_data.load_bills(_app._data_dir, year)
     all_notices = notices_data.load_notices(_app._data_dir, year)
     all_ftm = ftm_data.load_forward_to_me(_app._data_dir)
+
+    last_run = run_log_data.get_last_run(_app._data_dir)
+    pending_ftm_count = len([f for f in all_ftm if f.get("forwarding_status") == "pending"])
+    pending_bills_count = len([b for b in all_bills if b.get("status") == "pending"])
+
+    all_pending_matches = entity_data.load_pending_matches(_app._data_dir)
+    pending_matches = [m for m in all_pending_matches if m.get("status") == "pending"]
+    pending_by_sender = {m.get("proposed_name", "").lower(): m for m in pending_matches}
+
     items = (
         [{"_type": "Bill", **b} for b in all_bills]
         + [{"_type": "Notice", **n} for n in all_notices]
@@ -62,55 +67,29 @@ def mail():
         items=items,
         year=year,
         entities=all_entities,
+        last_run=last_run,
+        pending_ftm_count=pending_ftm_count,
+        pending_bills_count=pending_bills_count,
+        pending_matches=pending_matches,
+        pending_by_sender=pending_by_sender,
+        initial_tab=initial_tab,
         today=date.today().isoformat(),
     )
 
 
 @pages_bp.route("/bills")
 def bills():
-    year = request.args.get("year", date.today().year, type=int)
-    all_bills = bills_data.load_bills(_app._data_dir, year)
-    pending = [b for b in all_bills if b.get("status") == "pending"]
-    all_entities = entity_data.load_entities(_app._data_dir)
-    return render_template(
-        "page.html",
-        page="bills",
-        title="Bills",
-        bills=all_bills,
-        pending_bills=pending,
-        year=year,
-        entities=all_entities,
-        today=date.today().isoformat(),
-    )
+    return redirect(url_for("pages.mail", tab="bills"))
 
 
 @pages_bp.route("/forward")
 def forward():
-    items = ftm_data.load_forward_to_me(_app._data_dir)
-    pending = [i for i in items if i.get("forwarding_status") == "pending"]
-    all_entities = entity_data.load_entities(_app._data_dir)
-    return render_template(
-        "page.html",
-        page="forward",
-        title="Forward To Me",
-        items=items,
-        pending=pending,
-        entities=all_entities,
-        today=date.today().isoformat(),
-    )
+    return redirect(url_for("pages.mail", tab="forward"))
 
 
 @pages_bp.route("/pending")
 def pending():
-    pending_matches = entity_data.load_pending_matches(_app._data_dir)
-    pending_only = [m for m in pending_matches if m.get("status") == "pending"]
-    return render_template(
-        "page.html",
-        page="pending",
-        title="Pending Reviews",
-        pending_matches=pending_only,
-        today=date.today().isoformat(),
-    )
+    return redirect(url_for("pages.mail", tab="unassigned"))
 
 
 @pages_bp.route("/entities")
@@ -128,26 +107,20 @@ def entities():
 
 @pages_bp.route("/corrections")
 def corrections():
-    summary = corrections_data.correction_summary(_app._data_dir)
-    all_corrections = corrections_data.load_corrections(_app._data_dir)
-    return render_template(
-        "page.html",
-        page="corrections",
-        title="Entity Corrections",
-        correction_summary=summary,
-        corrections=all_corrections,
-        today=date.today().isoformat(),
-    )
+    from flask import redirect as _redirect, url_for as _url_for
+    return _redirect(_url_for("pages.logs"))
 
 
 @pages_bp.route("/logs")
 def logs():
     lines = _read_log_tail(50)
+    correction_summary = corrections_data.correction_summary(_app._data_dir)
     return render_template(
         "page.html",
         page="logs",
         title="Logs",
         log_lines=lines,
+        correction_summary=correction_summary,
         today=date.today().isoformat(),
     )
 
@@ -156,12 +129,14 @@ def logs():
 def settings():
     saved = request.args.get("saved") == "1"
     cfg = _app._config_raw
-    finance_by_type = {p["type"]: p for p in cfg.get("finance", {}).get("providers", [])}
+    finance_by_type = {p.get("service", ""): p for p in cfg.get("finance", {}).get("providers", [])}
     email_by_role = {p.get("role", ""): p for p in cfg.get("email", {}).get("providers", [])}
     storage_providers = cfg.get("storage", {}).get("providers", [{}])
     sheet_providers = cfg.get("spreadsheet", {}).get("providers", [{}])
     llm_providers = cfg.get("llm", {}).get("providers", [{}])
     mbox_providers = cfg.get("mailbox", {}).get("providers", [{}])
+    from postmule.agents.backup import get_last_backup
+    last_backup = get_last_backup(_app._data_dir) if _app._data_dir else None
     return render_template(
         "page.html",
         page="settings",
@@ -176,24 +151,30 @@ def settings():
         saved=saved,
         config_missing=(_app._config_path is None),
         today=date.today().isoformat(),
+        last_backup=last_backup,
     )
 
 
-@pages_bp.route("/connections")
-def connections():
+@pages_bp.route("/providers")
+def providers():
     status = _connection_status()
     return render_template(
         "page.html",
-        page="connections",
-        title="Connections",
+        page="providers",
+        title="Providers",
         today=date.today().isoformat(),
         conn=status,
     )
 
 
+@pages_bp.route("/connections")
+def connections_redirect():
+    return redirect(url_for("pages.providers"), code=301)
+
+
 @pages_bp.route("/setup")
 def setup():
-    return redirect(url_for("pages.connections"))
+    return redirect(url_for("pages.providers"))
 
 
 @pages_bp.route("/pdf/<mail_id>")
@@ -234,7 +215,7 @@ def _connection_status() -> dict:
 
     # mailbox
     mbox_providers = cfg.get("mailbox", {}).get("providers", [])
-    mbox_type = mbox_providers[0].get("type", "") if mbox_providers else ""
+    mbox_type = mbox_providers[0].get("service", "") if mbox_providers else ""
     vpm_creds_ok = (
         bool(_cred_get("vpm", "username")) and bool(_cred_get("vpm", "password"))
     ) if mbox_type == "vpm" else False
@@ -245,7 +226,7 @@ def _connection_status() -> dict:
     email_address = ""
     if email_providers:
         ep = email_providers[0]
-        email_type = ep.get("type", "")
+        email_type = ep.get("service", "")
         email_address = ep.get("address", "") or ep.get("username", "")
 
     # storage
@@ -254,7 +235,7 @@ def _connection_status() -> dict:
     storage_root = ""
     if storage_providers:
         sp = storage_providers[0]
-        storage_type = sp.get("type", "")
+        storage_type = sp.get("service", "")
         storage_root = sp.get("root_folder", "") or sp.get("bucket", "")
 
     # spreadsheet
@@ -263,7 +244,7 @@ def _connection_status() -> dict:
     sheet_name = ""
     if sheet_providers:
         shp = sheet_providers[0]
-        sheet_type = shp.get("type", "")
+        sheet_type = shp.get("service", "")
         sheet_name = shp.get("workbook_name", "") or shp.get("spreadsheet_name", "")
 
     # LLM
@@ -272,19 +253,20 @@ def _connection_status() -> dict:
     llm_model = ""
     if llm_providers:
         lp = llm_providers[0]
-        llm_type = lp.get("type", "")
+        llm_type = lp.get("service", "")
         llm_model = lp.get("model", "")
     anthropic_key = _cred_get("anthropic", "api_key")
     openai_key = _cred_get("openai", "api_key")
 
     # finance
     finance_providers = cfg.get("finance", {}).get("providers", [])
-    finance_type = finance_providers[0].get("type", "") if finance_providers else ""
+    finance_type = finance_providers[0].get("service", "") if finance_providers else ""
     ynab_token = _cred_get("ynab", "access_token")
     ynab_budget = _cred_get("ynab", "budget_id")
 
     # notifications
     alert_email = cfg.get("notifications", {}).get("alert_email", "")
+    alert_email_secondary = cfg.get("notifications", {}).get("alert_email_secondary", "")
 
     return {
         # Legacy flat keys kept for backward compat
@@ -326,6 +308,7 @@ def _connection_status() -> dict:
         },
         "notifications": {
             "alert_email": alert_email,
+            "alert_email_secondary": alert_email_secondary,
         },
     }
 

@@ -18,6 +18,8 @@ class ClassificationResult:
     due_date: str | None
     account_number: str | None
     summary: str
+    statement_date: str | None = None
+    ach_descriptor: str | None = None
     tokens_used: int = 0
     raw_response: str = ""
 

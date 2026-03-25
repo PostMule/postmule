@@ -10,7 +10,9 @@ Schema for each bill record:
   "recipients": ["Alice"],
   "amount_due": 94.00,
   "due_date": "YYYY-MM-DD",
+  "statement_date": "YYYY-MM-DD",   # billing cycle/statement date (may differ from due_date)
   "account_number": "1234",
+  "ach_descriptor": "ATT*PAYMENT",  # ACH descriptor as shown on bank statements (for matching)
   "summary": "...",
   "drive_file_id": "...",
   "filename": "2025-11-15_Alice_ATT_Bill.pdf",
@@ -32,7 +34,7 @@ from postmule.data._io import atomic_write, recent_years, year_from
 
 _HEADERS = [
     "ID", "Date Received", "Date Processed", "Sender", "Recipients",
-    "Amount Due", "Due Date", "Account Number", "Summary",
+    "Amount Due", "Due Date", "Statement Date", "Account Number", "ACH Descriptor", "Summary",
     "Drive File ID", "Filename", "Status", "Matched Transaction ID", "Alert Sent Date",
 ]
 
@@ -122,7 +124,9 @@ def to_sheet_rows(bills: list[dict[str, Any]]) -> list[list[Any]]:
             ", ".join(b.get("recipients", [])),
             b.get("amount_due", ""),
             b.get("due_date", ""),
+            b.get("statement_date", ""),
             b.get("account_number", ""),
+            b.get("ach_descriptor", ""),
             b.get("summary", ""),
             b.get("drive_file_id", ""),
             b.get("filename", ""),

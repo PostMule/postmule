@@ -48,7 +48,7 @@ notifications:
 # ---------------------------------------------------------------------------
 mailbox:
   providers:
-    - type: vpm                   # vpm | earth_class | traveling_mailbox | postscan
+    - service: vpm                # vpm | earth_class | traveling_mailbox | postscan
       enabled: true
       # VPM sends scan notification emails from this address and subject prefix.
       # Update these if using a different mailbox provider.
@@ -65,7 +65,7 @@ mailbox:
 # ---------------------------------------------------------------------------
 email:
   providers:
-    - type: gmail                 # gmail | outlook | imap
+    - service: gmail              # gmail | outlook_com | outlook_365 | proton | imap
       enabled: true
       role: mailbox_notifications # This account receives VPM scan notification emails
       address: ""                 # e.g. YourMailManagement@gmail.com
@@ -75,7 +75,7 @@ email:
     # Create a separate address (e.g. bills@yourdomain.com) and give billers that address.
     # PostMule will pull PDF attachments from this inbox and process them identically to
     # physical mail scans. Enable this after Phase 23 is implemented.
-    - type: gmail
+    - service: gmail
       enabled: false
       role: bill_intake
       address: ""                 # e.g. bills@gmail.com or bills@yourdomain.com
@@ -88,7 +88,7 @@ email:
 # ---------------------------------------------------------------------------
 storage:
   providers:
-    - type: google_drive          # google_drive | s3 | dropbox | onedrive
+    - service: google_drive       # google_drive | s3 | dropbox | onedrive
       enabled: true
       root_folder: "PostMule"     # Top-level folder name in your storage provider
       # Sub-folders created automatically on first run.
@@ -109,7 +109,7 @@ storage:
 # ---------------------------------------------------------------------------
 spreadsheet:
   providers:
-    - type: google_sheets         # google_sheets | excel_online | airtable | none
+    - service: google_sheets      # google_sheets | excel_online | airtable | none
       enabled: true
       workbook_name: "PostMule"
       # Sheets are generated views — rebuilt from JSON on demand.
@@ -130,7 +130,7 @@ spreadsheet:
 # ---------------------------------------------------------------------------
 llm:
   providers:
-    - type: gemini                # gemini | openai | anthropic | ollama
+    - service: gemini             # gemini | openai | anthropic | ollama
       enabled: true
       model: "gemini-1.5-flash"
   classification_confidence_threshold: 0.80  # Below this → NeedsReview
@@ -202,7 +202,7 @@ finance:
     #
     # YNAB (recommended) — real REST API, free Personal Access Token
     #   Get token: app.ynab.com → Account Settings → Developer Settings
-    - type: ynab                  # ynab | plaid | simplifi | monarch
+    - service: ynab               # ynab | plaid | simplifi | monarch
       enabled: false
       # budget_id defaults to "last-used" (your most recently opened budget).
       # Override with a specific UUID if you have multiple budgets.
@@ -211,16 +211,16 @@ finance:
     # Plaid — real REST API, development tier free (up to 100 institutions)
     #   Requires running Plaid Link once per bank to obtain an access_token.
     #   See: https://plaid.com/docs/link/
-    # - type: plaid
+    # - service: plaid
     #   enabled: false
     #   environment: development  # sandbox | development | production
     #
     # Simplifi by Quicken — browser automation (EXPERIMENTAL, may break on DOM changes)
-    # - type: simplifi
+    # - service: simplifi
     #   enabled: false
     #
     # Monarch Money — browser automation (EXPERIMENTAL, no public API)
-    # - type: monarch
+    # - service: monarch
     #   enabled: false
   bill_matching:
     require_manual_approval: true # true = human approves each match in dashboard

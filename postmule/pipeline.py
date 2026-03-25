@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from postmule.agents import bill_email_intake
 from postmule.agents import classification as classify_agent
 from postmule.agents import email_ingestion
 from postmule.agents import mailbox_ingestion
@@ -53,6 +54,7 @@ class Providers:
     safety_agent: Any
     folder_ids: dict = field(default_factory=dict)
     vpm: Any = None  # VpmProvider — set when VPM credentials are configured
+    bill_intake_providers: list = field(default_factory=list)  # EmailProvider(s) with role: bill_intake
 
 
 def run_daily_pipeline(
@@ -152,6 +154,31 @@ def run_daily_pipeline(
 
             if ingestion.errors:
                 stats["status"] = "partial"
+
+            # ------------------------------------------------------------------
+            # Step 1b: Bill email intake (bill_intake role providers)
+            # ------------------------------------------------------------------
+            if providers.bill_intake_providers:
+                log.info(f"Step 1b: Bill email intake ({len(providers.bill_intake_providers)} provider(s))")
+            for bp in providers.bill_intake_providers:
+                try:
+                    bi = bill_email_intake.run_intake(
+                        email_provider=bp,
+                        drive=providers.drive,
+                        inbox_folder_id=providers.folder_ids.get("inbox", ""),
+                        download_dir=Path(tmpdir),
+                        dry_run=dry_run,
+                    )
+                    stats["emails_found"] += bi.emails_found
+                    processed_pdfs = list(processed_pdfs) + bi.ingested
+                    errors.extend(bi.errors)
+                    if bi.errors:
+                        stats["status"] = "partial"
+                except Exception as exc:
+                    msg = f"Bill email intake failed: {exc}"
+                    log.error(msg)
+                    errors.append(msg)
+                    stats["status"] = "partial"
 
             # ------------------------------------------------------------------
             # Step 2: OCR + Classification (per PDF)
@@ -284,10 +311,12 @@ def run_daily_pipeline(
     # ------------------------------------------------------------------
     log.info("Step 6/7: Alerts")
     smtp_cfg = credentials.get("smtp", {})
+    _recipients = cfg.alert_recipients
     if forward_to_me_found:
         try:
             from postmule.agents.summary import send_urgent_alert
-            send_urgent_alert(smtp_cfg, cfg.alert_email, forward_to_me_found)
+            for _addr in _recipients:
+                send_urgent_alert(smtp_cfg, _addr, forward_to_me_found)
         except Exception as exc:
             log.warning(f"Urgent alert failed: {exc}")
 
@@ -297,7 +326,8 @@ def run_daily_pipeline(
         _cur_year = datetime.now(tz=timezone.utc).year
         all_bills = (bills_data.load_bills(data_dir, _cur_year) +
                      bills_data.load_bills(data_dir, _cur_year - 1))
-        send_bill_due_alert(smtp_cfg, cfg.alert_email, all_bills, bill_due_alert_days, dry_run=dry_run, data_dir=data_dir)
+        for _addr in _recipients:
+            send_bill_due_alert(smtp_cfg, _addr, all_bills, bill_due_alert_days, dry_run=dry_run, data_dir=data_dir)
     except Exception as exc:
         log.warning(f"Bill due alert failed (non-fatal): {exc}")
 
@@ -313,9 +343,10 @@ def run_daily_pipeline(
                       bills_data.load_bills(data_dir, _cur_year - 1))
         pending_bills = [b for b in _all_bills if b.get("status") == "pending"]
         smtp_cfg = credentials.get("smtp", {})
-        send_daily_summary(
+        for _addr in _recipients:
+          send_daily_summary(
             smtp_config=smtp_cfg,
-            alert_email=cfg.alert_email,
+            alert_email=_addr,
             run_stats=stats,
             processed_items=classified_items,
             pending_bills=pending_bills,
@@ -359,7 +390,7 @@ def _build_providers(cfg: Config, credentials: dict, data_dir: Path):
     spreadsheet_provider_cfg = (cfg.get("spreadsheet", "providers") or [{}])[0]
     email_provider_cfg = (cfg.get("email", "providers") or [{}])[0]
     llm_provider_cfg = (cfg.get("llm", "providers") or [{}])[0]
-    llm_provider_name = llm_provider_cfg.get("type", "gemini")
+    llm_provider_name = llm_provider_cfg.get("service", "gemini")
     llm_creds = credentials.get(llm_provider_name, {})
 
     drive = DriveProvider(
@@ -386,10 +417,25 @@ def _build_providers(cfg: Config, credentials: dict, data_dir: Path):
     folders_cfg = storage_provider_cfg.get("folders") or {}
     folder_ids = drive.ensure_folder_structure(folders_cfg)
 
+    # Build bill_intake email providers
+    bill_intake_providers = []
+    for ep_cfg in cfg.get("email", "providers") or []:
+        if ep_cfg.get("role") != "bill_intake":
+            continue
+        if not ep_cfg.get("enabled", True):
+            continue
+        service = ep_cfg.get("service", "gmail")
+        if service == "gmail":
+            label = ep_cfg.get("label", "PostMule-Bills")
+            bill_intake_providers.append(GmailProvider(google_creds, label_name=label))
+            log.info(f"Bill intake provider configured: Gmail (label={label})")
+        else:
+            log.warning(f"Bill intake provider '{service}' is not yet supported — skipping")
+
     # Build VPM provider if credentials are available
     vpm = None
     mailbox_provider_cfg = (cfg.get("mailbox", "providers") or [{}])[0]
-    if mailbox_provider_cfg.get("type") == "vpm" and mailbox_provider_cfg.get("enabled", True):
+    if mailbox_provider_cfg.get("service") == "vpm" and mailbox_provider_cfg.get("enabled", True):
         vpm_creds = credentials.get("vpm", {})
         vpm_username = vpm_creds.get("username", "")
         vpm_password = vpm_creds.get("password", "")
@@ -408,6 +454,7 @@ def _build_providers(cfg: Config, credentials: dict, data_dir: Path):
         safety_agent=safety_agent,
         folder_ids=folder_ids,
         vpm=vpm,
+        bill_intake_providers=bill_intake_providers,
     )
 
 
@@ -427,6 +474,8 @@ def _store_processed_mail(data_dir: Path, result, drive_file_id: str, received_d
             "amount_due": result.amount_due,
             "due_date": result.due_date,
             "account_number": result.account_number,
+            "statement_date": result.statement_date,
+            "ach_descriptor": result.ach_descriptor,
             "status": "pending",
         })
     elif result.category == "Notice":
