@@ -65,6 +65,18 @@ def set_entity_override(data_dir: Path, notice_id: str, entity_id: str) -> bool:
     return False
 
 
+def set_category_override(data_dir: Path, notice_id: str, category: str) -> bool:
+    """Set category_override on a notice record. Returns True if found and updated."""
+    for year in recent_years():
+        notices = load_notices(data_dir, year)
+        for notice in notices:
+            if notice.get("id") == notice_id:
+                notice["category_override"] = category
+                save_notices(data_dir, notices, year)
+                return True
+    return False
+
+
 def to_sheet_rows(notices: list[dict[str, Any]]) -> list[list[Any]]:
     rows = [_HEADERS]
     for n in notices:

@@ -148,5 +148,5 @@ Living mockup: `postmule/web/templates/mockup_dashboard.html` — must be kept i
 ---
 
 ## Build Status
-Phases 1–23 complete (590 tests passing). Planned work tracked as GitHub issues:
+Phases 1–23 complete (620 tests passing). Planned work tracked as GitHub issues:
 `gh issue list --repo PostMule/app`

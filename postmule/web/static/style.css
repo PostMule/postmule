@@ -1011,6 +1011,54 @@ nav { display: flex; gap: 4px; flex: 1; }
 }
 .login-error { color: #C62828; font-size: 0.75rem; margin-bottom: 10px; }
 
+/* ── Mail item edit row ─────────────────────────────────────────── */
+.mail-edit-btn {
+  font-size: 0.6875rem;
+  padding: 2px 8px;
+  background: #EEF2F7;
+  border: 1px solid #C5D0DE;
+  border-radius: 4px;
+  color: #4A6080;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  margin-left: auto;
+}
+.mail-edit-btn:hover { background: #DDE3EC; color: #0F2044; }
+.mail-edit-row {
+  border-top: 1px solid #EEF2F7;
+  padding: 10px 0 4px;
+  margin-top: 8px;
+}
+.mail-edit-row-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #8A9BB0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.cat-chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.cat-chip {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid #C5D0DE;
+  background: #F4F7FA;
+  color: #4A6080;
+  cursor: pointer;
+}
+.cat-chip:hover { background: #DDE3EC; color: #0F2044; }
+.cat-chip--active { background: #0F2044; color: #fff; border-color: #0F2044; }
+.mail-edit-entity-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.mail-edit-entity-label { font-size: 0.6875rem; font-weight: 600; color: #8A9BB0; white-space: nowrap; }
+.mail-edit-entity-name { font-size: 0.8125rem; font-weight: 600; color: #0F2044; cursor: pointer; text-decoration: underline dotted; }
+.mail-edit-entity-name:hover { color: #1A4A90; }
+.mail-edit-actions { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.mail-edit-saved { font-size: 0.75rem; color: #2E7D32; margin-left: 8px; }
+
 /* ── Entity picker ──────────────────────────────────────────────── */
 .entity-fix-btn {
   font-size: 0.6875rem;

@@ -333,6 +333,19 @@
     .mail-unassigned-row { background: #FFF8E1; border: 1px solid #FFE082; border-radius: 6px; padding: 8px 12px; margin-top: 8px; display: flex; align-items: center; gap: 10px; }
     .mail-unassigned-label { font-size: 12px; color: #5A7090; flex: 1; }
     .mail-unassigned-label strong { color: #0F2044; }
+    /* ── Mail edit row ─────────────────────────────────────────────── */
+    .mail-edit-btn { font-size: 0.6875rem; padding: 2px 8px; background: #EEF2F7; border: 1px solid #C5D0DE; border-radius: 4px; color: #4A6080; cursor: pointer; font-family: inherit; white-space: nowrap; margin-left: auto; }
+    .mail-edit-btn:hover { background: #DDE3EC; color: #0F2044; }
+    .mail-edit-row { border-top: 1px solid #EEF2F7; padding: 10px 0 4px; margin-top: 8px; }
+    .mail-edit-row-label { font-size: 0.6875rem; font-weight: 600; color: #8A9BB0; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .cat-chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .cat-chip { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.5px; padding: 3px 10px; border-radius: 4px; border: 1px solid #C5D0DE; background: #F4F7FA; color: #4A6080; cursor: pointer; }
+    .cat-chip:hover { background: #DDE3EC; color: #0F2044; }
+    .cat-chip--active { background: #0F2044; color: #fff; border-color: #0F2044; }
+    .mail-edit-entity-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .mail-edit-entity-label { font-size: 0.6875rem; font-weight: 600; color: #8A9BB0; white-space: nowrap; }
+    .mail-edit-entity-name { font-size: 0.8125rem; font-weight: 600; color: #0F2044; cursor: pointer; text-decoration: underline dotted; }
+    .mail-edit-actions { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
 
     /* ── Connections — tabbed provider list ────────────────────────── */
     .conn-tabs { display: flex; gap: 2px; border-bottom: 2px solid #DDE3EC; margin-bottom: 20px; flex-wrap: wrap; }
@@ -536,7 +549,7 @@
       <!-- Unified mail item list -->
       <div id="mail-pane-items">
 
-        <!-- Bill item — with due date row and inline unassigned match -->
+        <!-- Bill item — with due date row, unassigned match, and Edit panel OPEN (demo state) -->
         <div class="mail-item" data-type="bill">
           <div class="mail-bar mail-bar--bill"></div>
           <div class="mail-body">
@@ -552,11 +565,35 @@
               <span class="mail-due-label">&middot;</span>
               <span class="mail-due-amount">$94.00</span>
             </div>
-            <!-- Inline unassigned match proposal for this sender -->
+            <!-- Inline unassigned match proposal -->
             <div class="mail-unassigned-row">
               <span class="mail-unassigned-label">New name: <strong>"Verizon Wireless Inc"</strong> &mdash; looks like Verizon Wireless (92%)</span>
               <button class="btn btn-primary btn-sm">Approve</button>
               <button class="btn btn-danger btn-sm">Deny</button>
+            </div>
+            <div class="mail-footer" style="margin-top:6px;">
+              <span class="badge badge--bill">BILL</span>
+              <button class="mail-edit-btn" style="background:#0F2044;color:#fff;border-color:#0F2044;">Edit ▲</button>
+            </div>
+            <!-- Edit row — shown open for demo -->
+            <div class="mail-edit-row">
+              <div class="mail-edit-row-label">Category</div>
+              <div class="cat-chip-list">
+                <button class="cat-chip cat-chip--active">BILL</button>
+                <button class="cat-chip">NOTICE</button>
+                <button class="cat-chip">FORWARD</button>
+                <button class="cat-chip">PERSONAL</button>
+                <button class="cat-chip">JUNK</button>
+                <button class="cat-chip">NEEDS REVIEW</button>
+              </div>
+              <div class="mail-edit-row-label">Entity</div>
+              <div class="mail-edit-entity-row">
+                <span class="mail-edit-entity-name">Verizon Wireless ▾</span>
+              </div>
+              <div class="mail-edit-actions">
+                <button class="btn btn-primary btn-sm">Save</button>
+                <button class="btn btn-secondary btn-sm">Cancel</button>
+              </div>
             </div>
           </div>
         </div>
@@ -570,8 +607,11 @@
               <div class="mail-date">2026-03-19</div>
             </div>
             <div class="mail-summary">New credit card enclosed &mdash; physical item requires forwarding</div>
-            <span class="badge badge--forward">FORWARD</span>
             <div class="mail-forward-alert">&#9888; ACTION REQUIRED — contact VPM to forward this item</div>
+            <div class="mail-footer" style="margin-top:6px;">
+              <span class="badge badge--forward">FORWARD</span>
+              <button class="mail-edit-btn">Edit</button>
+            </div>
           </div>
         </div>
 
@@ -591,6 +631,10 @@
               <span class="mail-due-label">&middot;</span>
               <span class="mail-due-amount">$182.50</span>
             </div>
+            <div class="mail-footer" style="margin-top:6px;">
+              <span class="badge badge--bill">BILL</span>
+              <button class="mail-edit-btn">Edit</button>
+            </div>
           </div>
         </div>
 
@@ -603,7 +647,10 @@
               <div class="mail-date">2026-03-12</div>
             </div>
             <div class="mail-summary">Tax refund status update &mdash; your refund has been approved</div>
-            <span class="badge badge--notice">NOTICE</span>
+            <div class="mail-footer" style="margin-top:6px;">
+              <span class="badge badge--notice">NOTICE</span>
+              <button class="mail-edit-btn">Edit</button>
+            </div>
           </div>
         </div>
 
@@ -616,7 +663,10 @@
               <div class="mail-date">2026-03-10</div>
             </div>
             <div class="mail-summary">Vehicle registration renewal notice &mdash; due May 1, 2026</div>
-            <span class="badge badge--notice">NOTICE</span>
+            <div class="mail-footer" style="margin-top:6px;">
+              <span class="badge badge--notice">NOTICE</span>
+              <button class="mail-edit-btn">Edit</button>
+            </div>
           </div>
         </div>
 
@@ -629,7 +679,10 @@
               <div class="mail-date">2026-03-15</div>
             </div>
             <div class="mail-summary">Spring sale &mdash; 40% off everything this weekend</div>
-            <span class="badge badge--junk">JUNK</span>
+            <div class="mail-footer" style="margin-top:6px;">
+              <span class="badge badge--junk">JUNK</span>
+              <button class="mail-edit-btn">Edit</button>
+            </div>
           </div>
         </div>
 
@@ -642,7 +695,10 @@
               <div class="mail-date">2026-03-21</div>
             </div>
             <div class="mail-summary">Unrecognized document &mdash; classification confidence 0.61</div>
-            <span class="badge badge--needs-review">NEEDS REVIEW</span>
+            <div class="mail-footer" style="margin-top:6px;">
+              <span class="badge badge--needs-review">NEEDS REVIEW</span>
+              <button class="mail-edit-btn">Edit</button>
+            </div>
           </div>
         </div>
 

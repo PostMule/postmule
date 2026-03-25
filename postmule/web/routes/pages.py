@@ -55,9 +55,9 @@ def mail():
     pending_by_sender = {m.get("proposed_name", "").lower(): m for m in pending_matches}
 
     items = (
-        [{"_type": "Bill", **b} for b in all_bills]
-        + [{"_type": "Notice", **n} for n in all_notices]
-        + [{"_type": "ForwardToMe", **f} for f in all_ftm]
+        [{"_type": b.get("category_override", "Bill"), **b} for b in all_bills]
+        + [{"_type": n.get("category_override", "Notice"), **n} for n in all_notices]
+        + [{"_type": f.get("category_override", "ForwardToMe"), **f} for f in all_ftm]
     )
     items.sort(key=lambda x: x.get("date_received", ""), reverse=True)
     all_entities = entity_data.load_entities(_app._data_dir)

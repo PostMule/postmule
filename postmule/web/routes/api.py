@@ -409,6 +409,37 @@ def api_mail_entity_override(mail_id: str):
     return ("", 200)
 
 
+_VALID_CATEGORIES = {"Bill", "Notice", "ForwardToMe", "Personal", "Junk", "NeedsReview"}
+
+
+@api_bp.route("/api/mail/<mail_id>/category", methods=["POST"])
+def api_mail_category(mail_id: str):
+    """Override the category (type) of a mail item."""
+    if _app._config and _app._config.get("app", {}).get("dry_run"):
+        return jsonify({"ok": True, "dry_run": True})
+
+    category = request.form.get("category", "").strip()
+    if category not in _VALID_CATEGORIES:
+        return jsonify({"error": f"Invalid category; must be one of {sorted(_VALID_CATEGORIES)}"}), 400
+
+    from postmule.data._io import recent_years
+    for year in recent_years():
+        for bill in bills_data.load_bills(_app._data_dir, year):
+            if bill.get("id") == mail_id:
+                bills_data.set_category_override(_app._data_dir, mail_id, category)
+                return ("", 200)
+        for notice in notices_data.load_notices(_app._data_dir, year):
+            if notice.get("id") == mail_id:
+                notices_data.set_category_override(_app._data_dir, mail_id, category)
+                return ("", 200)
+    for ftm in ftm_data.load_forward_to_me(_app._data_dir):
+        if ftm.get("id") == mail_id:
+            ftm_data.set_category_override(_app._data_dir, mail_id, category)
+            return ("", 200)
+
+    return jsonify({"error": "Mail item not found"}), 404
+
+
 @api_bp.route("/api/entity/<entity_id>/add-account", methods=["POST"])
 def api_entity_add_account(entity_id: str):
     """Set the account number on an entity (one per entity)."""

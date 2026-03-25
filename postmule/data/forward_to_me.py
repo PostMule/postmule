@@ -60,6 +60,17 @@ def set_entity_override(data_dir: Path, item_id: str, entity_id: str) -> bool:
     return False
 
 
+def set_category_override(data_dir: Path, item_id: str, category: str) -> bool:
+    """Set category_override on a forward-to-me record. Returns True if found and updated."""
+    items = load_forward_to_me(data_dir)
+    for item in items:
+        if item.get("id") == item_id:
+            item["category_override"] = category
+            save_forward_to_me(data_dir, items)
+            return True
+    return False
+
+
 def to_sheet_rows(items: list[dict[str, Any]]) -> list[list[Any]]:
     rows = [_HEADERS]
     for i in items:

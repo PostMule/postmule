@@ -332,8 +332,8 @@
       {% set match = pending_by_sender.get(item.get('sender', '')|lower) %}
       <div class="mail-item"
            x-show="typeFilter === 'all' || typeFilter === '{{ item._type }}'"
-           x-data="entityPicker('{{ item.get('id','') }}', '{{ item.get('entity_override_id','') }}')"
-           @keydown.escape="open = false">
+           x-data="mailReassign('{{ item.get('id','') }}', '{{ item._type }}', '{{ item.get('entity_override_id','') }}')"
+           @keydown.escape="editOpen = false; entityMode = false">
         <div class="mail-bar {{ bar_class.get(item._type, 'mail-bar--default') }}"></div>
         <div class="mail-body">
           <div class="mail-header">
@@ -352,10 +352,10 @@
           <div class="mail-forward-alert">ACTION REQUIRED &mdash; contact your mailbox to ship this item</div>
           {% endif %}
           <div class="mail-footer">
-            <span class="badge {{ badge_class.get(item._type, 'badge--junk') }}">{{ type_display.get(item._type, item._type.upper()) }}</span>
+            <span class="badge {{ badge_class.get(item._type, 'badge--junk') }}" x-text="catLabel()" x-bind:class="catBadgeClass()">{{ type_display.get(item._type, item._type.upper()) }}</span>
             {% if item.get('drive_file_id') %}<a href="/pdf/{{ item.get('id') }}" target="_blank" class="pdf-link">View PDF</a>{% endif %}
             {% if item.get('entity_override_id') %}<span class="entity-override-badge" title="Entity manually overridden">&#10003; Corrected</span>{% endif %}
-            <button class="entity-fix-btn" @click="open = !open">Wrong entity?</button>
+            <button class="mail-edit-btn" @click="editOpen = !editOpen" :aria-expanded="editOpen.toString()">Edit</button>
           </div>
           {% if match %}
           <div class="mail-unassigned-row" data-match-row>
@@ -372,26 +372,40 @@
                     hx-swap="outerHTML">Deny</button>
           </div>
           {% endif %}
-          <div x-show="open" x-cloak class="entity-picker">
-            <div class="entity-picker-label">Assign to entity:</div>
-            <input class="entity-picker-search" type="text" placeholder="Search entities&#x2026;" x-model="query" @input="filter()" aria-label="Search entities">
-            <div class="entity-picker-list">
-              {% for entity in entities %}
-              <div class="entity-picker-option"
-                   x-show="matchedIds.includes('{{ entity.id }}')"
-                   @click="select('{{ entity.id }}', '{{ entity.canonical_name|replace("'","\\'")|replace('"','\\"') }}')">
-                {{ entity.canonical_name }}              </div>
+          <div x-show="editOpen" x-cloak class="mail-edit-row">
+            <div class="mail-edit-row-label">Category</div>
+            <div class="cat-chip-list">
+              {% for cat, label in [('Bill','BILL'),('Notice','NOTICE'),('ForwardToMe','FORWARD'),('Personal','PERSONAL'),('Junk','JUNK'),('NeedsReview','NEEDS REVIEW')] %}
+              <button class="cat-chip" :class="{'cat-chip--active': selectedCat === '{{ cat }}'}" @click="selectedCat = '{{ cat }}'">{{ label }}</button>
               {% endfor %}
             </div>
-            <label class="entity-picker-alias-label">
-              <input type="checkbox" x-model="addAlias">
-              Add &ldquo;{{ item.get('sender','') }}&rdquo; as alias on selected entity
-            </label>
-            <div class="entity-picker-actions">
-              <button class="btn btn-primary btn-sm" @click="save('{{ item.get('sender','') | replace("'", "\\'") }}')" :disabled="!selectedId">Save</button>
-              <button class="btn btn-secondary btn-sm" @click="open = false">Cancel</button>
+            <div class="mail-edit-row-label">Entity</div>
+            <div class="mail-edit-entity-row">
+              <span class="mail-edit-entity-name" @click="entityMode = !entityMode" :title="entityMode ? 'Hide search' : 'Click to change entity'">
+                <span x-text="selectedEntityName || '{{ item.get('sender','') | replace("'", "\\'") }}'"></span> &#9660;
+              </span>
             </div>
-            <div x-show="saved" x-cloak class="entity-picker-saved" aria-live="polite" role="status">Saved.</div>
+            <div x-show="entityMode" x-cloak>
+              <input class="entity-picker-search" type="text" placeholder="Search entities&#x2026;" x-model="query" @input="filterEntities()" aria-label="Search entities">
+              <div class="entity-picker-list">
+                {% for entity in entities %}
+                <div class="entity-picker-option"
+                     x-show="matchedIds.includes('{{ entity.id }}')"
+                     @click="selectEntity('{{ entity.id }}', '{{ entity.canonical_name|replace("'","\\'")|replace('"','\\"') }}')">
+                  {{ entity.canonical_name }}
+                </div>
+                {% endfor %}
+              </div>
+              <label class="entity-picker-alias-label">
+                <input type="checkbox" x-model="addAlias">
+                Add &ldquo;{{ item.get('sender','') }}&rdquo; as alias on selected entity
+              </label>
+            </div>
+            <div class="mail-edit-actions">
+              <button class="btn btn-primary btn-sm" @click="save('{{ item.get('sender','') | replace("'", "\\'") }}')" :disabled="saving">Save</button>
+              <button class="btn btn-secondary btn-sm" @click="editOpen = false; entityMode = false">Cancel</button>
+              <span x-show="saved" x-cloak class="mail-edit-saved" role="status">Saved.</span>
+            </div>
           </div>
         </div>
       </div>
@@ -2615,6 +2629,63 @@ postmule run</pre>
   // Entity data for the picker — rendered once, shared across all picker instances.
   // _ENTITY_LIST is populated by the inline script tag below (only on pages that pass `entities`).
   window._ENTITY_LIST = window._ENTITY_LIST || [];
+
+  const _CAT_LABELS = {
+    Bill: 'BILL', Notice: 'NOTICE', ForwardToMe: 'FORWARD',
+    Personal: 'PERSONAL', Junk: 'JUNK', NeedsReview: 'NEEDS REVIEW'
+  };
+  const _CAT_BADGE = {
+    Bill: 'badge--bill', Notice: 'badge--notice', ForwardToMe: 'badge--forward',
+    Personal: 'badge--junk', Junk: 'badge--junk', NeedsReview: 'badge--needs-review'
+  };
+
+  function mailReassign(mailId, currentType, existingOverride) {
+    return {
+      editOpen: false,
+      entityMode: false,
+      selectedCat: currentType,
+      query: '',
+      matchedIds: [],
+      selectedEntityId: existingOverride || '',
+      selectedEntityName: '',
+      addAlias: false,
+      saved: false,
+      saving: false,
+      init() {
+        this.matchedIds = window._ENTITY_LIST.map(e => e.id);
+      },
+      catLabel() { return _CAT_LABELS[this.selectedCat] || this.selectedCat.toUpperCase(); },
+      catBadgeClass() { return 'badge ' + (_CAT_BADGE[this.selectedCat] || 'badge--junk'); },
+      filterEntities() {
+        const q = this.query.toLowerCase().trim();
+        if (!q) { this.matchedIds = window._ENTITY_LIST.map(e => e.id); return; }
+        this.matchedIds = window._ENTITY_LIST.filter(e => e.name.toLowerCase().includes(q)).map(e => e.id);
+      },
+      selectEntity(id, name) {
+        this.selectedEntityId = id;
+        this.selectedEntityName = name;
+        this.entityMode = false;
+      },
+      save(sender) {
+        this.saving = true;
+        const catFd = new FormData();
+        catFd.append('category', this.selectedCat);
+        const entityFd = new FormData();
+        entityFd.append('entity_id', this.selectedEntityId);
+        entityFd.append('add_alias', this.addAlias ? 'true' : 'false');
+        const calls = [fetch('/api/mail/' + mailId + '/category', { method: 'POST', body: catFd })];
+        if (this.selectedEntityId) {
+          calls.push(fetch('/api/mail/' + mailId + '/entity', { method: 'POST', body: entityFd }));
+        }
+        Promise.all(calls).then(() => {
+          this.saved = true;
+          this.editOpen = false;
+          this.entityMode = false;
+          this.saving = false;
+        });
+      }
+    };
+  }
 
   function entityPicker(mailId, existingOverride) {
     return {
