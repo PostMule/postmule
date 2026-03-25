@@ -5,7 +5,10 @@
 ---
 
 ## Last Completed
-Issue #32 — Entity data model overhaul. Schema v3: `friendly_name` (unique, user-editable primary label), `account_number` scalar replaces `account_numbers` list. Migration v2→v3 splits multi-account entities into separate records. New helpers: `mask_account_number()`, `validate_friendly_name_unique()`, `find_entity_by_account()`. Entity discovery now does account-number primary matching; unrecognized accounts route to unassigned. API: friendly_name uniqueness (409), account endpoint sets single value. 620 tests passing.
+Issues #35, #36, #37 — In-app Help section, GitHub docs, entity UI polish.
+- **#37**: Entity expand button replaced with CSS-rotated chevron `›` (`.entity-expand-chevron`). `payment_address` field added to entity schema v3 (`entities.py` migrate + add_entity), API save handler, and entity detail panel (view + edit modes with textarea).
+- **#36**: Created `docs/` with Mermaid diagrams: `architecture.md`, `workflows.md`, `providers.md`, `installation.md`, `configuration.md`. README updated with Mermaid graph + doc links.
+- **#35**: Help nav item added (`/help`, `/help/installation`, `/help/configuration` routes). `architecture.svg` created. Help page block added to `page.html` with three tabs: Overview (SVG + components table + pipeline steps), Installation (step-by-step guide), Configuration (config section tables). 620 tests passing.
 
 ## Next
 Work the issues in this order (check `gh issue list --repo PostMule/app` for current state):

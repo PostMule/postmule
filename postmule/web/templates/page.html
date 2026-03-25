@@ -528,8 +528,8 @@
       <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false">
         <button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Entities">?</button>
         <div class="help-popover" x-show="open" @click.outside="open = false" x-cloak>
-          <p>Entities are the companies, services, and people that PostMule recognises as senders in your mail. Each entity has a canonical name, a list of known aliases (sender names that map to it), and optionally account numbers.</p>
-          <p>Click an entity row to expand it and edit fields directly. Changes are saved immediately and marked as user-verified.</p>
+          <p>Entities are the companies, services, and people PostMule recognises as senders. Each entity has a friendly name (your label), a canonical name (what the LLM extracted), one account number, and a list of known aliases.</p>
+          <p>Click a row to expand it. Click <strong>Edit</strong> in the detail panel to edit fields, then <strong>Save Changes</strong> to commit.</p>
         </div>
       </div>
     </div>
@@ -546,167 +546,202 @@
     <table class="entity-table" aria-label="Entities">
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Aliases</th>
-          <th>Accounts</th>
-          <th>Last Seen</th>
+          <th>Friendly Name</th>
+          <th>Account</th>
+          <th>Last Payment</th>
           <th></th>
         </tr>
       </thead>
       {% for entity in entities %}
+      {% set eid = entity.id %}
       <tbody class="entity-group" x-data="{ open: false }"
-             data-search="{{ (entity.canonical_name + ' ' + entity.aliases|join(' '))|lower }}">
-        <tr class="entity-tr">
-          <td class="entity-name-cell">{{ entity.canonical_name }}</td>
-          <td class="entity-aliases-cell">{{ entity.aliases | join(', ') }}</td>
-          <td class="entity-accounts-cell">{{ entity.get('account_numbers', []) | length }}</td>
-          <td class="entity-lastseen-cell">
-            {% if entity.get('last_seen_in_mail_id') %}
-            <a href="/pdf/{{ entity.last_seen_in_mail_id }}" target="_blank" class="pdf-link">View</a>
-            {% else %}&mdash;{% endif %}
+             data-search="{{ (entity.friendly_name + ' ' + entity.canonical_name + ' ' + entity.aliases|join(' '))|lower }}">
+        <tr class="entity-tr" style="cursor:pointer;" @click="open = !open">
+          <td class="entity-name-cell">
+            <span class="entity-friendly-name">{{ entity.friendly_name or entity.canonical_name }}</span>
+            {% if entity.friendly_name and entity.friendly_name != entity.canonical_name %}
+            <span class="entity-canonical-name">{{ entity.canonical_name }}</span>
+            {% endif %}
           </td>
-          <td><button class="entity-expand-btn" @click="open = !open" :aria-expanded="open.toString()" :aria-label="open ? 'Collapse ' + '{{ entity.canonical_name }}' : 'Expand ' + '{{ entity.canonical_name }}'">
-            <span x-text="open ? '▲' : '▼'" aria-hidden="true"></span>
+          <td class="entity-account-cell">{{ entity._masked_account or '&mdash;' }}</td>
+          <td class="entity-lastpay-cell">{{ entity._last_payment or '&mdash;' }}</td>
+          <td><button class="entity-expand-btn" @click.stop="open = !open"
+                      :aria-expanded="open.toString()"
+                      :aria-label="open ? 'Collapse' : 'Expand'">
+            <span class="entity-expand-chevron" :style="open ? 'transform:rotate(90deg)' : ''" aria-hidden="true">›</span>
           </button></td>
         </tr>
         <tr x-show="open" x-cloak class="entity-detail-tr">
-          <td colspan="5">
-            <div class="entity-detail">
-              <!-- Contact & profile -->
+          <td colspan="4">
+            <div class="entity-detail"
+                 x-data="{
+                   editing: false,
+                   errorMsg: '',
+                   orig: {
+                     fn: {{ entity.friendly_name | tojson }},
+                     acct: {{ (entity.get('account_number') or '') | tojson }},
+                     cat: {{ (entity.get('category') or 'biller') | tojson }},
+                     phone: {{ (entity.get('phone') or '') | tojson }},
+                     website: {{ (entity.get('website') or '') | tojson }},
+                     paymentAddress: {{ (entity.get('payment_address') or '') | tojson }}
+                   },
+                   fn: {{ entity.friendly_name | tojson }},
+                   acct: {{ (entity.get('account_number') or '') | tojson }},
+                   cat: {{ (entity.get('category') or 'biller') | tojson }},
+                   phone: {{ (entity.get('phone') or '') | tojson }},
+                   website: {{ (entity.get('website') or '') | tojson }},
+                   paymentAddress: {{ (entity.get('payment_address') or '') | tojson }},
+                   cancel() {
+                     this.fn = this.orig.fn;
+                     this.acct = this.orig.acct;
+                     this.cat = this.orig.cat;
+                     this.phone = this.orig.phone;
+                     this.website = this.orig.website;
+                     this.paymentAddress = this.orig.paymentAddress;
+                     this.editing = false;
+                     this.errorMsg = '';
+                   },
+                   async save() {
+                     if (!confirm('Save changes to ' + this.fn + '?')) return;
+                     const fd = new FormData();
+                     fd.append('friendly_name', this.fn);
+                     fd.append('account_number', this.acct);
+                     fd.append('category', this.cat);
+                     fd.append('phone', this.phone);
+                     fd.append('website', this.website);
+                     fd.append('payment_address', this.paymentAddress);
+                     const r = await fetch('/api/entity/{{ eid }}/save', {method: 'POST', body: fd});
+                     if (r.status === 409) {
+                       const j = await r.json();
+                       this.errorMsg = j.message;
+                     } else if (r.ok) {
+                       this.orig = {fn: this.fn, acct: this.acct, cat: this.cat, phone: this.phone, website: this.website, paymentAddress: this.paymentAddress};
+                       this.editing = false;
+                       this.errorMsg = '';
+                     }
+                   }
+                 }">
+
+              <!-- Panel header -->
+              <div class="entity-panel-header">
+                <span class="entity-panel-title">Details</span>
+                <button class="edit-btn" x-show="!editing" @click="editing = true">Edit</button>
+                <div x-show="editing" class="entity-panel-actions">
+                  <button class="save-btn" @click="save()">Save Changes</button>
+                  <button class="cancel-btn" @click="cancel()">Cancel</button>
+                </div>
+                <span x-show="errorMsg" class="entity-field-error" x-text="errorMsg"></span>
+              </div>
+
+              <!-- Fields grid -->
               <div class="entity-detail-grid">
-                <div class="entity-field" x-data="{ editing: false }">
-                  <div class="entity-field-label">Phone
-                    {% if 'phone' in entity.get('user_verified_fields', []) %}<span class="verified-badge" title="User verified">✓</span>{% endif %}
+                <div class="entity-field">
+                  <div class="entity-field-label">Friendly Name</div>
+                  <div class="entity-field-value">
+                    <span x-show="!editing" x-text="fn || '—'"></span>
+                    <input x-show="editing" class="entity-input" type="text" x-model="fn"
+                           placeholder="e.g. AT&amp;T Mobile" aria-label="Friendly name">
                   </div>
-                  <div x-show="!editing" class="entity-field-value">
-                    {{ entity.get('phone') or '—' }}
-                    <button class="edit-btn" @click="editing = true">Edit</button>
-                  </div>
-                  <form x-show="editing" class="entity-inline-form"
-                        hx-post="/api/entity/{{ entity.id }}"
-                        hx-swap="none"
-                        @htmx:after-request="editing = false">
-                    <input type="hidden" name="field" value="phone">
-                    <input class="entity-input" type="text" name="value" value="{{ entity.get('phone') or '' }}" placeholder="e.g. 1-800-555-0100" aria-label="Phone number">
-                    <button class="save-btn" type="submit">Save</button>
-                    <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
-                  </form>
                 </div>
 
-                <div class="entity-field" x-data="{ editing: false }">
-                  <div class="entity-field-label">Website
-                    {% if 'website' in entity.get('user_verified_fields', []) %}<span class="verified-badge">✓</span>{% endif %}
-                  </div>
-                  <div x-show="!editing" class="entity-field-value">
-                    {% if entity.get('website') %}<a href="{{ entity.website }}" target="_blank" class="pdf-link">{{ entity.website }}</a>{% else %}—{% endif %}
-                    <button class="edit-btn" @click="editing = true">Edit</button>
-                  </div>
-                  <form x-show="editing" class="entity-inline-form"
-                        hx-post="/api/entity/{{ entity.id }}"
-                        hx-swap="none"
-                        @htmx:after-request="editing = false">
-                    <input type="hidden" name="field" value="website">
-                    <input class="entity-input" type="text" name="value" value="{{ entity.get('website') or '' }}" placeholder="e.g. https://att.com" aria-label="Website URL">
-                    <button class="save-btn" type="submit">Save</button>
-                    <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
-                  </form>
+                <div class="entity-field">
+                  <div class="entity-field-label">Canonical Name</div>
+                  <div class="entity-field-value text-muted">{{ entity.canonical_name }}</div>
                 </div>
 
-                <div class="entity-field" x-data="{ editing: false }">
-                  <div class="entity-field-label">Email
-                    {% if 'email' in entity.get('user_verified_fields', []) %}<span class="verified-badge">✓</span>{% endif %}
+                <div class="entity-field">
+                  <div class="entity-field-label">Account Number</div>
+                  <div class="entity-field-value">
+                    <span x-show="!editing">{{ entity._masked_account or '&mdash;' }}</span>
+                    <input x-show="editing" class="entity-input" type="text" x-model="acct"
+                           placeholder="Full account number" aria-label="Account number">
                   </div>
-                  <div x-show="!editing" class="entity-field-value">
-                    {{ entity.get('email') or '—' }}
-                    <button class="edit-btn" @click="editing = true">Edit</button>
-                  </div>
-                  <form x-show="editing" class="entity-inline-form"
-                        hx-post="/api/entity/{{ entity.id }}"
-                        hx-swap="none"
-                        @htmx:after-request="editing = false">
-                    <input type="hidden" name="field" value="email">
-                    <input class="entity-input" type="email" name="value" value="{{ entity.get('email') or '' }}" placeholder="e.g. billing@att.com" aria-label="Email address">
-                    <button class="save-btn" type="submit">Save</button>
-                    <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
-                  </form>
                 </div>
 
+                <div class="entity-field">
+                  <div class="entity-field-label">Category Hint</div>
+                  <div class="entity-field-value">
+                    <span x-show="!editing" x-text="cat || '—'"></span>
+                    <select x-show="editing" class="entity-input" x-model="cat" aria-label="Category hint">
+                      {% for cat in entity_categories %}
+                      <option value="{{ cat }}">{{ cat }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+
+                <div class="entity-field">
+                  <div class="entity-field-label">Phone</div>
+                  <div class="entity-field-value">
+                    <span x-show="!editing" x-text="phone || '—'"></span>
+                    <input x-show="editing" class="entity-input" type="text" x-model="phone"
+                           placeholder="e.g. 1-800-555-0100" aria-label="Phone number">
+                  </div>
+                </div>
+
+                <div class="entity-field">
+                  <div class="entity-field-label">Website</div>
+                  <div class="entity-field-value">
+                    <span x-show="!editing">
+                      <template x-if="website">
+                        <a :href="website" target="_blank" class="pdf-link" x-text="website"></a>
+                      </template>
+                      <template x-if="!website"><span>—</span></template>
+                    </span>
+                    <input x-show="editing" class="entity-input" type="text" x-model="website"
+                           placeholder="e.g. https://att.com" aria-label="Website">
+                  </div>
+                </div>
               </div>
 
-              <!-- Address -->
-              <div class="entity-field entity-field--wide" x-data="{ editing: false }">
-                <div class="entity-field-label">Address
-                  {% if 'address' in entity.get('user_verified_fields', []) %}<span class="verified-badge">✓</span>{% endif %}
-                </div>
-                {% set addr = entity.get('address') or {} %}
-                <div x-show="!editing" class="entity-field-value">
-                  {% if addr.get('street') or addr.get('city') %}
-                  {{ [addr.get('street'), addr.get('city'), addr.get('state'), addr.get('zip'), addr.get('country')] | select | join(', ') }}
-                  {% else %}—{% endif %}
-                  <button class="edit-btn" @click="editing = true">Edit</button>
-                </div>
-                <form x-show="editing" class="entity-inline-form entity-address-form"
-                      hx-post="/api/entity/{{ entity.id }}"
-                      hx-swap="none"
-                      @htmx:after-request="editing = false">
-                  <input type="hidden" name="field" value="address">
-                  <input class="entity-input" type="text" name="address_street" value="{{ addr.get('street') or '' }}" placeholder="Street" aria-label="Street address">
-                  <input class="entity-input" type="text" name="address_city" value="{{ addr.get('city') or '' }}" placeholder="City" aria-label="City">
-                  <input class="entity-input entity-input--sm" type="text" name="address_state" value="{{ addr.get('state') or '' }}" placeholder="State" aria-label="State">
-                  <input class="entity-input entity-input--sm" type="text" name="address_zip" value="{{ addr.get('zip') or '' }}" placeholder="ZIP" aria-label="ZIP code">
-                  <input class="entity-input entity-input--sm" type="text" name="address_country" value="{{ addr.get('country') or '' }}" placeholder="Country" aria-label="Country">
-                  <button class="save-btn" type="submit">Save</button>
-                  <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
-                </form>
-              </div>
-
-              <!-- Account numbers -->
-              <div class="entity-field entity-field--wide" x-data="{ adding: false }">
-                <div class="entity-field-label">Account Numbers</div>
+              <!-- Payment Mailing Address -->
+              <div class="entity-field entity-field--wide">
+                <div class="entity-field-label">Payment Mailing Address</div>
                 <div class="entity-field-value">
-                  {% for acct in entity.get('account_numbers', []) %}
-                  <span class="acct-chip">{{ acct }}</span>
-                  {% else %}
-                  <span class="text-muted">None on file</span>
-                  {% endfor %}
+                  <span x-show="!editing" style="white-space:pre-line" x-text="paymentAddress || '—'"></span>
+                  <textarea x-show="editing" class="entity-input" x-model="paymentAddress" rows="3"
+                            placeholder="e.g. 123 Remittance Dr&#10;Atlanta, GA 30301"
+                            aria-label="Payment mailing address"
+                            style="width:100%; resize:vertical;"></textarea>
+                </div>
+              </div>
+
+              <!-- Aliases -->
+              <div class="entity-field entity-field--wide"
+                   x-data="{ adding: false, newAlias: '' }">
+                <div class="entity-field-label">
+                  Aliases
                   <button class="edit-btn" @click="adding = !adding">+ Add</button>
                 </div>
+                <div class="entity-field-value" style="flex-wrap:wrap; gap:6px;">
+                  {% for alias in entity.aliases %}
+                  <span class="alias-chip">{{ alias }}
+                    <button class="alias-remove-btn"
+                            hx-post="/api/entity/{{ eid }}/alias"
+                            hx-vals='{"action":"remove","value":"{{ alias|replace("'","\\'")|replace('"','\\"') }}"}'
+                            hx-swap="none"
+                            aria-label="Remove {{ alias }}">×</button>
+                  </span>
+                  {% else %}
+                  <span class="text-muted">No aliases</span>
+                  {% endfor %}
+                </div>
                 <form x-show="adding" class="entity-inline-form"
-                      hx-post="/api/entity/{{ entity.id }}/add-account"
+                      hx-post="/api/entity/{{ eid }}/alias"
                       hx-swap="none"
-                      @htmx:after-request="adding = false">
-                  <input class="entity-input" type="text" name="account" placeholder="Account number" aria-label="Account number">
+                      @htmx:after-request="adding = false; newAlias = ''">
+                  <input type="hidden" name="action" value="add">
+                  <input class="entity-input" type="text" name="value" x-model="newAlias"
+                         placeholder="Alias to add" aria-label="New alias">
                   <button class="save-btn" type="submit">Add</button>
-                  <button class="cancel-btn" type="button" @click="adding = false">Cancel</button>
-                </form>
-              </div>
-
-              <!-- Notes -->
-              <div class="entity-field entity-field--wide" x-data="{ editing: false }">
-                <div class="entity-field-label">Notes
-                  {% if 'notes' in entity.get('user_verified_fields', []) %}<span class="verified-badge">✓</span>{% endif %}
-                </div>
-                <div x-show="!editing" class="entity-field-value entity-notes-value">
-                  {{ entity.get('notes') or '—' }}
-                  <button class="edit-btn" @click="editing = true">Edit</button>
-                </div>
-                <form x-show="editing" class="entity-inline-form"
-                      hx-post="/api/entity/{{ entity.id }}"
-                      hx-swap="none"
-                      @htmx:after-request="editing = false">
-                  <input type="hidden" name="field" value="notes">
-                  <textarea class="entity-textarea" name="value" placeholder="Free-form notes..." aria-label="Notes">{{ entity.get('notes') or '' }}</textarea>
-                  <button class="save-btn" type="submit">Save</button>
-                  <button class="cancel-btn" type="button" @click="editing = false">Cancel</button>
+                  <button class="cancel-btn" type="button" @click="adding = false; newAlias = ''">Cancel</button>
                 </form>
               </div>
 
               <!-- Meta -->
               <div class="entity-meta">
-                <span>Created: {{ entity.get('created_date', '') }}</span>
-                {% if entity.get('auto_populated_at') %}
-                <span>Auto-enriched: {{ entity.auto_populated_at[:10] }}</span>
-                {% endif %}
+                <span>First seen: {{ entity.get('created_date') or '—' }}</span>
+                <span>Last seen: {% if entity.get('last_seen_in_mail_id') %}<a href="/pdf/{{ entity.last_seen_in_mail_id }}" target="_blank" class="pdf-link">View</a>{% else %}—{% endif %}</span>
                 <span>ID: {{ entity.id }}</span>
               </div>
             </div>
@@ -2347,6 +2382,211 @@
     }
     </script>
     {% endif %}
+
+    {% elif page == 'help' %}
+    <div class="page-title-row">
+      <h1 class="page-title">Help</h1>
+    </div>
+
+    <div x-data="{ section: '{{ help_section|default('overview') }}' }">
+      <div class="conn-tabs" role="tablist" aria-label="Help sections" style="margin-bottom:24px;">
+        <button role="tab" class="conn-tab" :class="{ active: section === 'overview' }"
+                @click="section = 'overview'" :aria-selected="(section === 'overview').toString()">Overview</button>
+        <button role="tab" class="conn-tab" :class="{ active: section === 'installation' }"
+                @click="section = 'installation'" :aria-selected="(section === 'installation').toString()">Installation</button>
+        <button role="tab" class="conn-tab" :class="{ active: section === 'configuration' }"
+                @click="section = 'configuration'" :aria-selected="(section === 'configuration').toString()">Configuration</button>
+      </div>
+
+      <!-- Overview -->
+      <div x-show="section === 'overview'" x-cloak>
+        <div class="s-card" style="margin-bottom:20px;">
+          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">How PostMule Works</h2>
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0 0 20px;">
+            PostMule is a self-hosted mail management system. Physical mail scanned by your virtual mailbox service (or biller PDFs sent directly to your email) flows through an AI-powered pipeline that classifies, extracts, and organizes everything automatically.
+          </p>
+          <img src="/static/architecture.svg" alt="PostMule component architecture diagram" style="width:100%;max-width:900px;display:block;border-radius:8px;border:1px solid #DDE3EC;">
+        </div>
+
+        <div class="s-card" style="margin-bottom:20px;">
+          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 16px;">Components</h2>
+          <table class="data-table" style="font-size:0.8125rem;">
+            <thead><tr>
+              <th>Component</th><th>Default</th><th>Purpose</th>
+            </tr></thead>
+            <tbody>
+              <tr><td>Virtual Mailbox</td><td>VirtualPostMail</td><td>Scans physical mail; sends notification email with PDF</td></tr>
+              <tr><td>Email (notifications)</td><td>Gmail</td><td>Receives VPM scan emails; triggers PDF download</td></tr>
+              <tr><td>Email (bill intake)</td><td>Gmail</td><td>Receives biller PDF attachments directly</td></tr>
+              <tr><td>OCR</td><td>pdfplumber + pytesseract</td><td>Extracts text from PDFs; auto-selects best method</td></tr>
+              <tr><td>LLM</td><td>Gemini 1.5 Flash</td><td>Classifies documents; extracts sender, amount, due date</td></tr>
+              <tr><td>Storage</td><td>Google Drive</td><td>Stores PDFs and JSON data (cloud-redundant)</td></tr>
+              <tr><td>Spreadsheet</td><td>Google Sheets</td><td>Generated view layer; rebuilt from JSON on demand</td></tr>
+              <tr><td>Finance</td><td>YNAB</td><td>Pulls bank transactions for bill reconciliation</td></tr>
+              <tr><td>Web Dashboard</td><td>Flask + HTMX</td><td>This UI — localhost:5000</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="s-card">
+          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">Daily Pipeline (2am)</h2>
+          <ol style="font-size:0.8125rem;color:#5A7090;line-height:2;padding-left:20px;margin:0;">
+            <li>Check email for VPM scan notifications → download PDFs → upload to /Inbox</li>
+            <li>Check bill intake email for biller PDF attachments → upload to /Inbox</li>
+            <li>Per PDF: OCR → LLM classify → rename → move to correct folder → update JSON</li>
+            <li>Sync spreadsheet view from JSON</li>
+            <li>Check storage consistency</li>
+            <li>Pull bank transactions from finance provider</li>
+            <li>Run bill matching (amount + date)</li>
+            <li>Run entity discovery (fuzzy alias matching)</li>
+            <li>Send daily summary email; immediate alert for ForwardToMe items</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- Installation -->
+      <div x-show="section === 'installation'" x-cloak>
+        <div class="s-card" style="margin-bottom:20px;">
+          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 16px;">Requirements</h2>
+          <ul style="font-size:0.8125rem;color:#5A7090;line-height:2;padding-left:20px;margin:0;">
+            <li>Python 3.12+ on Windows 11 (macOS/Linux may work with minor adjustments)</li>
+            <li>A virtual mailbox service (VirtualPostMail, Earth Class Mail, Traveling Mailbox, PostScan)</li>
+            <li>A Gmail account (or other supported provider) to receive mailbox notifications</li>
+            <li>A Google account for Drive + Sheets storage (or configure an alternative)</li>
+            <li>An API key for a supported LLM (default: Gemini 1.5 Flash — free tier)</li>
+          </ul>
+        </div>
+
+        <div class="s-card" style="margin-bottom:20px;">
+          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">Step 1 — Clone and install</h2>
+          <pre style="background:#F0F4F9;border-radius:6px;padding:14px;font-size:0.8125rem;overflow-x:auto;color:#0F2044;margin:0;">git clone https://github.com/PostMule/app.git PostMule
+cd PostMule
+python -m venv .venv
+.venv\Scripts\activate
+pip install -e .</pre>
+        </div>
+
+        <div class="s-card" style="margin-bottom:20px;">
+          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">Step 2 — Create config files</h2>
+          <pre style="background:#F0F4F9;border-radius:6px;padding:14px;font-size:0.8125rem;overflow-x:auto;color:#0F2044;margin:0 0 12px;">copy config.example.yaml config.yaml
+copy credentials.example.yaml credentials.yaml</pre>
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">Both files are in <code>.gitignore</code> and will never be committed.</p>
+        </div>
+
+        <div class="s-card" style="margin-bottom:20px;">
+          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">Step 3 — Set up Google OAuth</h2>
+          <ol style="font-size:0.8125rem;color:#5A7090;line-height:2;padding-left:20px;margin:0;">
+            <li>Go to <a href="https://console.cloud.google.com" target="_blank" class="pdf-link">console.cloud.google.com</a> and create a project</li>
+            <li>Enable the <strong>Google Drive API</strong> and <strong>Google Sheets API</strong></li>
+            <li>Create an OAuth 2.0 Client ID (Desktop app type)</li>
+            <li>Download the JSON file and save it as <code>credentials.json</code> in the PostMule directory</li>
+            <li>On first run, PostMule will open a browser for OAuth consent — approve access</li>
+          </ol>
+        </div>
+
+        <div class="s-card" style="margin-bottom:20px;">
+          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">Step 4 — Encrypt credentials</h2>
+          <pre style="background:#F0F4F9;border-radius:6px;padding:14px;font-size:0.8125rem;overflow-x:auto;color:#0F2044;margin:0 0 12px;">postmule set-master-password
+postmule encrypt-credentials</pre>
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">Your master password is stored in the Windows system keyring (DPAPI). After encrypting, you can delete <code>credentials.yaml</code>.</p>
+        </div>
+
+        <div class="s-card" style="margin-bottom:20px;">
+          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">Step 5 — Test and schedule</h2>
+          <pre style="background:#F0F4F9;border-radius:6px;padding:14px;font-size:0.8125rem;overflow-x:auto;color:#0F2044;margin:0 0 12px;"># Test with a dry run (no writes, no emails)
+postmule --dry-run
+
+# Schedule the daily 2am run
+postmule install-task
+
+# Run immediately
+postmule run</pre>
+        </div>
+
+        <div class="s-card">
+          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">First-Run Checklist</h2>
+          <ul style="font-size:0.8125rem;color:#5A7090;line-height:2;padding-left:20px;margin:0;">
+            <li><code>postmule --dry-run</code> completes without errors</li>
+            <li>Dashboard loads at localhost:5000</li>
+            <li>Storage folders created in Google Drive under "PostMule"</li>
+            <li>Test email received at your <code>alert_email</code></li>
+            <li>Task Scheduler task visible in Windows Task Scheduler</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Configuration -->
+      <div x-show="section === 'configuration'" x-cloak>
+        <div class="s-card" style="margin-bottom:20px;">
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">
+            All configuration lives in <code>config.yaml</code> (copied from <code>config.example.yaml</code>). This file is in <code>.gitignore</code> and never committed. Sensitive secrets belong in <code>credentials.yaml</code>, not here.
+          </p>
+        </div>
+
+        {% set help_sections = [
+          ('app', 'Top-level application settings', [
+            ('name', 'PostMule', 'Application name used in logs and notifications'),
+            ('dry_run', 'false', 'true = simulate all actions; no writes, moves, or emails sent'),
+            ('install_dir', 'C:\\ProgramData\\PostMule', 'Local directory for logs and cache'),
+          ]),
+          ('schedule', 'When the daily pipeline runs', [
+            ('run_time', '"02:00"', 'Time of day in 24h format (local time)'),
+            ('timezone', '"America/Los_Angeles"', 'IANA timezone name'),
+          ]),
+          ('notifications', 'Daily summary and alert delivery', [
+            ('alert_email', '""', 'Required. Email address to receive daily summaries and alerts'),
+            ('forward_to_me_urgent', 'true', 'Send immediate alert when ForwardToMe mail is detected'),
+            ('bill_due_alert_days', '7', 'Send proactive alert when a bill is due within this many days'),
+          ]),
+          ('llm', 'AI classification provider', [
+            ('providers[].service', 'gemini', 'gemini | openai | anthropic | ollama'),
+            ('providers[].model', 'gemini-1.5-flash', 'Model name (provider-specific)'),
+            ('classification_confidence_threshold', '0.80', 'Below this confidence → file goes to NeedsReview'),
+          ]),
+          ('api_safety', 'Hard limits to prevent runaway LLM costs', [
+            ('daily_request_limit', '1400', 'Hard stop on API requests per day (matches Gemini free tier)'),
+            ('daily_token_limit', '900000', 'Hard stop on tokens per day'),
+            ('monthly_cost_budget_usd', '0.00', '0 = free tier only; raise for paid tiers'),
+          ]),
+          ('finance', 'Bank transaction sync', [
+            ('providers[].service', '—', 'ynab | plaid | simplifi | monarch'),
+            ('bill_matching.require_manual_approval', 'true', 'Require human approval for each bill/transaction match'),
+            ('bill_matching.amount_tolerance_cents', '0', 'Allow matches within this many cents (0 = exact)'),
+          ]),
+          ('data_protection', 'Safety guardrails', [
+            ('soft_deletes_only', 'true', 'Never permanently delete files automatically — do not change'),
+            ('max_files_moved_per_run', '50', 'Safety cap — pipeline stops and alerts if exceeded'),
+            ('write_verification', 'true', 'Read back + hash every write (3-layer redundancy)'),
+          ]),
+        ] %}
+
+        {% for section_key, section_desc, fields in help_sections %}
+        <div class="s-card" style="margin-bottom:16px;">
+          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 4px;font-family:monospace;">{{ section_key }}</h2>
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0 0 14px;">{{ section_desc }}</p>
+          <table class="data-table" style="font-size:0.8125rem;">
+            <thead><tr><th>Field</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+              {% for field, default, desc in fields %}
+              <tr>
+                <td><code>{{ field }}</code></td>
+                <td style="white-space:nowrap;color:#5A7090;">{{ default }}</td>
+                <td style="color:#5A7090;">{{ desc }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endfor %}
+
+        <div class="s-card">
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">
+            For the full configuration reference with all sections, see
+            <a href="https://github.com/PostMule/app/blob/main/docs/configuration.md" target="_blank" class="pdf-link">docs/configuration.md</a> on GitHub.
+          </p>
+        </div>
+      </div>
+    </div>
 
     {% endif %}
 

@@ -6,6 +6,22 @@ PostMule receives your physical mail as PDFs from a virtual mailbox service, use
 classify and extract data, manages your bills, sends alerts for important items, and
 reconciles transactions with your bank — all running on your own machine.
 
+```mermaid
+graph LR
+    VPM["Virtual Mailbox\n(physical mail)"] -->|scan PDF| OCR
+    EMAIL["Email\n(biller PDFs)"] -->|attachment| OCR
+    OCR["OCR"] --> LLM["LLM\nClassify"]
+    LLM -->|Bill/Notice/etc.| DRIVE["Cloud Storage\n(Google Drive)"]
+    DRIVE --> JSON["JSON\n(source of truth)"]
+    JSON --> SHEETS["Sheets\n(view)"]
+    JSON --> DASH["Dashboard\nlocalhost:5000"]
+    BANK["Bank\n(YNAB/Plaid)"] -->|transactions| MATCH["Bill\nMatching"]
+    JSON --> MATCH
+    MATCH --> DASH
+```
+
+→ [Architecture](docs/architecture.md) · [Daily Workflow](docs/workflows.md) · [Providers](docs/providers.md) · [Installation](docs/installation.md) · [Configuration](docs/configuration.md)
+
 ## Features
 
 - **AI-powered classification** — Bills, Notices, ForwardToMe, Personal, Junk
@@ -61,7 +77,7 @@ postmule encrypt-credentials
 postmule --dry-run
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup.
+See [docs/installation.md](docs/installation.md) for the full installation guide and [CONTRIBUTING.md](CONTRIBUTING.md) for development setup.
 
 ## Supported Providers
 

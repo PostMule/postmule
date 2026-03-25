@@ -485,16 +485,25 @@ nav { display: flex; gap: 4px; flex: 1; }
 .entity-tr:hover td { background: #F7F9FC; }
 .entity-name-cell { font-weight: 600; color: #0F2044; }
 .entity-aliases-cell, .entity-accounts-cell, .entity-lastseen-cell { color: #7A90A8; font-size: 0.75rem; }
+.entity-friendly-name { font-weight: 600; color: #0F2044; display: block; }
+.entity-canonical-name { font-size: 0.6875rem; color: #9AAABB; display: block; margin-top: 1px; }
+.entity-account-cell { font-family: monospace; font-size: 0.75rem; color: #5A7090; }
+.entity-lastpay-cell { font-size: 0.75rem; color: #5A7090; white-space: nowrap; }
 .entity-expand-btn {
   background: none;
   border: 1px solid #DDE3EC;
   border-radius: 4px;
   padding: 2px 8px;
   cursor: pointer;
-  font-size: 0.6875rem;
+  font-size: 0.875rem;
   color: #7A90A8;
+  line-height: 1;
 }
 .entity-expand-btn:hover { background: #F0F4F9; }
+.entity-expand-chevron {
+  display: inline-block;
+  transition: transform 0.18s ease;
+}
 
 /* Category badges */
 .entity-badge {
@@ -623,6 +632,49 @@ nav { display: flex; gap: 4px; flex: 1; }
   font-family: monospace;
 }
 .entity-notes-value { white-space: pre-wrap; }
+.entity-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.entity-panel-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #7A90A8;
+  flex: 1;
+}
+.entity-panel-actions { display: flex; gap: 6px; align-items: center; }
+.entity-field-error {
+  font-size: 0.6875rem;
+  color: #C62828;
+  margin-left: 6px;
+}
+.alias-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.6875rem;
+  background: #EEF3F9;
+  color: #2C4A6E;
+  border: 1px solid #C0D0E4;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: inherit;
+}
+.alias-remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9AAABB;
+  font-size: 0.875rem;
+  line-height: 1;
+  padding: 0 1px;
+  font-family: inherit;
+}
+.alias-remove-btn:hover { color: #C62828; }
 .entity-meta {
   display: flex;
   gap: 16px;

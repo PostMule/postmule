@@ -190,7 +190,8 @@
     .entity-tr td { padding:10px 12px; border-bottom:1px solid #F0F4F9; vertical-align:middle; color:#1C2E44; }
     .entity-name-cell { font-weight:600; color:#0F2044; }
     .entity-aliases-cell, .entity-accounts-cell, .entity-lastseen-cell { color:#7A90A8; font-size:0.75rem; }
-    .entity-expand-btn { background:none; border:1px solid #DDE3EC; border-radius:4px; padding:2px 8px; cursor:pointer; font-size:0.6875rem; color:#7A90A8; }
+    .entity-expand-btn { background:none; border:1px solid #DDE3EC; border-radius:4px; padding:2px 8px; cursor:pointer; font-size:0.875rem; color:#7A90A8; line-height:1; }
+    .entity-expand-chevron { display:inline-block; transition:transform 0.18s ease; }
     .entity-detail-tr td { padding:0; border-bottom:1px solid #DDE3EC; }
     .entity-detail { padding:16px; }
 
@@ -638,85 +639,302 @@
       <table class="entity-table" style="margin-top:0;">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Aliases</th>
-            <th>Accounts</th>
-            <th>Last Seen</th>
+            <th>Friendly Name</th>
+            <th>Account</th>
+            <th>Last Payment</th>
             <th></th>
           </tr>
         </thead>
-        <tbody class="entity-group" data-search="verizon wireless verizon wireless inc vzw verizon">
-          <tr class="entity-tr">
-            <td class="entity-name-cell">Verizon Wireless</td>
-            <td class="entity-aliases-cell">Verizon Wireless Inc, VZW, Verizon</td>
-            <td class="entity-accounts-cell">1</td>
-            <td class="entity-lastseen-cell"><a href="#" class="pdf-link">View</a></td>
-            <td><button class="entity-expand-btn">▼</button></td>
+
+        <!-- Verizon Wireless -->
+        <tbody class="entity-group" x-data="{ open: false }" data-search="verizon wireless verizon wireless inc vzw verizon">
+          <tr class="entity-tr" style="cursor:pointer;" @click="open = !open">
+            <td class="entity-name-cell">
+              <span class="entity-friendly-name">Verizon Wireless</span>
+              <span class="entity-canonical-name">Verizon Wireless Inc</span>
+            </td>
+            <td class="entity-account-cell">****8801</td>
+            <td class="entity-lastpay-cell">Mar 18 &middot; $94.00</td>
+            <td><button class="entity-expand-btn" @click.stop="open = !open" :aria-expanded="open.toString()">
+              <span class="entity-expand-chevron" :style="open ? 'transform:rotate(90deg)' : ''" aria-hidden="true">›</span>
+            </button></td>
           </tr>
-          <tr class="entity-detail-tr" style="display:none;">
-            <td colspan="5"><div class="entity-detail"><div class="entity-meta">Phone: 1-800-922-0204 &nbsp;·&nbsp; Website: verizon.com &nbsp;·&nbsp; Created: 2026-01-04</div></div></td>
+          <tr x-show="open" x-cloak class="entity-detail-tr">
+            <td colspan="4">
+              <div class="entity-detail" x-data="{ editing: false, fn: 'Verizon Wireless', acct: '88801', cat: 'biller', phone: '1-800-922-0204', website: 'https://verizon.com', errorMsg: '', cancel() { this.editing = false; this.errorMsg = ''; } }">
+                <div class="entity-panel-header">
+                  <span class="entity-panel-title">Details</span>
+                  <button class="edit-btn" x-show="!editing" @click="editing = true">Edit</button>
+                  <div x-show="editing" class="entity-panel-actions">
+                    <button class="save-btn" @click="editing = false">Save Changes</button>
+                    <button class="cancel-btn" @click="cancel()">Cancel</button>
+                  </div>
+                  <span x-show="errorMsg" class="entity-field-error" x-text="errorMsg"></span>
+                </div>
+                <div class="entity-detail-grid">
+                  <div class="entity-field">
+                    <div class="entity-field-label">Friendly Name</div>
+                    <div class="entity-field-value">
+                      <span x-show="!editing" x-text="fn"></span>
+                      <input x-show="editing" class="entity-input" type="text" x-model="fn" aria-label="Friendly name">
+                    </div>
+                  </div>
+                  <div class="entity-field">
+                    <div class="entity-field-label">Canonical Name</div>
+                    <div class="entity-field-value text-muted">Verizon Wireless Inc</div>
+                  </div>
+                  <div class="entity-field">
+                    <div class="entity-field-label">Account Number</div>
+                    <div class="entity-field-value">
+                      <span x-show="!editing">****8801</span>
+                      <input x-show="editing" class="entity-input" type="text" x-model="acct" aria-label="Account number">
+                    </div>
+                  </div>
+                  <div class="entity-field">
+                    <div class="entity-field-label">Category Hint</div>
+                    <div class="entity-field-value">
+                      <span x-show="!editing" x-text="cat"></span>
+                      <select x-show="editing" class="entity-input" x-model="cat">
+                        <option>biller</option><option>sender</option><option>vendor</option><option>government</option><option>personal</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="entity-field">
+                    <div class="entity-field-label">Phone</div>
+                    <div class="entity-field-value">
+                      <span x-show="!editing" x-text="phone"></span>
+                      <input x-show="editing" class="entity-input" type="text" x-model="phone" aria-label="Phone">
+                    </div>
+                  </div>
+                  <div class="entity-field">
+                    <div class="entity-field-label">Website</div>
+                    <div class="entity-field-value">
+                      <span x-show="!editing"><a href="https://verizon.com" target="_blank" class="pdf-link">verizon.com</a></span>
+                      <input x-show="editing" class="entity-input" type="text" x-model="website" aria-label="Website">
+                    </div>
+                  </div>
+                </div>
+                <div class="entity-field entity-field--wide">
+                  <div class="entity-field-label">Payment Mailing Address</div>
+                  <div class="entity-field-value">
+                    <span x-show="!editing" style="white-space:pre-line">P.O. Box 660108
+Dallas, TX 75266</span>
+                    <textarea x-show="editing" class="entity-input" rows="3"
+                              placeholder="e.g. 123 Remittance Dr&#10;Atlanta, GA 30301"
+                              aria-label="Payment mailing address"
+                              style="width:100%; resize:vertical;"></textarea>
+                  </div>
+                </div>
+                <div class="entity-field entity-field--wide">
+                  <div class="entity-field-label">Aliases</div>
+                  <div class="entity-field-value" style="flex-wrap:wrap; gap:6px;">
+                    <span class="alias-chip">Verizon Wireless Inc <button class="alias-remove-btn">×</button></span>
+                    <span class="alias-chip">VZW <button class="alias-remove-btn">×</button></span>
+                    <span class="alias-chip">Verizon <button class="alias-remove-btn">×</button></span>
+                  </div>
+                </div>
+                <div class="entity-meta">
+                  <span>First seen: 2026-01-04</span>
+                  <span>Last seen: <a href="#" class="pdf-link">View</a></span>
+                  <span>ID: ent-001</span>
+                </div>
+              </div>
+            </td>
           </tr>
         </tbody>
-        <tbody class="entity-group" data-search="at&amp;t at&amp;t mobility llc at&amp;t internet">
-          <tr class="entity-tr">
-            <td class="entity-name-cell">AT&amp;T</td>
-            <td class="entity-aliases-cell">AT&amp;T Mobility LLC, AT&amp;T Internet, AT&amp;T Services</td>
-            <td class="entity-accounts-cell">2</td>
-            <td class="entity-lastseen-cell"><a href="#" class="pdf-link">View</a></td>
-            <td><button class="entity-expand-btn">▼</button></td>
+
+        <!-- AT&T Mobile (split from AT&T — account ****1234) -->
+        <tbody class="entity-group" x-data="{ open: false }" data-search="at&amp;t mobile at&amp;t mobility llc att mobile">
+          <tr class="entity-tr" style="cursor:pointer;" @click="open = !open">
+            <td class="entity-name-cell">
+              <span class="entity-friendly-name">AT&amp;T Mobile</span>
+              <span class="entity-canonical-name">AT&amp;T Mobility LLC</span>
+            </td>
+            <td class="entity-account-cell">****1234</td>
+            <td class="entity-lastpay-cell">Mar 5 &middot; $62.50</td>
+            <td><button class="entity-expand-btn" @click.stop="open = !open" :aria-expanded="open.toString()">
+              <span class="entity-expand-chevron" :style="open ? 'transform:rotate(90deg)' : ''" aria-hidden="true">›</span>
+            </button></td>
           </tr>
-          <tr class="entity-detail-tr" style="display:none;"><td colspan="5"></td></tr>
-        </tbody>
-        <tbody class="entity-group" data-search="pg&amp;e pacific gas electric co pacific gas &amp; electric">
-          <tr class="entity-tr">
-            <td class="entity-name-cell">PG&amp;E</td>
-            <td class="entity-aliases-cell">Pacific Gas Electric Co, Pacific Gas &amp; Electric</td>
-            <td class="entity-accounts-cell">1</td>
-            <td class="entity-lastseen-cell">&mdash;</td>
-            <td><button class="entity-expand-btn">▼</button></td>
+          <tr x-show="open" x-cloak class="entity-detail-tr">
+            <td colspan="4">
+              <div class="entity-detail" x-data="{ editing: false, fn: 'AT&amp;T Mobile', acct: '...1234', cat: 'biller', phone: '1-800-331-0500', website: 'https://att.com', errorMsg: '', cancel() { this.editing = false; this.errorMsg = ''; } }">
+                <div class="entity-panel-header">
+                  <span class="entity-panel-title">Details</span>
+                  <button class="edit-btn" x-show="!editing" @click="editing = true">Edit</button>
+                  <div x-show="editing" class="entity-panel-actions">
+                    <button class="save-btn" @click="editing = false">Save Changes</button>
+                    <button class="cancel-btn" @click="cancel()">Cancel</button>
+                  </div>
+                  <span x-show="errorMsg" class="entity-field-error" x-text="errorMsg"></span>
+                </div>
+                <div class="entity-detail-grid">
+                  <div class="entity-field">
+                    <div class="entity-field-label">Friendly Name</div>
+                    <div class="entity-field-value">
+                      <span x-show="!editing" x-text="fn"></span>
+                      <input x-show="editing" class="entity-input" type="text" x-model="fn" aria-label="Friendly name">
+                    </div>
+                  </div>
+                  <div class="entity-field">
+                    <div class="entity-field-label">Canonical Name</div>
+                    <div class="entity-field-value text-muted">AT&amp;T Mobility LLC</div>
+                  </div>
+                  <div class="entity-field">
+                    <div class="entity-field-label">Account Number</div>
+                    <div class="entity-field-value">
+                      <span x-show="!editing">****1234</span>
+                      <input x-show="editing" class="entity-input" type="text" x-model="acct" aria-label="Account number">
+                    </div>
+                  </div>
+                  <div class="entity-field">
+                    <div class="entity-field-label">Category Hint</div>
+                    <div class="entity-field-value">
+                      <span x-show="!editing" x-text="cat"></span>
+                      <select x-show="editing" class="entity-input" x-model="cat">
+                        <option>biller</option><option>sender</option><option>vendor</option><option>government</option><option>personal</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="entity-field">
+                    <div class="entity-field-label">Phone</div>
+                    <div class="entity-field-value">
+                      <span x-show="!editing" x-text="phone"></span>
+                      <input x-show="editing" class="entity-input" type="text" x-model="phone" aria-label="Phone">
+                    </div>
+                  </div>
+                  <div class="entity-field">
+                    <div class="entity-field-label">Website</div>
+                    <div class="entity-field-value">
+                      <span x-show="!editing"><a href="https://att.com" target="_blank" class="pdf-link">att.com</a></span>
+                      <input x-show="editing" class="entity-input" type="text" x-model="website" aria-label="Website">
+                    </div>
+                  </div>
+                </div>
+                <div class="entity-field entity-field--wide">
+                  <div class="entity-field-label">Aliases</div>
+                  <div class="entity-field-value" style="flex-wrap:wrap; gap:6px;">
+                    <span class="alias-chip">AT&amp;T Mobility LLC <button class="alias-remove-btn">×</button></span>
+                    <span class="alias-chip">ATT Mobile <button class="alias-remove-btn">×</button></span>
+                  </div>
+                </div>
+                <div class="entity-meta">
+                  <span>First seen: 2026-01-10</span>
+                  <span>Last seen: <a href="#" class="pdf-link">View</a></span>
+                  <span>ID: ent-002</span>
+                </div>
+              </div>
+            </td>
           </tr>
-          <tr class="entity-detail-tr" style="display:none;"><td colspan="5"></td></tr>
         </tbody>
-        <tbody class="entity-group" data-search="chase bank jpmorgan chase chase bank usa">
-          <tr class="entity-tr">
-            <td class="entity-name-cell">Chase Bank</td>
-            <td class="entity-aliases-cell">JPMorgan Chase, Chase Bank USA</td>
-            <td class="entity-accounts-cell">0</td>
-            <td class="entity-lastseen-cell">&mdash;</td>
-            <td><button class="entity-expand-btn">▼</button></td>
+
+        <!-- AT&T Internet (split from AT&T — account ****5678) -->
+        <tbody class="entity-group" x-data="{ open: false }" data-search="at&amp;t internet at&amp;t services att internet">
+          <tr class="entity-tr" style="cursor:pointer;" @click="open = !open">
+            <td class="entity-name-cell">
+              <span class="entity-friendly-name">AT&amp;T Internet</span>
+              <span class="entity-canonical-name">AT&amp;T Services Inc</span>
+            </td>
+            <td class="entity-account-cell">****5678</td>
+            <td class="entity-lastpay-cell">&mdash;</td>
+            <td><button class="entity-expand-btn" @click.stop="open = !open" :aria-expanded="open.toString()">
+              <span class="entity-expand-chevron" :style="open ? 'transform:rotate(90deg)' : ''" aria-hidden="true">›</span>
+            </button></td>
           </tr>
-          <tr class="entity-detail-tr" style="display:none;"><td colspan="5"></td></tr>
-        </tbody>
-        <tbody class="entity-group" data-search="irs internal revenue service u.s. treasury">
-          <tr class="entity-tr">
-            <td class="entity-name-cell">IRS</td>
-            <td class="entity-aliases-cell">Internal Revenue Service, U.S. Treasury &mdash; IRS</td>
-            <td class="entity-accounts-cell">0</td>
-            <td class="entity-lastseen-cell">&mdash;</td>
-            <td><button class="entity-expand-btn">▼</button></td>
+          <tr x-show="open" x-cloak class="entity-detail-tr">
+            <td colspan="4">
+              <div class="entity-detail" x-data="{ editing: false }">
+                <div class="entity-panel-header">
+                  <span class="entity-panel-title">Details</span>
+                  <button class="edit-btn" x-show="!editing" @click="editing = true">Edit</button>
+                  <div x-show="editing" class="entity-panel-actions">
+                    <button class="save-btn" @click="editing = false">Save Changes</button>
+                    <button class="cancel-btn" @click="editing = false">Cancel</button>
+                  </div>
+                </div>
+                <div class="entity-detail-grid">
+                  <div class="entity-field"><div class="entity-field-label">Friendly Name</div><div class="entity-field-value">AT&amp;T Internet</div></div>
+                  <div class="entity-field"><div class="entity-field-label">Canonical Name</div><div class="entity-field-value text-muted">AT&amp;T Services Inc</div></div>
+                  <div class="entity-field"><div class="entity-field-label">Account Number</div><div class="entity-field-value">****5678</div></div>
+                  <div class="entity-field"><div class="entity-field-label">Category Hint</div><div class="entity-field-value">biller</div></div>
+                </div>
+                <div class="entity-field entity-field--wide">
+                  <div class="entity-field-label">Aliases</div>
+                  <div class="entity-field-value" style="flex-wrap:wrap; gap:6px;">
+                    <span class="alias-chip">AT&amp;T Services Inc <button class="alias-remove-btn">×</button></span>
+                  </div>
+                </div>
+                <div class="entity-meta">
+                  <span>First seen: 2026-02-01</span>
+                  <span>Last seen: —</span>
+                  <span>ID: ent-003</span>
+                </div>
+              </div>
+            </td>
           </tr>
-          <tr class="entity-detail-tr" style="display:none;"><td colspan="5"></td></tr>
         </tbody>
-        <tbody class="entity-group" data-search="amazon amazon prime amazon.com amazon web services">
-          <tr class="entity-tr">
-            <td class="entity-name-cell">Amazon</td>
-            <td class="entity-aliases-cell">Amazon Prime, Amazon.com, Amazon Web Services</td>
-            <td class="entity-accounts-cell">0</td>
-            <td class="entity-lastseen-cell"><a href="#" class="pdf-link">View</a></td>
-            <td><button class="entity-expand-btn">▼</button></td>
+
+        <!-- PG&E -->
+        <tbody class="entity-group" x-data="{ open: false }" data-search="pg&amp;e pacific gas electric co pacific gas &amp; electric">
+          <tr class="entity-tr" style="cursor:pointer;" @click="open = !open">
+            <td class="entity-name-cell">
+              <span class="entity-friendly-name">PG&amp;E</span>
+              <span class="entity-canonical-name">Pacific Gas and Electric Co</span>
+            </td>
+            <td class="entity-account-cell">****4421</td>
+            <td class="entity-lastpay-cell">Mar 18 &middot; $61.00</td>
+            <td><button class="entity-expand-btn" @click.stop="open = !open" :aria-expanded="open.toString()">
+              <span class="entity-expand-chevron" :style="open ? 'transform:rotate(90deg)' : ''" aria-hidden="true">›</span>
+            </button></td>
           </tr>
-          <tr class="entity-detail-tr" style="display:none;"><td colspan="5"></td></tr>
-        </tbody>
-        <tbody class="entity-group" data-search="comcast xfinity comcast cable communications">
-          <tr class="entity-tr">
-            <td class="entity-name-cell">Comcast</td>
-            <td class="entity-aliases-cell">Xfinity, Comcast Cable Communications</td>
-            <td class="entity-accounts-cell">0</td>
-            <td class="entity-lastseen-cell">&mdash;</td>
-            <td><button class="entity-expand-btn">▼</button></td>
+          <tr x-show="open" x-cloak class="entity-detail-tr">
+            <td colspan="4"><div class="entity-detail" x-data="{ editing: false }">
+              <div class="entity-panel-header"><span class="entity-panel-title">Details</span><button class="edit-btn" @click="editing = true">Edit</button></div>
+              <div class="entity-detail-grid">
+                <div class="entity-field"><div class="entity-field-label">Friendly Name</div><div class="entity-field-value">PG&amp;E</div></div>
+                <div class="entity-field"><div class="entity-field-label">Canonical Name</div><div class="entity-field-value text-muted">Pacific Gas and Electric Co</div></div>
+                <div class="entity-field"><div class="entity-field-label">Account Number</div><div class="entity-field-value">****4421</div></div>
+                <div class="entity-field"><div class="entity-field-label">Category Hint</div><div class="entity-field-value">biller</div></div>
+              </div>
+              <div class="entity-meta"><span>First seen: 2026-01-07</span><span>Last seen: —</span><span>ID: ent-004</span></div>
+            </div></td>
           </tr>
-          <tr class="entity-detail-tr" style="display:none;"><td colspan="5"></td></tr>
         </tbody>
+
+        <!-- Comcast -->
+        <tbody class="entity-group" x-data="{ open: false }" data-search="comcast xfinity comcast cable communications">
+          <tr class="entity-tr" style="cursor:pointer;" @click="open = !open">
+            <td class="entity-name-cell">
+              <span class="entity-friendly-name">Comcast</span>
+              <span class="entity-canonical-name">Comcast Cable Communications</span>
+            </td>
+            <td class="entity-account-cell">&mdash;</td>
+            <td class="entity-lastpay-cell">Mar 20 &middot; $89.99</td>
+            <td><button class="entity-expand-btn" @click.stop="open = !open" :aria-expanded="open.toString()">
+              <span class="entity-expand-chevron" :style="open ? 'transform:rotate(90deg)' : ''" aria-hidden="true">›</span>
+            </button></td>
+          </tr>
+          <tr x-show="open" x-cloak class="entity-detail-tr">
+            <td colspan="4"><div class="entity-detail" x-data="{ editing: false }">
+              <div class="entity-panel-header"><span class="entity-panel-title">Details</span><button class="edit-btn" @click="editing = true">Edit</button></div>
+              <div class="entity-detail-grid">
+                <div class="entity-field"><div class="entity-field-label">Friendly Name</div><div class="entity-field-value">Comcast</div></div>
+                <div class="entity-field"><div class="entity-field-label">Canonical Name</div><div class="entity-field-value text-muted">Comcast Cable Communications</div></div>
+                <div class="entity-field"><div class="entity-field-label">Account Number</div><div class="entity-field-value">—</div></div>
+                <div class="entity-field"><div class="entity-field-label">Category Hint</div><div class="entity-field-value">biller</div></div>
+              </div>
+              <div class="entity-field entity-field--wide">
+                <div class="entity-field-label">Aliases</div>
+                <div class="entity-field-value" style="flex-wrap:wrap; gap:6px;">
+                  <span class="alias-chip">Xfinity <button class="alias-remove-btn">×</button></span>
+                  <span class="alias-chip">Comcast Cable Communications <button class="alias-remove-btn">×</button></span>
+                </div>
+              </div>
+              <div class="entity-meta"><span>First seen: 2026-01-15</span><span>Last seen: —</span><span>ID: ent-005</span></div>
+            </div></td>
+          </tr>
+        </tbody>
+
       </table>
     </div>
 

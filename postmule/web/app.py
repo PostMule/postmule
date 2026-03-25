@@ -70,6 +70,7 @@ _NAV_ITEMS = [
     ("settings", "/settings", "Settings"),
     ("logs", "/logs", "Logs"),
     ("providers", "/providers", "Providers"),
+    ("help", "/help", "Help"),
 ]
 
 

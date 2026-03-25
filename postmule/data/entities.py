@@ -19,6 +19,7 @@ Entity record schema (v3 — field additions require an app update + migration):
   },
   "phone": null,
   "website": null,
+  "payment_address": null,       # remittance/payment mailing address (may differ from general address)
   "email": null,
   "notes": null,                 # free-text, human-editable
   "auto_populated_at": null,     # ISO datetime of last LLM enrichment
@@ -130,6 +131,7 @@ def migrate_entity(entity: dict[str, Any]) -> dict[str, Any]:
     entity.setdefault("address", dict(_EMPTY_ADDRESS))
     entity.setdefault("phone", None)
     entity.setdefault("website", None)
+    entity.setdefault("payment_address", None)
     entity.setdefault("email", None)
     entity.setdefault("notes", None)
     entity.setdefault("auto_populated_at", None)
@@ -217,6 +219,7 @@ def add_entity(
         "address": dict(_EMPTY_ADDRESS),
         "phone": None,
         "website": None,
+        "payment_address": None,
         "email": None,
         "notes": None,
         "auto_populated_at": None,

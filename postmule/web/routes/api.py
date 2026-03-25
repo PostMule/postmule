@@ -421,6 +421,58 @@ def api_entity_add_account(entity_id: str):
     return ("", 200)
 
 
+@api_bp.route("/api/entity/<entity_id>/save", methods=["POST"])
+def api_entity_save(entity_id: str):
+    """Batch save editable fields on an entity from the detail panel."""
+    entities = entity_data.load_entities(_app._data_dir)
+    entity = next((e for e in entities if e["id"] == entity_id), None)
+    if entity is None:
+        return jsonify({"error": "not_found"}), 404
+
+    friendly = request.form.get("friendly_name", "").strip()
+    if not friendly:
+        return jsonify({"error": "empty_friendly_name", "message": "Friendly name cannot be empty."}), 400
+    if not entity_data.validate_friendly_name_unique(entities, friendly, exclude_id=entity_id):
+        return jsonify({"error": "friendly_name_taken",
+                        "message": f"'{friendly}' is already used by another entity."}), 409
+
+    entity["friendly_name"] = friendly
+    for field in ("account_number", "category", "phone", "website", "payment_address"):
+        val = request.form.get(field)
+        if val is not None:
+            entity[field] = val.strip() or None
+            verified = entity.setdefault("user_verified_fields", [])
+            if field not in verified:
+                verified.append(field)
+
+    verified = entity.setdefault("user_verified_fields", [])
+    if "friendly_name" not in verified:
+        verified.append("friendly_name")
+
+    entity_data.save_entities(_app._data_dir, entities)
+    return jsonify({"ok": True})
+
+
+@api_bp.route("/api/entity/<entity_id>/alias", methods=["POST"])
+def api_entity_alias(entity_id: str):
+    """Add or remove an alias on an entity."""
+    action = request.form.get("action")
+    value = (request.form.get("value") or "").strip()
+    if action not in ("add", "remove") or not value:
+        return "action and value are required", 400
+    entities = entity_data.load_entities(_app._data_dir)
+    entity = next((e for e in entities if e["id"] == entity_id), None)
+    if entity is None:
+        return "Entity not found", 404
+    aliases = entity.setdefault("aliases", [])
+    if action == "add" and value not in aliases:
+        aliases.append(value)
+    elif action == "remove" and value in aliases:
+        aliases.remove(value)
+    entity_data.save_entities(_app._data_dir, entities)
+    return ("", 200)
+
+
 @api_bp.route("/api/backup", methods=["POST"])
 def api_backup():
     """Trigger an on-demand backup upload to cloud storage."""

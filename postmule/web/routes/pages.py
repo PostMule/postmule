@@ -14,6 +14,7 @@ from postmule.data import forward_to_me as ftm_data
 from postmule.data import notices as notices_data
 from postmule.data import run_log as run_log_data
 from postmule.data._io import recent_years
+from postmule.data.entities import find_entity_by_account, mask_account_number
 
 import postmule.web.app as _app
 
@@ -92,9 +93,48 @@ def pending():
     return redirect(url_for("pages.mail", tab="unassigned"))
 
 
+def _last_payment_display(date_str: str, amount) -> str:
+    """Format '2026-03-18' + 94.0 as 'Mar 18 · $94.00'."""
+    import calendar as _cal
+    try:
+        parts = date_str.split("-")
+        abbr = _cal.month_abbr[int(parts[1])]
+        return f"{abbr} {int(parts[2])} · ${float(amount):.2f}"
+    except Exception:
+        return ""
+
+
+def _compute_last_payments(data_dir, entities: list) -> dict:
+    """Return dict[entity_id -> display_str] for the most recent matched bill per entity."""
+    recent: dict = {}  # entity_id -> (date_str, amount)
+    for year in recent_years(2):
+        for bill in bills_data.load_bills(data_dir, year):
+            if bill.get("status") != "matched":
+                continue
+            eid = bill.get("entity_override_id")
+            if not eid and bill.get("account_number"):
+                match = find_entity_by_account(entities, bill["account_number"])
+                if match:
+                    eid = match["id"]
+            if not eid:
+                continue
+            date_str = bill.get("date_received", "")
+            amount = bill.get("amount_due")
+            if amount is None:
+                continue
+            prev = recent.get(eid)
+            if not prev or date_str > prev[0]:
+                recent[eid] = (date_str, amount)
+    return {eid: _last_payment_display(d, a) for eid, (d, a) in recent.items()}
+
+
 @pages_bp.route("/entities")
 def entities():
     all_entities = entity_data.load_entities(_app._data_dir)
+    last_payments = _compute_last_payments(_app._data_dir, all_entities)
+    for e in all_entities:
+        e["_masked_account"] = mask_account_number(e.get("account_number") or "")
+        e["_last_payment"] = last_payments.get(e["id"], "")
     return render_template(
         "page.html",
         page="entities",
@@ -164,6 +204,39 @@ def providers():
         title="Providers",
         today=date.today().isoformat(),
         conn=status,
+    )
+
+
+@pages_bp.route("/help")
+def help_overview():
+    return render_template(
+        "page.html",
+        page="help",
+        title="Help",
+        today=date.today().isoformat(),
+        help_section="overview",
+    )
+
+
+@pages_bp.route("/help/installation")
+def help_installation():
+    return render_template(
+        "page.html",
+        page="help",
+        title="Help — Installation",
+        today=date.today().isoformat(),
+        help_section="installation",
+    )
+
+
+@pages_bp.route("/help/configuration")
+def help_configuration():
+    return render_template(
+        "page.html",
+        page="help",
+        title="Help — Configuration",
+        today=date.today().isoformat(),
+        help_section="configuration",
     )
 
 
