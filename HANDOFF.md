@@ -15,22 +15,20 @@ If files are modified, commit them before starting new work. Never let a session
 ---
 
 ## Last Completed
-Mockup interactivity — Mail tab Edit rows (`mockup_dashboard.html`):
-- All 7 mail items now have working Edit buttons (previously only the first item had the row, hardcoded open)
-- Edit button toggles the inline edit row; opening one auto-closes any other open row
-- Category chips are clickable — selecting one deactivates the others
-- Entity name opens a dropdown picker with all entities; clicking an item selects it; clicking outside dismisses
-- Save and Cancel both collapse the row and reset the button
-- Each item pre-selects the correct active chip and entity to match its current state
-- No new GitHub issue — this was a mockup-only UX improvement
+Issues #42 and #43 — README overhaul + Help page overhaul:
 
-Previously: Issue #39 — In-app Feedback button (local-first logging):
-- `postmule/data/feedback.py`: new module — `append_feedback(data_dir, entry)` and `list_feedback(data_dir)`; appends to `data/feedback.json` atomically
-- `api.py`: reworked `/api/feedback` — always writes locally first, GitHub submission optional (only if PAT configured); removed contact/email field from payload and issue body; always returns 200 with `{"saved": true}`
-- `page.html`: moved Feedback button from header nav to footer; removed contact email field from modal; added read-only context block (page, version, timestamp) + "For follow-up, email support@postmule.com" note; added `openFeedbackModal()` JS function that stamps timestamp at open time; updated `submitFeedback()` to send page/version context, removed 503 error branch
-- `style.css`: replaced `.feedback-nav-btn` with `.app-footer-feedback`; added `.feedback-context`, `.feedback-context-*`, `.feedback-support-note` styles
-- `mockup_dashboard.html`: same header/footer/modal/JS changes as page.html
-- `tests/unit/test_data_feedback.py`: 7 tests, feedback.py at 100% coverage
+**#42 — README (dual-audience):**
+- `README.md`: restructured for two audiences — plain-English hero + Get Started (installer vs CLI) for non-technical users; Technical Reference section with links at the bottom for developers; feature bullets rewritten without tech stack details
+- `docs/install-cli.md`: new file absorbing CLI Quick Start content from README
+
+**#43 — Help page (plain English, remove Installation, add Troubleshooting):**
+- Both `mockup_dashboard.html` and `page.html` updated identically
+- Removed Installation tab (wrong place — user hasn't installed yet)
+- Overview → "How It Works": plain English description, mail categories table, where-your-data-lives paragraph; removed Components table (pdfplumber, Flask, etc.) and numbered pipeline steps
+- Configuration → "Settings Reference": plain English description of each Settings section; no YAML field references
+- Added Troubleshooting tab: 5 scenarios (not run today, missing email, needs review, unpaid bill, post-Windows-update breakage) + links to Logs page and GitHub Issues
+
+Previously: Mockup interactivity — Mail tab Edit rows (mockup-only, no issue)
 
 ## Next
 Work the issues in this order (check `gh issue list --repo PostMule/app` for current state):
