@@ -55,7 +55,6 @@
         {% endfor %}
       </nav>
       <div class="header-date" aria-label="Today's date">{{ today }}</div>
-      <button class="feedback-nav-btn" id="feedbackOpenBtn" aria-label="Send feedback" onclick="document.getElementById('feedbackModal').removeAttribute('hidden');document.getElementById('feedbackTitle').focus();">Feedback</button>
       <!-- Accessibility toolbar -->
       <div x-data="{ open: false, fontSize: localStorage.getItem('a11y-font-size') || 'default', hc: localStorage.getItem('a11y-high-contrast') === '1' }"
            @click.outside="open = false" @keydown.escape.window="open = false" style="position:relative">
@@ -2615,6 +2614,7 @@ postmule run</pre>
 
   <footer class="app-footer">
     <span class="app-footer-version">PostMule v{{ app_version }}</span>
+    <a href="#" class="app-footer-feedback" onclick="openFeedbackModal(); return false;">Feedback</a>
   </footer>
 
   <script>
@@ -2797,10 +2797,13 @@ postmule run</pre>
           <label class="feedback-label" for="feedbackSteps">Steps to reproduce</label>
           <textarea class="form-control feedback-textarea" id="feedbackSteps" rows="3" placeholder="1. Go to…&#10;2. Click…&#10;3. See error…"></textarea>
         </div>
-        <div class="feedback-field">
-          <label class="feedback-label" for="feedbackContact">Your email <span class="feedback-optional">(optional, for follow-up)</span></label>
-          <input type="email" class="form-control" id="feedbackContact" placeholder="you@example.com">
+        <div class="feedback-context">
+          <span class="feedback-context-label">Context (auto-collected, non-PII)</span>
+          <div class="feedback-context-row"><span class="feedback-context-key">Page</span><span class="feedback-context-val">{{ page | title }}</span></div>
+          <div class="feedback-context-row"><span class="feedback-context-key">Version</span><span class="feedback-context-val">{{ app_version }}</span></div>
+          <div class="feedback-context-row"><span class="feedback-context-key">Timestamp</span><span class="feedback-context-val" id="feedbackCtxTimestamp"></span></div>
         </div>
+        <p class="feedback-support-note">For follow-up, email <a href="mailto:support@postmule.com">support@postmule.com</a></p>
         <div id="feedbackError" class="feedback-error" hidden></div>
         <div class="feedback-actions">
           <button class="btn btn-secondary" onclick="closeFeedbackModal()" type="button">Cancel</button>
@@ -2817,6 +2820,11 @@ postmule run</pre>
   </div>
 
   <script>
+  function openFeedbackModal() {
+    document.getElementById('feedbackCtxTimestamp').textContent = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+    document.getElementById('feedbackModal').removeAttribute('hidden');
+    document.getElementById('feedbackTitle').focus();
+  }
   function closeFeedbackModal() {
     document.getElementById('feedbackModal').setAttribute('hidden', '');
     document.getElementById('feedbackForm').hidden = false;
@@ -2825,7 +2833,6 @@ postmule run</pre>
     document.getElementById('feedbackTitle').value = '';
     document.getElementById('feedbackDesc').value = '';
     document.getElementById('feedbackSteps').value = '';
-    document.getElementById('feedbackContact').value = '';
     document.getElementById('feedbackType').value = 'general';
     document.getElementById('feedbackStepsRow').hidden = true;
     document.getElementById('feedbackSubmitBtn').disabled = false;
@@ -2855,31 +2862,27 @@ postmule run</pre>
       title: title,
       description: desc,
       steps: document.getElementById('feedbackSteps').value.trim(),
-      contact: document.getElementById('feedbackContact').value.trim(),
+      page: '{{ page }}',
+      version: '{{ app_version }}',
     };
     fetch('/api/feedback', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
-    .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, status: r.status, data: d}; }); })
+    .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
     .then(function(res) {
       if (res.ok) {
         document.getElementById('feedbackForm').hidden = true;
         var successLink = document.getElementById('feedbackSuccessLink');
         if (res.data.url) {
-          successLink.innerHTML = 'Issue <a href="' + res.data.url + '" target="_blank" rel="noopener">#' + res.data.number + '</a> created — you can track it on GitHub.';
+          successLink.innerHTML = 'Issue <a href="' + res.data.url + '" target="_blank" rel="noopener">#' + res.data.number + '</a> created on GitHub.';
         } else {
-          successLink.textContent = '';
+          successLink.textContent = 'Saved locally.';
         }
         document.getElementById('feedbackSuccess').hidden = false;
-      } else if (res.status === 503 && res.data.error === 'not_configured') {
-        errEl.innerHTML = res.data.message + ' <a href="https://github.com/PostMule/app/issues" target="_blank" rel="noopener">Open GitHub Issues</a>';
-        errEl.hidden = false;
-        btn.disabled = false;
-        btn.textContent = 'Submit';
       } else {
-        errEl.textContent = 'Submission failed. Please try again or report directly on GitHub.';
+        errEl.textContent = 'Submission failed. Please try again.';
         errEl.hidden = false;
         btn.disabled = false;
         btn.textContent = 'Submit';

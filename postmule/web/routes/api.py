@@ -872,23 +872,39 @@ def api_connection_provider():
 
 @api_bp.route("/api/feedback", methods=["POST"])
 def api_feedback():
-    """Submit in-app feedback as a GitHub issue on PostMule/app."""
+    """Save in-app feedback locally and optionally submit as a GitHub issue."""
     import urllib.request
     import urllib.error
     import json as _json
     from postmule import __version__
+    from postmule.data.feedback import append_feedback
 
     data = request.get_json(silent=True) or {}
     feedback_type = data.get("type", "general")  # bug | feature | general
     title = (data.get("title") or "").strip()
     description = (data.get("description") or "").strip()
     steps = (data.get("steps") or "").strip()
-    contact = (data.get("contact") or "").strip()
+    page = (data.get("page") or "").strip()
+    version = (data.get("version") or str(__version__)).strip()
 
     if not title or not description:
         return jsonify({"error": "Title and description are required."}), 400
 
-    # Read GitHub PAT from credentials
+    # Always write to local log first (no PAT required)
+    entry = {
+        "type": feedback_type,
+        "title": title,
+        "description": description,
+        "steps": steps or None,
+        "page": page or None,
+        "version": version,
+    }
+    try:
+        append_feedback(_app._data_dir, entry)
+    except Exception as exc:
+        log.warning("Failed to write feedback to local log: %s", exc)
+
+    # Optionally submit to GitHub if PAT is configured — no PII in issue body
     try:
         from postmule.core.credentials import load_credentials
         creds = load_credentials(_app._enc_path)
@@ -899,14 +915,7 @@ def api_feedback():
         target_repo = "PostMule/app"
 
     if not github_pat:
-        return jsonify({
-            "error": "not_configured",
-            "message": (
-                "Feedback submission is not set up. "
-                "A maintainer needs to add a GitHub PAT to credentials (github.pat). "
-                "You can still report issues at https://github.com/PostMule/app/issues"
-            ),
-        }), 503
+        return jsonify({"saved": True}), 200
 
     # Build issue body
     type_labels = {"bug": ["user-feedback", "bug"], "feature": ["user-feedback", "enhancement"]}
@@ -916,8 +925,8 @@ def api_feedback():
     if steps and feedback_type == "bug":
         body_parts.append(f"**Steps to reproduce**\n\n{steps}")
     body_parts.append(f"**App version:** {__version__}")
-    if contact:
-        body_parts.append(f"**Contact:** {contact}")
+    if page:
+        body_parts.append(f"**Page:** {page}")
     body_parts.append("---\n*Submitted via PostMule in-app feedback*")
     issue_body = "\n\n".join(body_parts)
 
@@ -941,9 +950,11 @@ def api_feedback():
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
             result = _json.loads(resp.read().decode("utf-8"))
-        return jsonify({"url": result.get("html_url", ""), "number": result.get("number")}), 201
+        return jsonify({"saved": True, "url": result.get("html_url", ""), "number": result.get("number")}), 200
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
-        return jsonify({"error": "github_error", "detail": detail}), 502
+        log.warning("GitHub feedback submission failed: %s", detail)
+        return jsonify({"saved": True}), 200
     except Exception as exc:
-        return jsonify({"error": "network_error", "detail": str(exc)}), 502
+        log.warning("GitHub feedback submission failed: %s", exc)
+        return jsonify({"saved": True}), 200

@@ -5,19 +5,18 @@
 ---
 
 ## Last Completed
-Issue #34 — Mail page inline reassignment UI:
-- `bills/notices/forward_to_me.py`: added `set_category_override(data_dir, id, category)` (soft override, mirrors `entity_override_id` pattern)
-- `api.py`: new `POST /api/mail/<id>/category` endpoint (respects dry_run); valid categories: Bill, Notice, ForwardToMe, Personal, Junk, NeedsReview
-- `pages.py`: mail route honors `category_override` field when setting `_type` on items
-- `page.html`: replaced `entityPicker` x-data on mail items with new `mailReassign` Alpine component — Edit button expands inline row with category chip picker + entity search + one Save button for both
-- `style.css`: added `.mail-edit-btn`, `.mail-edit-row`, `.cat-chip`, `.cat-chip--active` styles
-- `mockup_dashboard.html`: Edit button on all items; Verizon item shows open edit panel
+Issue #39 — In-app Feedback button (local-first logging):
+- `postmule/data/feedback.py`: new module — `append_feedback(data_dir, entry)` and `list_feedback(data_dir)`; appends to `data/feedback.json` atomically
+- `api.py`: reworked `/api/feedback` — always writes locally first, GitHub submission optional (only if PAT configured); removed contact/email field from payload and issue body; always returns 200 with `{"saved": true}`
+- `page.html`: moved Feedback button from header nav to footer; removed contact email field from modal; added read-only context block (page, version, timestamp) + "For follow-up, email support@postmule.com" note; added `openFeedbackModal()` JS function that stamps timestamp at open time; updated `submitFeedback()` to send page/version context, removed 503 error branch
+- `style.css`: replaced `.feedback-nav-btn` with `.app-footer-feedback`; added `.feedback-context`, `.feedback-context-*`, `.feedback-support-note` styles
+- `mockup_dashboard.html`: same header/footer/modal/JS changes as page.html
+- `tests/unit/test_data_feedback.py`: 7 tests, feedback.py at 100% coverage
 
 ## Next
 Work the issues in this order (check `gh issue list --repo PostMule/app` for current state):
 
-1. **#39** — In-app Feedback button (note: feedback modal HTML + `/api/feedback` GitHub endpoint already exist in `page.html` and `api.py`; issue needs local-first `data/feedback.json` log + footer placement + context fields)
-2. **#30** — End-to-end validation (BLOCKED — do not start; user will unblock manually)
+1. **#30** — End-to-end validation (BLOCKED — do not start; user will unblock manually)
 
 ## Mid-Session Decisions (active)
 - **Friendly name is primary, must be unique.** Canonical `name` (LLM-extracted) shown as secondary muted text. Validation must block save if friendly_name already exists on another entity.

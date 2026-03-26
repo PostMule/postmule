@@ -1214,24 +1214,19 @@ nav { display: flex; gap: 4px; flex: 1; }
 }
 .update-banner-close:hover { color: #fff; }
 
-/* ------------------------------------------------------------------ */
-/* Feedback button + modal                                              */
-/* ------------------------------------------------------------------ */
-.feedback-nav-btn {
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.22);
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.4px;
-  padding: 5px 12px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  white-space: nowrap;
+/* ── App footer feedback link ───────────────────────────────────── */
+.app-footer-feedback {
+  color: #8A9BB0;
+  text-decoration: none;
+  margin-left: 12px;
+  transition: color 0.15s;
 }
-.feedback-nav-btn:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.35); }
-.feedback-nav-btn:focus-visible { outline: 2px solid #E8A020; outline-offset: 2px; }
+.app-footer-feedback:hover { color: #0F2044; text-decoration: underline; }
+.app-footer-feedback:focus-visible { outline: 2px solid #E8A020; outline-offset: 2px; border-radius: 2px; }
+
+/* ------------------------------------------------------------------ */
+/* Feedback modal                                                        */
+/* ------------------------------------------------------------------ */
 
 .feedback-modal-overlay {
   position: fixed;
@@ -1310,6 +1305,33 @@ nav { display: flex; gap: 4px; flex: 1; }
   color: #0F2044;
   margin: 0 0 4px;
 }
+.feedback-context {
+  background: #F5F6F8;
+  border: 1px solid #DDE3EC;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+  font-size: 0.75rem;
+  color: #5A7090;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.feedback-context-label {
+  font-weight: 600;
+  color: #0F2044;
+  margin-bottom: 4px;
+  display: block;
+}
+.feedback-context-row { display: flex; gap: 8px; }
+.feedback-context-key { min-width: 64px; color: #8A9BB0; }
+.feedback-context-val { color: #0F2044; font-weight: 500; }
+.feedback-support-note {
+  font-size: 0.75rem;
+  color: #8A9BB0;
+  margin: 0 0 14px;
+}
+.feedback-support-note a { color: #1A5EA8; }
 
 /* ── Mail Hub ──────────────────────────────────────────────────── */
 .mail-status-bar {
