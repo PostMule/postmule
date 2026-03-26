@@ -15,6 +15,23 @@ If files are modified, commit them before starting new work. Never let a session
 ---
 
 ## Last Completed
+Issue #40 — Windows .exe installer with guided setup wizard:
+- New: `installer/postmule.iss` — Inno Setup 6 script; 5 custom Pascal Script wizard pages:
+  - Page 1: Google credentials.json (file picker via PowerShell OpenFileDialog, optional)
+  - Page 2: Gemini API key (optional, masked)
+  - Page 3: Alert email address (required)
+  - Page 4: Virtual mailbox provider + sender email + subject prefix
+  - Page 5: Daily run time (HH:MM, defaults to 02:00)
+  - `CurStepChanged(ssPostInstall)` calls `postmule.exe configure` with all collected values
+- New: `installer/build.ps1` — developer build script (PyInstaller → `dist/postmule/` → ISCC → `PostMuleSetup.exe`)
+- Modified: `postmule/cli.py` — 4 new commands + 2 helpers:
+  - `configure` — non-interactive setup called by installer (writes config.yaml, encrypts credentials, registers Task Scheduler)
+  - `serve` — starts the Flask dashboard
+  - `install-task` / `uninstall-task` — manage Windows Task Scheduler entry
+  - `_build_config_yaml()` — generates config.yaml from installer inputs (VPM defaults to VPM sender/prefix if blank)
+  - `_do_install_task()` — PowerShell `Register-ScheduledTask` helper
+- Target audience: non-technical Windows 11 users; no Python or PowerShell interaction required
+
 Issue #41 — Silent/scripted CLI install path for advanced users:
 - New: `setup.ps1` — interactive + fully silent (`-AlertEmail`, `-GeminiApiKey`, `-VpmSender`, `-MasterPassword`, `-NoTaskScheduler`, `-DryRunOnly`)
 - New: `setup.bat` — thin wrapper calling `setup.ps1` via `powershell -ExecutionPolicy Bypass`
@@ -54,7 +71,6 @@ Previously: Issues #42 and #43 — README overhaul + Help page overhaul
 Work the issues in this order (check `gh issue list --repo PostMule/app` for current state):
 
 1. **#30** — End-to-end validation (BLOCKED — do not start; user will unblock manually)
-2. **#40** — Windows .exe installer with guided setup wizard
 
 ## Mid-Session Decisions (active)
 - **Friendly name is primary, must be unique.** Canonical `name` (LLM-extracted) shown as secondary muted text. Validation must block save if friendly_name already exists on another entity.
