@@ -15,7 +15,12 @@ If files are modified, commit them before starting new work. Never let a session
 ---
 
 ## Last Completed
-Issues #44, #46, #47 — Providers tab improvements (all implemented together):
+Issue #45 — Split Outlook into two distinct provider entries:
+- `outlook_365` → "Outlook / Microsoft 365" (org accounts, Azure AD OAuth)
+- `outlook_com` → "outlook.com / Hotmail / Live" (personal accounts, IMAP/personal OAuth)
+- Updated: `registry.py`, `outlook_365.py`, `outlook_com.py`, `page.html`, `mockup_dashboard.html`
+
+Previously: Issues #44, #46, #47 — Providers tab improvements (all implemented together):
 
 **#44 — Show and edit non-sensitive provider settings:**
 - Flask route `POST /api/providers/<category>/config` in `connections.py` writes whitelisted fields (email→label_name, storage→root_folder, spreadsheet→workbook_name, llm→model) to config.yaml
@@ -43,6 +48,8 @@ Previously: Issues #42 and #43 — README overhaul + Help page overhaul
 Work the issues in this order (check `gh issue list --repo PostMule/app` for current state):
 
 1. **#30** — End-to-end validation (BLOCKED — do not start; user will unblock manually)
+2. **#41** — Silent/scripted CLI install path for advanced users
+3. **#40** — Windows .exe installer with guided setup wizard
 
 ## Mid-Session Decisions (active)
 - **Friendly name is primary, must be unique.** Canonical `name` (LLM-extracted) shown as secondary muted text. Validation must block save if friendly_name already exists on another entity.
