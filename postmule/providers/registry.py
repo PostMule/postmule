@@ -64,14 +64,14 @@ PROVIDER_REGISTRY: dict[str, list[ProviderEntry]] = {
             "auth_type": "oauth2",
         },
         {
-            "service": "outlook_com",
-            "display_name": "Outlook.com",
+            "service": "outlook_365",
+            "display_name": "Outlook / Microsoft 365",
             "status": "stub",
             "auth_type": "oauth2",
         },
         {
-            "service": "outlook_365",
-            "display_name": "Outlook 365",
+            "service": "outlook_com",
+            "display_name": "outlook.com / Hotmail / Live",
             "status": "stub",
             "auth_type": "oauth2",
         },

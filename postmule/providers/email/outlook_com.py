@@ -16,7 +16,7 @@ Config example:
 from __future__ import annotations
 
 SERVICE_KEY = "outlook_com"
-DISPLAY_NAME = "Outlook.com"
+DISPLAY_NAME = "outlook.com / Hotmail / Live"
 
 
 class OutlookComProvider:

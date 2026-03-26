@@ -970,20 +970,39 @@
 
         <div class="conn-section-label conn-provider--inactive">Available</div>
 
-        <div class="conn-provider {% if conn.email.type == 'outlook' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+        <div class="conn-provider {% if conn.email.type == 'outlook_365' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#0078D4;color:white;flex-shrink:0;">M</div>
             <div style="flex:1;min-width:0;">
               <div class="conn-provider-name">Outlook / Microsoft 365</div>
-              <div class="conn-provider-desc-small">Microsoft email via OAuth or IMAP</div>
+              <div class="conn-provider-desc-small">Org accounts — Azure AD OAuth, Microsoft Graph</div>
             </div>
-            {% if conn.email.type == 'outlook' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            {% if conn.email.type == 'outlook_365' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
             {% else %}<span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>{% endif %}
             <div class="conn-provider-actions">
-              {% if conn.email.type != 'outlook' %}
+              {% if conn.email.type != 'outlook_365' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
-                <input type="hidden" name="category" value="email"><input type="hidden" name="service" value="outlook"><input type="hidden" name="tab" value="email">
-                <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Outlook</button>
+                <input type="hidden" name="category" value="email"><input type="hidden" name="service" value="outlook_365"><input type="hidden" name="tab" value="email">
+                <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Outlook 365</button>
+              </form>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="conn-provider {% if conn.email.type == 'outlook_com' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#0078D4;color:white;flex-shrink:0;">@</div>
+            <div style="flex:1;min-width:0;">
+              <div class="conn-provider-name">outlook.com / Hotmail / Live</div>
+              <div class="conn-provider-desc-small">Personal Microsoft accounts — IMAP or personal OAuth</div>
+            </div>
+            {% if conn.email.type == 'outlook_com' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            {% else %}<span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>{% endif %}
+            <div class="conn-provider-actions">
+              {% if conn.email.type != 'outlook_com' %}
+              <form method="post" action="/api/connection/provider" style="margin:0;">
+                <input type="hidden" name="category" value="email"><input type="hidden" name="service" value="outlook_com"><input type="hidden" name="tab" value="email">
+                <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Outlook.com</button>
               </form>{% endif %}
             </div>
           </div>

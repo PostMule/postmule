@@ -16,7 +16,7 @@ Config example:
 from __future__ import annotations
 
 SERVICE_KEY = "outlook_365"
-DISPLAY_NAME = "Outlook 365"
+DISPLAY_NAME = "Outlook / Microsoft 365"
 
 
 class Outlook365Provider:
