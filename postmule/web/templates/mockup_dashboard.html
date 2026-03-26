@@ -353,6 +353,11 @@
     .mail-edit-entity-label { font-size: 0.6875rem; font-weight: 600; color: #8A9BB0; white-space: nowrap; }
     .mail-edit-entity-name { font-size: 0.8125rem; font-weight: 600; color: #0F2044; cursor: pointer; text-decoration: underline dotted; }
     .mail-edit-actions { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .entity-picker { position:absolute; top:calc(100% + 4px); left:0; background:white; border:1px solid #C5D0DE; border-radius:6px; box-shadow:0 4px 12px rgba(15,32,68,0.14); z-index:50; min-width:200px; overflow:hidden; }
+    .entity-picker-item { display:block; padding:7px 12px; font-size:0.8125rem; color:#0F2044; cursor:pointer; border-bottom:1px solid #EEF2F7; }
+    .entity-picker-item:last-child { border-bottom:none; }
+    .entity-picker-item:hover { background:#F0F4FA; }
+    .entity-picker-item--active { font-weight:600; color:#1A5EA8; background:#EEF4FF; }
 
     /* ── Connections — tabbed provider list ────────────────────────── */
     .conn-tabs { display: flex; gap: 2px; border-bottom: 2px solid #DDE3EC; margin-bottom: 20px; flex-wrap: wrap; }
@@ -376,6 +381,7 @@
     .conn-icon-ms     { background: #E3F2FD; color: #0078D4; }
     .conn-icon-aws    { background: #FFF3E0; color: #FF9900; }
   </style>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body>
 
@@ -579,26 +585,33 @@
             </div>
             <div class="mail-footer" style="margin-top:6px;">
               <span class="badge badge--bill">BILL</span>
-              <button class="mail-edit-btn" style="background:#0F2044;color:#fff;border-color:#0F2044;">Edit ▲</button>
+              <button class="mail-edit-btn" onclick="toggleMailEdit(this)">Edit</button>
             </div>
-            <!-- Edit row — shown open for demo -->
-            <div class="mail-edit-row">
+            <div class="mail-edit-row" style="display:none;">
               <div class="mail-edit-row-label">Category</div>
               <div class="cat-chip-list">
-                <button class="cat-chip cat-chip--active">BILL</button>
-                <button class="cat-chip">NOTICE</button>
-                <button class="cat-chip">FORWARD</button>
-                <button class="cat-chip">PERSONAL</button>
-                <button class="cat-chip">JUNK</button>
-                <button class="cat-chip">NEEDS REVIEW</button>
+                <button class="cat-chip cat-chip--active" onclick="selectCatChip(this)">BILL</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">NOTICE</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">FORWARD</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">PERSONAL</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">JUNK</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">NEEDS REVIEW</button>
               </div>
               <div class="mail-edit-row-label">Entity</div>
-              <div class="mail-edit-entity-row">
-                <span class="mail-edit-entity-name">Verizon Wireless ▾</span>
+              <div class="mail-edit-entity-row" style="position:relative;">
+                <span class="mail-edit-entity-name" onclick="toggleEntityPicker(this)">Verizon Wireless &#9662;</span>
+                <div class="entity-picker" style="display:none;">
+                  <div class="entity-picker-item entity-picker-item--active" onclick="selectEntity(this)">Verizon Wireless</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">AT&amp;T Mobile</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">AT&amp;T Internet</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">PG&amp;E</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">Comcast</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">&#8212; (unassigned)</div>
+                </div>
               </div>
               <div class="mail-edit-actions">
-                <button class="btn btn-primary btn-sm">Save</button>
-                <button class="btn btn-secondary btn-sm">Cancel</button>
+                <button class="btn btn-primary btn-sm" onclick="saveMailEdit(this)">Save</button>
+                <button class="btn btn-secondary btn-sm" onclick="cancelMailEdit(this)">Cancel</button>
               </div>
             </div>
           </div>
@@ -616,7 +629,34 @@
             <div class="mail-forward-alert">&#9888; ACTION REQUIRED — contact VPM to forward this item</div>
             <div class="mail-footer" style="margin-top:6px;">
               <span class="badge badge--forward">FORWARD</span>
-              <button class="mail-edit-btn">Edit</button>
+              <button class="mail-edit-btn" onclick="toggleMailEdit(this)">Edit</button>
+            </div>
+            <div class="mail-edit-row" style="display:none;">
+              <div class="mail-edit-row-label">Category</div>
+              <div class="cat-chip-list">
+                <button class="cat-chip" onclick="selectCatChip(this)">BILL</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">NOTICE</button>
+                <button class="cat-chip cat-chip--active" onclick="selectCatChip(this)">FORWARD</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">PERSONAL</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">JUNK</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">NEEDS REVIEW</button>
+              </div>
+              <div class="mail-edit-row-label">Entity</div>
+              <div class="mail-edit-entity-row" style="position:relative;">
+                <span class="mail-edit-entity-name" onclick="toggleEntityPicker(this)">&#8212; (unassigned) &#9662;</span>
+                <div class="entity-picker" style="display:none;">
+                  <div class="entity-picker-item" onclick="selectEntity(this)">Verizon Wireless</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">AT&amp;T Mobile</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">AT&amp;T Internet</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">PG&amp;E</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">Comcast</div>
+                  <div class="entity-picker-item entity-picker-item--active" onclick="selectEntity(this)">&#8212; (unassigned)</div>
+                </div>
+              </div>
+              <div class="mail-edit-actions">
+                <button class="btn btn-primary btn-sm" onclick="saveMailEdit(this)">Save</button>
+                <button class="btn btn-secondary btn-sm" onclick="cancelMailEdit(this)">Cancel</button>
+              </div>
             </div>
           </div>
         </div>
@@ -639,7 +679,34 @@
             </div>
             <div class="mail-footer" style="margin-top:6px;">
               <span class="badge badge--bill">BILL</span>
-              <button class="mail-edit-btn">Edit</button>
+              <button class="mail-edit-btn" onclick="toggleMailEdit(this)">Edit</button>
+            </div>
+            <div class="mail-edit-row" style="display:none;">
+              <div class="mail-edit-row-label">Category</div>
+              <div class="cat-chip-list">
+                <button class="cat-chip cat-chip--active" onclick="selectCatChip(this)">BILL</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">NOTICE</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">FORWARD</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">PERSONAL</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">JUNK</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">NEEDS REVIEW</button>
+              </div>
+              <div class="mail-edit-row-label">Entity</div>
+              <div class="mail-edit-entity-row" style="position:relative;">
+                <span class="mail-edit-entity-name" onclick="toggleEntityPicker(this)">AT&amp;T Mobile &#9662;</span>
+                <div class="entity-picker" style="display:none;">
+                  <div class="entity-picker-item" onclick="selectEntity(this)">Verizon Wireless</div>
+                  <div class="entity-picker-item entity-picker-item--active" onclick="selectEntity(this)">AT&amp;T Mobile</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">AT&amp;T Internet</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">PG&amp;E</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">Comcast</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">&#8212; (unassigned)</div>
+                </div>
+              </div>
+              <div class="mail-edit-actions">
+                <button class="btn btn-primary btn-sm" onclick="saveMailEdit(this)">Save</button>
+                <button class="btn btn-secondary btn-sm" onclick="cancelMailEdit(this)">Cancel</button>
+              </div>
             </div>
           </div>
         </div>
@@ -655,7 +722,34 @@
             <div class="mail-summary">Tax refund status update &mdash; your refund has been approved</div>
             <div class="mail-footer" style="margin-top:6px;">
               <span class="badge badge--notice">NOTICE</span>
-              <button class="mail-edit-btn">Edit</button>
+              <button class="mail-edit-btn" onclick="toggleMailEdit(this)">Edit</button>
+            </div>
+            <div class="mail-edit-row" style="display:none;">
+              <div class="mail-edit-row-label">Category</div>
+              <div class="cat-chip-list">
+                <button class="cat-chip" onclick="selectCatChip(this)">BILL</button>
+                <button class="cat-chip cat-chip--active" onclick="selectCatChip(this)">NOTICE</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">FORWARD</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">PERSONAL</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">JUNK</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">NEEDS REVIEW</button>
+              </div>
+              <div class="mail-edit-row-label">Entity</div>
+              <div class="mail-edit-entity-row" style="position:relative;">
+                <span class="mail-edit-entity-name" onclick="toggleEntityPicker(this)">&#8212; (unassigned) &#9662;</span>
+                <div class="entity-picker" style="display:none;">
+                  <div class="entity-picker-item" onclick="selectEntity(this)">Verizon Wireless</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">AT&amp;T Mobile</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">AT&amp;T Internet</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">PG&amp;E</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">Comcast</div>
+                  <div class="entity-picker-item entity-picker-item--active" onclick="selectEntity(this)">&#8212; (unassigned)</div>
+                </div>
+              </div>
+              <div class="mail-edit-actions">
+                <button class="btn btn-primary btn-sm" onclick="saveMailEdit(this)">Save</button>
+                <button class="btn btn-secondary btn-sm" onclick="cancelMailEdit(this)">Cancel</button>
+              </div>
             </div>
           </div>
         </div>
@@ -671,7 +765,34 @@
             <div class="mail-summary">Vehicle registration renewal notice &mdash; due May 1, 2026</div>
             <div class="mail-footer" style="margin-top:6px;">
               <span class="badge badge--notice">NOTICE</span>
-              <button class="mail-edit-btn">Edit</button>
+              <button class="mail-edit-btn" onclick="toggleMailEdit(this)">Edit</button>
+            </div>
+            <div class="mail-edit-row" style="display:none;">
+              <div class="mail-edit-row-label">Category</div>
+              <div class="cat-chip-list">
+                <button class="cat-chip" onclick="selectCatChip(this)">BILL</button>
+                <button class="cat-chip cat-chip--active" onclick="selectCatChip(this)">NOTICE</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">FORWARD</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">PERSONAL</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">JUNK</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">NEEDS REVIEW</button>
+              </div>
+              <div class="mail-edit-row-label">Entity</div>
+              <div class="mail-edit-entity-row" style="position:relative;">
+                <span class="mail-edit-entity-name" onclick="toggleEntityPicker(this)">&#8212; (unassigned) &#9662;</span>
+                <div class="entity-picker" style="display:none;">
+                  <div class="entity-picker-item" onclick="selectEntity(this)">Verizon Wireless</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">AT&amp;T Mobile</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">AT&amp;T Internet</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">PG&amp;E</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">Comcast</div>
+                  <div class="entity-picker-item entity-picker-item--active" onclick="selectEntity(this)">&#8212; (unassigned)</div>
+                </div>
+              </div>
+              <div class="mail-edit-actions">
+                <button class="btn btn-primary btn-sm" onclick="saveMailEdit(this)">Save</button>
+                <button class="btn btn-secondary btn-sm" onclick="cancelMailEdit(this)">Cancel</button>
+              </div>
             </div>
           </div>
         </div>
@@ -687,7 +808,34 @@
             <div class="mail-summary">Spring sale &mdash; 40% off everything this weekend</div>
             <div class="mail-footer" style="margin-top:6px;">
               <span class="badge badge--junk">JUNK</span>
-              <button class="mail-edit-btn">Edit</button>
+              <button class="mail-edit-btn" onclick="toggleMailEdit(this)">Edit</button>
+            </div>
+            <div class="mail-edit-row" style="display:none;">
+              <div class="mail-edit-row-label">Category</div>
+              <div class="cat-chip-list">
+                <button class="cat-chip" onclick="selectCatChip(this)">BILL</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">NOTICE</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">FORWARD</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">PERSONAL</button>
+                <button class="cat-chip cat-chip--active" onclick="selectCatChip(this)">JUNK</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">NEEDS REVIEW</button>
+              </div>
+              <div class="mail-edit-row-label">Entity</div>
+              <div class="mail-edit-entity-row" style="position:relative;">
+                <span class="mail-edit-entity-name" onclick="toggleEntityPicker(this)">&#8212; (unassigned) &#9662;</span>
+                <div class="entity-picker" style="display:none;">
+                  <div class="entity-picker-item" onclick="selectEntity(this)">Verizon Wireless</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">AT&amp;T Mobile</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">AT&amp;T Internet</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">PG&amp;E</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">Comcast</div>
+                  <div class="entity-picker-item entity-picker-item--active" onclick="selectEntity(this)">&#8212; (unassigned)</div>
+                </div>
+              </div>
+              <div class="mail-edit-actions">
+                <button class="btn btn-primary btn-sm" onclick="saveMailEdit(this)">Save</button>
+                <button class="btn btn-secondary btn-sm" onclick="cancelMailEdit(this)">Cancel</button>
+              </div>
             </div>
           </div>
         </div>
@@ -703,7 +851,34 @@
             <div class="mail-summary">Unrecognized document &mdash; classification confidence 0.61</div>
             <div class="mail-footer" style="margin-top:6px;">
               <span class="badge badge--needs-review">NEEDS REVIEW</span>
-              <button class="mail-edit-btn">Edit</button>
+              <button class="mail-edit-btn" onclick="toggleMailEdit(this)">Edit</button>
+            </div>
+            <div class="mail-edit-row" style="display:none;">
+              <div class="mail-edit-row-label">Category</div>
+              <div class="cat-chip-list">
+                <button class="cat-chip" onclick="selectCatChip(this)">BILL</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">NOTICE</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">FORWARD</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">PERSONAL</button>
+                <button class="cat-chip" onclick="selectCatChip(this)">JUNK</button>
+                <button class="cat-chip cat-chip--active" onclick="selectCatChip(this)">NEEDS REVIEW</button>
+              </div>
+              <div class="mail-edit-row-label">Entity</div>
+              <div class="mail-edit-entity-row" style="position:relative;">
+                <span class="mail-edit-entity-name" onclick="toggleEntityPicker(this)">&#8212; (unassigned) &#9662;</span>
+                <div class="entity-picker" style="display:none;">
+                  <div class="entity-picker-item" onclick="selectEntity(this)">Verizon Wireless</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">AT&amp;T Mobile</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">AT&amp;T Internet</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">PG&amp;E</div>
+                  <div class="entity-picker-item" onclick="selectEntity(this)">Comcast</div>
+                  <div class="entity-picker-item entity-picker-item--active" onclick="selectEntity(this)">&#8212; (unassigned)</div>
+                </div>
+              </div>
+              <div class="mail-edit-actions">
+                <button class="btn btn-primary btn-sm" onclick="saveMailEdit(this)">Save</button>
+                <button class="btn btn-secondary btn-sm" onclick="cancelMailEdit(this)">Cancel</button>
+              </div>
             </div>
           </div>
         </div>
@@ -2256,6 +2431,65 @@ postmule run</pre>
     document.getElementById('htab-' + name).classList.add('active');
     btn.classList.add('active');
   }
+
+  // ── Mail inline edit ─────────────────────────────────────────────────────
+  function toggleMailEdit(btn) {
+    var item = btn.closest('.mail-item');
+    var row = item.querySelector('.mail-edit-row');
+    var isOpen = row && row.style.display !== 'none';
+    // Close all open edit rows first
+    document.querySelectorAll('.mail-item').forEach(function(it) {
+      var r = it.querySelector('.mail-edit-row');
+      var b = it.querySelector('.mail-edit-btn');
+      if (r) r.style.display = 'none';
+      if (b) { b.textContent = 'Edit'; b.removeAttribute('style'); }
+    });
+    if (!isOpen && row) {
+      row.style.display = '';
+      btn.innerHTML = 'Edit &#9650;';
+      btn.style.cssText = 'background:#0F2044;color:#fff;border-color:#0F2044;';
+    }
+  }
+
+  function selectCatChip(chip) {
+    chip.closest('.cat-chip-list').querySelectorAll('.cat-chip').forEach(function(c) {
+      c.classList.remove('cat-chip--active');
+    });
+    chip.classList.add('cat-chip--active');
+  }
+
+  function toggleEntityPicker(nameEl) {
+    var picker = nameEl.nextElementSibling;
+    var isOpen = picker.style.display !== 'none';
+    document.querySelectorAll('.entity-picker').forEach(function(p) { p.style.display = 'none'; });
+    if (!isOpen) picker.style.display = '';
+  }
+
+  function selectEntity(pickerItem) {
+    var picker = pickerItem.closest('.entity-picker');
+    var nameEl = picker.previousElementSibling;
+    picker.querySelectorAll('.entity-picker-item').forEach(function(i) { i.classList.remove('entity-picker-item--active'); });
+    pickerItem.classList.add('entity-picker-item--active');
+    nameEl.textContent = pickerItem.textContent + ' \u25be';
+    picker.style.display = 'none';
+  }
+
+  function saveMailEdit(btn) {
+    var row = btn.closest('.mail-edit-row');
+    var item = row.closest('.mail-item');
+    var editBtn = item.querySelector('.mail-edit-btn');
+    row.style.display = 'none';
+    editBtn.textContent = 'Edit';
+    editBtn.removeAttribute('style');
+  }
+
+  function cancelMailEdit(btn) { saveMailEdit(btn); }
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.mail-edit-entity-row')) {
+      document.querySelectorAll('.entity-picker').forEach(function(p) { p.style.display = 'none'; });
+    }
+  });
 </script>
 
 <!-- Update available banner (example: shown when newer release detected) -->

@@ -4,8 +4,27 @@
 
 ---
 
+## On Restart — Always Do First
+Before writing any code, check for and commit any uncommitted changes:
+```
+git status
+git diff --stat
+```
+If files are modified, commit them before starting new work. Never let a session end with uncommitted changes.
+
+---
+
 ## Last Completed
-Issue #39 — In-app Feedback button (local-first logging):
+Mockup interactivity — Mail tab Edit rows (`mockup_dashboard.html`):
+- All 7 mail items now have working Edit buttons (previously only the first item had the row, hardcoded open)
+- Edit button toggles the inline edit row; opening one auto-closes any other open row
+- Category chips are clickable — selecting one deactivates the others
+- Entity name opens a dropdown picker with all entities; clicking an item selects it; clicking outside dismisses
+- Save and Cancel both collapse the row and reset the button
+- Each item pre-selects the correct active chip and entity to match its current state
+- No new GitHub issue — this was a mockup-only UX improvement
+
+Previously: Issue #39 — In-app Feedback button (local-first logging):
 - `postmule/data/feedback.py`: new module — `append_feedback(data_dir, entry)` and `list_feedback(data_dir)`; appends to `data/feedback.json` atomically
 - `api.py`: reworked `/api/feedback` — always writes locally first, GitHub submission optional (only if PAT configured); removed contact/email field from payload and issue body; always returns 200 with `{"saved": true}`
 - `page.html`: moved Feedback button from header nav to footer; removed contact email field from modal; added read-only context block (page, version, timestamp) + "For follow-up, email support@postmule.com" note; added `openFeedbackModal()` JS function that stamps timestamp at open time; updated `submitFeedback()` to send page/version context, removed 503 error branch
