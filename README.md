@@ -14,7 +14,25 @@ Download the latest installer from the [Releases page](https://github.com/PostMu
 
 ### Option B — Command Line
 
-For advanced users and automation. See the [CLI Install Guide](docs/install-cli.md).
+For advanced users, self-hosters, and automation.
+
+<details>
+<summary><strong>Prerequisites</strong></summary>
+
+- **Python 3.12+** — download from [python.org/downloads](https://python.org/downloads). During install, check **"Add Python to PATH"**.
+- **git** — download from [git-scm.com](https://git-scm.com/downloads). Accept the default "Add Git to PATH" option. (Only needed to clone the repo — not required after setup.)
+
+</details>
+
+Clone the repo and run the setup script:
+
+```powershell
+git clone https://github.com/PostMule/app.git PostMule
+cd PostMule
+.\setup.ps1
+```
+
+The script checks prerequisites, creates a virtual environment, prompts for your email and API key, encrypts credentials, and registers the daily scheduled task. See the [CLI Install Guide](docs/install-cli.md) for the manual steps or silent-install flags.
 
 ---
 

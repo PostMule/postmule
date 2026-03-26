@@ -2,6 +2,27 @@
 
 For advanced users who prefer the command line. If you want a guided setup wizard, use the [Windows installer](https://github.com/PostMule/app/releases) instead.
 
+## Quickest path — setup script
+
+After cloning the repo, run:
+
+```powershell
+.\setup.ps1
+```
+
+This handles Steps 1–2 and 4–5 below automatically (interactive prompts for email, API key, and master password). For a fully silent install:
+
+```powershell
+.\setup.ps1 `
+  -AlertEmail you@example.com `
+  -GeminiApiKey AIzaSy... `
+  -VpmSender noreply@virtualpostmail.com `
+  -MasterPassword "your master password" `
+  -NoTaskScheduler
+```
+
+The manual steps below are for reference or if you prefer to run each step yourself.
+
 ## Requirements
 
 - Python 3.12+ on Windows 11 (macOS/Linux may work with minor adjustments)

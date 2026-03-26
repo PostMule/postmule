@@ -15,6 +15,12 @@ If files are modified, commit them before starting new work. Never let a session
 ---
 
 ## Last Completed
+Issue #41 — Silent/scripted CLI install path for advanced users:
+- New: `setup.ps1` — interactive + fully silent (`-AlertEmail`, `-GeminiApiKey`, `-VpmSender`, `-MasterPassword`, `-NoTaskScheduler`, `-DryRunOnly`)
+- New: `setup.bat` — thin wrapper calling `setup.ps1` via `powershell -ExecutionPolicy Bypass`
+- Updated: `README.md` — Prerequisites collapsible section + `setup.ps1` usage under Option B
+- Updated: `docs/install-cli.md` — points to `setup.ps1` as the quickest path; manual steps remain as reference
+
 Issue #45 — Split Outlook into two distinct provider entries:
 - `outlook_365` → "Outlook / Microsoft 365" (org accounts, Azure AD OAuth)
 - `outlook_com` → "outlook.com / Hotmail / Live" (personal accounts, IMAP/personal OAuth)
@@ -48,8 +54,7 @@ Previously: Issues #42 and #43 — README overhaul + Help page overhaul
 Work the issues in this order (check `gh issue list --repo PostMule/app` for current state):
 
 1. **#30** — End-to-end validation (BLOCKED — do not start; user will unblock manually)
-2. **#41** — Silent/scripted CLI install path for advanced users
-3. **#40** — Windows .exe installer with guided setup wizard
+2. **#40** — Windows .exe installer with guided setup wizard
 
 ## Mid-Session Decisions (active)
 - **Friendly name is primary, must be unique.** Canonical `name` (LLM-extracted) shown as secondary muted text. Validation must block save if friendly_name already exists on another entity.
