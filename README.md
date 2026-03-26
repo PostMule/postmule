@@ -1,83 +1,35 @@
 # PostMule
 
-> The open source, self-hosted replacement for PayTrust / PayMyBills.
+> PostMule automatically sorts your physical mail and bills, tracks due dates, and matches payments to your bank — running privately on your own computer, with no subscription fee.
 
-PostMule receives your physical mail as PDFs from a virtual mailbox service, uses AI to
-classify and extract data, manages your bills, sends alerts for important items, and
-reconciles transactions with your bank — all running on your own machine.
+It replaces services like PayTrust and PayMyBills. Your documents stay in your own Google Drive. Nothing is sent to any third-party server.
 
-```mermaid
-graph LR
-    VPM["Virtual Mailbox\n(physical mail)"] -->|scan PDF| OCR
-    EMAIL["Email\n(biller PDFs)"] -->|attachment| OCR
-    OCR["OCR"] --> LLM["LLM\nClassify"]
-    LLM -->|Bill/Notice/etc.| DRIVE["Cloud Storage\n(Google Drive)"]
-    DRIVE --> JSON["JSON\n(source of truth)"]
-    JSON --> SHEETS["Sheets\n(view)"]
-    JSON --> DASH["Dashboard\nlocalhost:5000"]
-    BANK["Bank\n(YNAB/Plaid)"] -->|transactions| MATCH["Bill\nMatching"]
-    JSON --> MATCH
-    MATCH --> DASH
-```
+---
 
-→ [Architecture](docs/architecture.md) · [Daily Workflow](docs/workflows.md) · [Providers](docs/providers.md) · [Installation](docs/installation.md) · [Configuration](docs/configuration.md)
+## Get Started
+
+### Option A — Windows Installer *(recommended)*
+
+Download the latest installer from the [Releases page](https://github.com/PostMule/app/releases). Double-click and follow the setup wizard. No technical knowledge required.
+
+### Option B — Command Line
+
+For advanced users and automation. See the [CLI Install Guide](docs/install-cli.md).
+
+---
 
 ## Features
 
-- **AI-powered classification** — Bills, Notices, ForwardToMe, Personal, Junk
-- **Urgent alerts** — Detects credit cards, checks, and other physical items that need forwarding
-- **Bill management** — Due date tracking, amount extraction, bank transaction matching
-- **Entity discovery** — Automatically learns names and aliases from your mail
-- **Modular providers** — Swap virtual mailbox, email, storage, LLM, and finance providers with one config line
-- **Zero lock-in** — All data stored as plain JSON files; Google Sheets is a generated view
-- **Privacy-first** — Runs locally; credentials encrypted with Fernet, master password in system keyring
-- **Web dashboard** — Local browser UI (localhost:5000) for reviewing mail, managing bills, editing entities, and configuring all connections; optional Tailscale for remote access
-- **Retroactive processing** — Process your full mail history in one command
+- **Automatic mail sorting** — Every day, PostMule checks your virtual mailbox and email for new items, reads each one, and files it into the right category automatically.
+- **Bill tracking** — Extracts amounts and due dates from bills. Sends you a reminder before anything is due.
+- **Payment matching** — Connects to your bank (via YNAB or similar) and marks bills paid when it finds the matching transaction.
+- **Forward-to-me alerts** — Detects physical items that need to be mailed to you (checks, gift cards, etc.) and sends an immediate alert.
+- **Web dashboard** — Review your mail, manage bills, and change settings in a browser. No technical knowledge needed. Accessible remotely via Tailscale.
+- **Your data stays yours** — All files stored in your own Google Drive. All data stored as plain JSON files. No lock-in.
+- **Privacy-first** — Runs on your own computer. Credentials are encrypted; the master password lives in your system keyring, never on disk.
+- **Swappable providers** — Change your virtual mailbox service, email provider, cloud storage, AI model, or finance app with one line in settings.
 
-## Status
-
-Early development — core pipeline complete, not yet validated against a live mailbox.
-See [build phases](CLAUDE.md#build-order--status) for detailed progress.
-
-## Requirements
-
-- Python 3.12+
-- Windows 11 (primary target; macOS/Linux may work with minor adjustments)
-- A supported virtual mailbox service (VirtualPostMail, Earth Class Mail, etc.)
-- A supported email provider for notifications (default: Gmail)
-- A supported cloud storage provider (default: Google Drive + Sheets)
-- An API key for a supported LLM provider (default: Gemini free tier — 1,500 req/day)
-
-All providers are configurable via a single line in `config.yaml`. Defaults are chosen for
-cost (free tiers) and ease of setup.
-
-## Quick Start
-
-```powershell
-# Clone and install
-git clone https://github.com/PostMule/app.git
-cd postmule
-python -m venv .venv
-.venv\Scripts\activate
-pip install -e .
-
-# Copy and edit config files
-copy config.example.yaml config.yaml
-copy credentials.example.yaml credentials.yaml
-# Edit config.yaml — set alert_email and your virtual mailbox provider
-# Edit credentials.yaml — fill in your Google OAuth and Gemini API key
-
-# Store master password in your system keyring
-postmule set-master-password
-
-# Encrypt credentials
-postmule encrypt-credentials
-
-# Test with a dry run
-postmule --dry-run
-```
-
-See [docs/installation.md](docs/installation.md) for the full installation guide and [CONTRIBUTING.md](CONTRIBUTING.md) for development setup.
+---
 
 ## Supported Providers
 
@@ -87,16 +39,33 @@ See [docs/installation.md](docs/installation.md) for the full installation guide
 | Email | Gmail | Outlook.com, Proton Mail, any IMAP |
 | Storage | Google Drive | Dropbox, OneDrive, S3 |
 | Spreadsheet | Google Sheets | Excel Online, Airtable |
-| LLM | Gemini 1.5 Flash | OpenAI, Anthropic, Ollama |
+| AI (mail classification) | Gemini 1.5 Flash (free) | OpenAI, Anthropic, Ollama |
 | Finance | — | YNAB, Plaid, Simplifi (experimental), Monarch (experimental) |
+
+---
+
+## Status
+
+PostMule is in early development. The core features are built and tested, but it hasn't yet been validated against a live mailbox service. Expect rough edges.
+
+---
+
+## Technical Reference
+
+For developers, self-hosters comfortable with the CLI, and contributors:
+
+- [Architecture](docs/architecture.md) — component diagram and provider pattern
+- [Daily Workflow](docs/workflows.md) — step-by-step pipeline detail
+- [Providers](docs/providers.md) — how to configure each provider
+- [CLI Install Guide](docs/install-cli.md) — command-line installation
+- [Configuration Reference](docs/configuration.md) — all config.yaml fields
+- [Contributing](CONTRIBUTING.md) — development setup and contribution guide
+
+---
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Attribution
 

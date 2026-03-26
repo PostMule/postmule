@@ -2129,234 +2129,151 @@ government id</textarea>
       <h1 class="page-title">Help</h1>
 
       <div class="conn-tabs" id="help-tabs">
-        <button class="conn-tab active" onclick="helpTab('overview',this)">Overview</button>
-        <button class="conn-tab" onclick="helpTab('installation',this)">Installation</button>
-        <button class="conn-tab" onclick="helpTab('configuration',this)">Configuration</button>
+        <button class="conn-tab active" onclick="helpTab('overview',this)">How It Works</button>
+        <button class="conn-tab" onclick="helpTab('settings',this)">Settings Reference</button>
+        <button class="conn-tab" onclick="helpTab('troubleshooting',this)">Troubleshooting</button>
       </div>
 
       <!-- TAB: Overview -->
       <div id="htab-overview" class="conn-pane active">
         <div class="s-card" style="margin-bottom:20px;">
-          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">How PostMule Works</h2>
-          <p style="font-size:0.8125rem;color:#5A7090;margin:0 0 20px;">
-            PostMule is a self-hosted mail management system. Physical mail scanned by your virtual mailbox service (or biller PDFs sent directly to your email) flows through an AI-powered pipeline that classifies, extracts, and organizes everything automatically.
+          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">What PostMule Does</h2>
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0;line-height:1.7;">
+            Every day, PostMule checks your email for new mail from your virtual mailbox service and any bills sent directly by your providers. It reads each item, figures out what it is — a bill, a notice, junk, or something that needs to be physically forwarded to you — and files it away automatically. If it finds a bill, it tracks the amount and due date, and checks your bank to see if you've already paid it. At the end, it sends you a summary email.
           </p>
-          <div style="width:100%;max-width:900px;background:#EEF3F9;border-radius:8px;border:1px solid #DDE3EC;display:flex;align-items:center;justify-content:center;height:280px;color:#5A7090;font-size:0.8125rem;">
-            Architecture diagram — rendered from /static/architecture.svg in the live app
-          </div>
         </div>
 
         <div class="s-card" style="margin-bottom:20px;">
-          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 16px;">Components</h2>
+          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 16px;">Mail Categories</h2>
           <div class="table-wrap">
             <table class="data-table" style="font-size:0.8125rem;">
-              <thead><tr><th>Component</th><th>Default</th><th>Purpose</th></tr></thead>
+              <thead><tr><th>Category</th><th>What it means</th></tr></thead>
               <tbody>
-                <tr><td>Virtual Mailbox</td><td>VirtualPostMail</td><td>Scans physical mail; sends notification email with PDF</td></tr>
-                <tr><td>Email (notifications)</td><td>Gmail</td><td>Receives VPM scan emails; triggers PDF download</td></tr>
-                <tr><td>Email (bill intake)</td><td>Gmail</td><td>Receives biller PDF attachments directly</td></tr>
-                <tr><td>OCR</td><td>pdfplumber + pytesseract</td><td>Extracts text from PDFs; auto-selects best method</td></tr>
-                <tr><td>LLM</td><td>Gemini 1.5 Flash</td><td>Classifies documents; extracts sender, amount, due date</td></tr>
-                <tr><td>Storage</td><td>Google Drive</td><td>Stores PDFs and JSON data (cloud-redundant)</td></tr>
-                <tr><td>Spreadsheet</td><td>Google Sheets</td><td>Generated view layer; rebuilt from JSON on demand</td></tr>
-                <tr><td>Finance</td><td>YNAB</td><td>Pulls bank transactions for bill reconciliation</td></tr>
-                <tr><td>Web Dashboard</td><td>Flask + HTMX</td><td>This UI — localhost:5000</td></tr>
-                <tr><td>Notifications</td><td>Email</td><td>Daily summary + urgent alerts</td></tr>
+                <tr><td><strong>Bills</strong></td><td style="color:#5A7090;">Invoices with an amount and due date</td></tr>
+                <tr><td><strong>Notices</strong></td><td style="color:#5A7090;">Important non-bill mail — statements, alerts, policy updates</td></tr>
+                <tr><td><strong>Forward To Me</strong></td><td style="color:#5A7090;">Physical items that need to be mailed to you (checks, gift cards, etc.) — PostMule sends an immediate alert</td></tr>
+                <tr><td><strong>Personal</strong></td><td style="color:#5A7090;">Personal letters and non-financial mail</td></tr>
+                <tr><td><strong>Junk</strong></td><td style="color:#5A7090;">Ads and marketing mail</td></tr>
+                <tr><td><strong>Needs Review</strong></td><td style="color:#5A7090;">Items the AI wasn't confident about — check these manually on the Mail page</td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
         <div class="s-card">
-          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">Daily Pipeline (2am)</h2>
-          <ol style="font-size:0.8125rem;color:#5A7090;line-height:2;padding-left:20px;margin:0;">
-            <li>Check email for VPM scan notifications &rarr; download PDFs &rarr; upload to /Inbox</li>
-            <li>Check bill intake email for biller PDF attachments &rarr; upload to /Inbox</li>
-            <li>Per PDF: OCR &rarr; LLM classify &rarr; rename &rarr; move to correct folder &rarr; update JSON</li>
-            <li>Sync spreadsheet view from JSON</li>
-            <li>Check storage consistency</li>
-            <li>Pull bank transactions from finance provider</li>
-            <li>Run bill matching (amount + date)</li>
-            <li>Run entity discovery (fuzzy alias matching)</li>
-            <li>Send daily summary email; immediate alert for ForwardToMe items</li>
-          </ol>
+          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">Where Your Data Lives</h2>
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0;line-height:1.7;">
+            Your mail PDFs and data are stored in your Google Drive, in a folder called "PostMule". PostMule never stores your data on any server — everything goes directly between your computer and your own Google account.
+          </p>
         </div>
       </div>
 
-      <!-- TAB: Installation -->
-      <div id="htab-installation" class="conn-pane">
-        <div class="s-card" style="margin-bottom:20px;">
-          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 16px;">Requirements</h2>
-          <ul style="font-size:0.8125rem;color:#5A7090;line-height:2;padding-left:20px;margin:0;">
-            <li>Python 3.12+ on Windows 11 (macOS/Linux may work with minor adjustments)</li>
-            <li>A virtual mailbox service (VirtualPostMail, Earth Class Mail, Traveling Mailbox, PostScan)</li>
-            <li>A Gmail account (or other supported provider) to receive mailbox notifications</li>
-            <li>A Google account for Drive + Sheets storage (or configure an alternative)</li>
-            <li>An API key for a supported LLM (default: Gemini 1.5 Flash &mdash; free tier)</li>
-          </ul>
-        </div>
-
-        <div class="s-card" style="margin-bottom:20px;">
-          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">Step 1 &mdash; Clone and install</h2>
-          <pre style="background:#F0F4F9;border-radius:6px;padding:14px;font-size:0.8125rem;overflow-x:auto;color:#0F2044;margin:0;">git clone https://github.com/PostMule/app.git PostMule
-cd PostMule
-python -m venv .venv
-.venv\Scripts\activate
-pip install -e .</pre>
-        </div>
-
-        <div class="s-card" style="margin-bottom:20px;">
-          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">Step 2 &mdash; Create config files</h2>
-          <pre style="background:#F0F4F9;border-radius:6px;padding:14px;font-size:0.8125rem;overflow-x:auto;color:#0F2044;margin:0 0 12px;">copy config.example.yaml config.yaml
-copy credentials.example.yaml credentials.yaml</pre>
-          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">Both files are in <code>.gitignore</code> and will never be committed.</p>
-        </div>
-
-        <div class="s-card" style="margin-bottom:20px;">
-          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">Step 3 &mdash; Set up Google OAuth</h2>
-          <ol style="font-size:0.8125rem;color:#5A7090;line-height:2;padding-left:20px;margin:0;">
-            <li>Go to console.cloud.google.com and create a project</li>
-            <li>Enable the <strong>Google Drive API</strong> and <strong>Google Sheets API</strong></li>
-            <li>Create an OAuth 2.0 Client ID (Desktop app type)</li>
-            <li>Download the JSON file and save it as <code>credentials.json</code> in the PostMule directory</li>
-            <li>On first run, PostMule will open a browser for OAuth consent &mdash; approve access</li>
-          </ol>
-        </div>
-
-        <div class="s-card" style="margin-bottom:20px;">
-          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">Step 4 &mdash; Encrypt credentials</h2>
-          <pre style="background:#F0F4F9;border-radius:6px;padding:14px;font-size:0.8125rem;overflow-x:auto;color:#0F2044;margin:0 0 12px;">postmule set-master-password
-postmule encrypt-credentials</pre>
-          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">Your master password is stored in the Windows system keyring (DPAPI). After encrypting, you can delete <code>credentials.yaml</code>.</p>
-        </div>
-
-        <div class="s-card" style="margin-bottom:20px;">
-          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">Step 5 &mdash; Test and schedule</h2>
-          <pre style="background:#F0F4F9;border-radius:6px;padding:14px;font-size:0.8125rem;overflow-x:auto;color:#0F2044;margin:0;"># Test with a dry run (no writes, no emails)
-postmule --dry-run
-
-# Schedule the daily 2am run
-postmule install-task
-
-# Run immediately
-postmule run</pre>
-        </div>
-
-        <div class="s-card">
-          <h2 style="font-size:1.1rem;font-weight:700;color:#0F2044;margin:0 0 12px;">First-Run Checklist</h2>
-          <ul style="font-size:0.8125rem;color:#5A7090;line-height:2;padding-left:20px;margin:0;">
-            <li><code>postmule --dry-run</code> completes without errors</li>
-            <li>Dashboard loads at localhost:5000</li>
-            <li>Storage folders created in Google Drive under &ldquo;PostMule&rdquo;</li>
-            <li>Test email received at your <code>alert_email</code></li>
-            <li>Task Scheduler task visible in Windows Task Scheduler</li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- TAB: Configuration -->
-      <div id="htab-configuration" class="conn-pane">
+      <!-- TAB: Settings Reference -->
+      <div id="htab-settings" class="conn-pane">
         <div class="s-card" style="margin-bottom:16px;">
-          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">
-            All configuration lives in <code>config.yaml</code> (copied from <code>config.example.yaml</code>). This file is in <code>.gitignore</code> and never committed. Sensitive secrets belong in <code>credentials.yaml</code>, not here.
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0;line-height:1.7;">
+            All settings are configured on the <strong>Settings</strong> page. You don't need to edit any files directly. The sections below describe what each part of the Settings page controls.
           </p>
         </div>
 
         <div class="s-card" style="margin-bottom:16px;">
-          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 4px;font-family:monospace;">app</h2>
-          <p style="font-size:0.8125rem;color:#5A7090;margin:0 0 14px;">Top-level application settings</p>
-          <div class="table-wrap"><table class="data-table" style="font-size:0.8125rem;">
-            <thead><tr><th>Field</th><th>Default</th><th>Description</th></tr></thead>
-            <tbody>
-              <tr><td><code>name</code></td><td style="color:#5A7090;">PostMule</td><td style="color:#5A7090;">Application name used in logs and notifications</td></tr>
-              <tr><td><code>dry_run</code></td><td style="color:#5A7090;">false</td><td style="color:#5A7090;">true = simulate all actions; no writes, moves, or emails sent</td></tr>
-              <tr><td><code>install_dir</code></td><td style="color:#5A7090;">C:\ProgramData\PostMule</td><td style="color:#5A7090;">Local directory for logs and cache</td></tr>
-            </tbody>
-          </table></div>
+          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">Application</h2>
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">Controls top-level behavior. Use <strong>Dry Run</strong> to simulate a full run without moving files, sending emails, or writing any data — useful for testing after changes.</p>
         </div>
 
         <div class="s-card" style="margin-bottom:16px;">
-          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 4px;font-family:monospace;">schedule</h2>
-          <p style="font-size:0.8125rem;color:#5A7090;margin:0 0 14px;">When the daily pipeline runs</p>
-          <div class="table-wrap"><table class="data-table" style="font-size:0.8125rem;">
-            <thead><tr><th>Field</th><th>Default</th><th>Description</th></tr></thead>
-            <tbody>
-              <tr><td><code>run_time</code></td><td style="color:#5A7090;">"02:00"</td><td style="color:#5A7090;">Time of day in 24h format (local time)</td></tr>
-              <tr><td><code>timezone</code></td><td style="color:#5A7090;">"America/Los_Angeles"</td><td style="color:#5A7090;">IANA timezone name</td></tr>
-            </tbody>
-          </table></div>
+          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">Schedule</h2>
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">When the daily pipeline runs automatically. Change the time and timezone here — PostMule will update your Windows Task Scheduler entry when you save.</p>
         </div>
 
         <div class="s-card" style="margin-bottom:16px;">
-          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 4px;font-family:monospace;">notifications</h2>
-          <p style="font-size:0.8125rem;color:#5A7090;margin:0 0 14px;">Daily summary and alert delivery</p>
-          <div class="table-wrap"><table class="data-table" style="font-size:0.8125rem;">
-            <thead><tr><th>Field</th><th>Default</th><th>Description</th></tr></thead>
-            <tbody>
-              <tr><td><code>alert_email</code></td><td style="color:#5A7090;">""</td><td style="color:#5A7090;">Required. Email address to receive daily summaries and alerts</td></tr>
-              <tr><td><code>forward_to_me_urgent</code></td><td style="color:#5A7090;">true</td><td style="color:#5A7090;">Send immediate alert when ForwardToMe mail is detected</td></tr>
-              <tr><td><code>bill_due_alert_days</code></td><td style="color:#5A7090;">7</td><td style="color:#5A7090;">Send proactive alert when a bill is due within this many days</td></tr>
-            </tbody>
-          </table></div>
+          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">Alerts</h2>
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">Where PostMule sends the daily summary and urgent notifications — for example, when a physical item needs forwarding or a bill is due soon. You can add a second recipient (a spouse, accountant, etc.) to be copied on all alerts.</p>
         </div>
 
         <div class="s-card" style="margin-bottom:16px;">
-          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 4px;font-family:monospace;">llm</h2>
-          <p style="font-size:0.8125rem;color:#5A7090;margin:0 0 14px;">AI classification provider</p>
-          <div class="table-wrap"><table class="data-table" style="font-size:0.8125rem;">
-            <thead><tr><th>Field</th><th>Default</th><th>Description</th></tr></thead>
-            <tbody>
-              <tr><td><code>providers[].service</code></td><td style="color:#5A7090;">gemini</td><td style="color:#5A7090;">gemini | openai | anthropic | ollama</td></tr>
-              <tr><td><code>providers[].model</code></td><td style="color:#5A7090;">gemini-1.5-flash</td><td style="color:#5A7090;">Model name (provider-specific)</td></tr>
-              <tr><td><code>classification_confidence_threshold</code></td><td style="color:#5A7090;">0.80</td><td style="color:#5A7090;">Below this confidence &rarr; file goes to NeedsReview</td></tr>
-            </tbody>
-          </table></div>
+          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">AI / Classification</h2>
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">The AI service PostMule uses to read and classify your mail. The default (Gemini) is free. The confidence threshold controls how certain the AI needs to be before it files something automatically — items below the threshold go to <strong>Needs Review</strong> instead.</p>
         </div>
 
         <div class="s-card" style="margin-bottom:16px;">
-          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 4px;font-family:monospace;">api_safety</h2>
-          <p style="font-size:0.8125rem;color:#5A7090;margin:0 0 14px;">Hard limits to prevent runaway LLM costs</p>
-          <div class="table-wrap"><table class="data-table" style="font-size:0.8125rem;">
-            <thead><tr><th>Field</th><th>Default</th><th>Description</th></tr></thead>
-            <tbody>
-              <tr><td><code>daily_request_limit</code></td><td style="color:#5A7090;">1400</td><td style="color:#5A7090;">Hard stop on API requests per day (matches Gemini free tier)</td></tr>
-              <tr><td><code>daily_token_limit</code></td><td style="color:#5A7090;">900000</td><td style="color:#5A7090;">Hard stop on tokens per day</td></tr>
-              <tr><td><code>monthly_cost_budget_usd</code></td><td style="color:#5A7090;">0.00</td><td style="color:#5A7090;">0 = free tier only; raise for paid tiers</td></tr>
-            </tbody>
-          </table></div>
+          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">API Safety Limits</h2>
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">Hard limits on how many AI requests PostMule can make per day. These exist to protect you from unexpected charges. The defaults match Gemini's free tier. PostMule warns at 80% and stops if a limit is reached.</p>
         </div>
 
         <div class="s-card" style="margin-bottom:16px;">
-          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 4px;font-family:monospace;">finance</h2>
-          <p style="font-size:0.8125rem;color:#5A7090;margin:0 0 14px;">Bank transaction sync</p>
-          <div class="table-wrap"><table class="data-table" style="font-size:0.8125rem;">
-            <thead><tr><th>Field</th><th>Default</th><th>Description</th></tr></thead>
-            <tbody>
-              <tr><td><code>providers[].service</code></td><td style="color:#5A7090;">&mdash;</td><td style="color:#5A7090;">ynab | plaid | simplifi | monarch</td></tr>
-              <tr><td><code>bill_matching.require_manual_approval</code></td><td style="color:#5A7090;">true</td><td style="color:#5A7090;">Require human approval for each bill/transaction match</td></tr>
-              <tr><td><code>bill_matching.amount_tolerance_cents</code></td><td style="color:#5A7090;">0</td><td style="color:#5A7090;">Allow matches within this many cents (0 = exact)</td></tr>
-            </tbody>
-          </table></div>
+          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">Bill Matching</h2>
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">How PostMule matches bills to bank transactions. By default, you approve each match before it's applied. You can also allow a small tolerance (in cents) if your bank rounds amounts slightly.</p>
         </div>
 
         <div class="s-card" style="margin-bottom:16px;">
-          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 4px;font-family:monospace;">data_protection</h2>
-          <p style="font-size:0.8125rem;color:#5A7090;margin:0 0 14px;">Safety guardrails</p>
-          <div class="table-wrap"><table class="data-table" style="font-size:0.8125rem;">
-            <thead><tr><th>Field</th><th>Default</th><th>Description</th></tr></thead>
-            <tbody>
-              <tr><td><code>soft_deletes_only</code></td><td style="color:#5A7090;">true</td><td style="color:#5A7090;">Never permanently delete files automatically &mdash; do not change</td></tr>
-              <tr><td><code>max_files_moved_per_run</code></td><td style="color:#5A7090;">50</td><td style="color:#5A7090;">Safety cap &mdash; pipeline stops and alerts if exceeded</td></tr>
-              <tr><td><code>write_verification</code></td><td style="color:#5A7090;">true</td><td style="color:#5A7090;">Read back + hash every write (3-layer redundancy)</td></tr>
-            </tbody>
-          </table></div>
+          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">Data Protection</h2>
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">Safety guardrails. PostMule never permanently deletes files — deleted items go to Trash for manual review. A cap limits how many files can be moved in a single run to prevent runaway behavior.</p>
         </div>
 
         <div class="s-card">
-          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">
-            For the full configuration reference with all sections, see <strong>docs/configuration.md</strong> on GitHub.
-          </p>
+          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">Backups &amp; Deployment</h2>
+          <p style="font-size:0.8125rem;color:#5A7090;margin:0;">Daily encrypted backups are uploaded to your Drive automatically. You can trigger a manual backup any time. Deployment settings control the dashboard port and optional Tailscale remote access.</p>
         </div>
+      </div>
+
+      <!-- TAB: Troubleshooting -->
+      <div id="htab-troubleshooting" class="conn-pane">
+
+        <div class="s-card" style="margin-bottom:16px;">
+          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">PostMule hasn't run today</h2>
+          <ul style="font-size:0.8125rem;color:#5A7090;line-height:1.9;padding-left:20px;margin:0;">
+            <li>Check the <strong>Last Run</strong> status at the top of the Mail page</li>
+            <li>Check that your computer was on at the scheduled time</li>
+            <li>Click <strong>Run Now</strong> on the Settings page to trigger a manual run</li>
+            <li>Check the Logs page for any error messages</li>
+          </ul>
+        </div>
+
+        <div class="s-card" style="margin-bottom:16px;">
+          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">I'm not receiving my daily summary email</h2>
+          <ul style="font-size:0.8125rem;color:#5A7090;line-height:1.9;padding-left:20px;margin:0;">
+            <li>Check your spam or junk folder</li>
+            <li>Verify the alert email address in <strong>Settings &rarr; Alerts</strong></li>
+            <li>Check the Logs page for email send errors</li>
+          </ul>
+        </div>
+
+        <div class="s-card" style="margin-bottom:16px;">
+          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">An item is in "Needs Review"</h2>
+          <ul style="font-size:0.8125rem;color:#5A7090;line-height:1.9;padding-left:20px;margin:0;">
+            <li>PostMule wasn't confident enough to classify this item automatically</li>
+            <li>Open the item on the Mail page, review the PDF, and assign a category manually</li>
+            <li>If a particular sender ends up here often, add them to the Entities list</li>
+          </ul>
+        </div>
+
+        <div class="s-card" style="margin-bottom:16px;">
+          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">A bill shows as unpaid but I've already paid it</h2>
+          <ul style="font-size:0.8125rem;color:#5A7090;line-height:1.9;padding-left:20px;margin:0;">
+            <li>PostMule may not have synced the matching bank transaction yet — check Providers to confirm your finance connection is active</li>
+            <li>If bill matching is on, check the Pending tab for a match waiting for your approval</li>
+            <li>You can manually mark a bill as paid from the Bills tab</li>
+          </ul>
+        </div>
+
+        <div class="s-card" style="margin-bottom:16px;">
+          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">PostMule stopped working after a Windows update</h2>
+          <ul style="font-size:0.8125rem;color:#5A7090;line-height:1.9;padding-left:20px;margin:0;">
+            <li>Open the Logs page and look for the most recent error</li>
+            <li>Try clicking <strong>Run Now</strong> &mdash; if it works, the scheduled task may need to be re-registered</li>
+            <li>Go to <strong>Settings &rarr; Deployment &rarr; Re-register Scheduled Task</strong></li>
+          </ul>
+        </div>
+
+        <div class="s-card">
+          <h2 style="font-size:1rem;font-weight:700;color:#0F2044;margin:0 0 8px;">Something else is wrong</h2>
+          <ul style="font-size:0.8125rem;color:#5A7090;line-height:1.9;padding-left:20px;margin:0;">
+            <li>Check the <a href="#" onclick="showSection('logs');return false;" style="color:#1A5EA8;">Logs page</a> for recent errors</li>
+            <li>Report the issue on <a href="https://github.com/PostMule/app/issues" target="_blank" rel="noopener" style="color:#1A5EA8;">GitHub</a></li>
+          </ul>
+        </div>
+
       </div>
 
     </div>
