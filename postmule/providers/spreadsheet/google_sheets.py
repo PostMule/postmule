@@ -35,6 +35,15 @@ class SheetsProvider:
             self._service = build("sheets", "v4", credentials=self.credentials)
         return self._service
 
+    def health_check(self):
+        """Return a HealthResult indicating whether Sheets credentials are valid."""
+        from postmule.providers import HealthResult
+        try:
+            self._get_service()  # triggers OAuth; raises if creds invalid
+            return HealthResult(ok=True, status="ok", message="Sheets connected")
+        except Exception as exc:
+            return HealthResult(ok=False, status="error", message=str(exc))
+
     def get_or_create_workbook(self, drive_folder_id: str | None = None) -> str:
         """
         Find or create the PostMule Google Sheets workbook.

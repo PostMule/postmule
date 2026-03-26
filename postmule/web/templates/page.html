@@ -914,7 +914,10 @@
       {# ── EMAIL ── #}
       <div id="conn-panel-email" role="tabpanel" aria-labelledby="conn-tab-email" x-show="tab === 'email'" class="conn-provider-list">
 
-        <div class="conn-provider {% if conn.email.type == 'gmail' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+        {% if conn.email.type %}<div class="conn-section-label">Configured</div>{% endif %}
+
+        <div class="conn-provider {% if conn.email.type == 'gmail' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}"
+          {% if conn.email.type == 'gmail' %}x-data="{ ts: 'idle', tm: '', configOpen: false, initOk: {{ 'true' if conn.google else 'false' }} }"{% endif %}>
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-google" style="flex-shrink:0;">G</div>
             <div style="flex:1;min-width:0;">
@@ -922,8 +925,9 @@
               <div class="conn-provider-desc-small">Google Gmail via OAuth</div>
             </div>
             {% if conn.email.type == 'gmail' %}
-              {% if conn.google %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-              {% else %}<span class="conn-provider-badge conn-provider-badge--warn">Setup needed</span>{% endif %}
+              <span class="conn-provider-badge"
+                    :class="ts!='idle' ? (ts=='ok'?'conn-provider-badge--ok':ts=='warn'?'conn-provider-badge--warn':ts=='checking'?'conn-provider-badge--off':'conn-provider-badge--error') : (initOk ? 'conn-provider-badge--ok' : 'conn-provider-badge--warn')"
+                    x-text="ts=='idle' ? (initOk ? 'Active' : 'Setup needed') : ts=='checking' ? 'Checking\u2026' : ts=='ok' ? 'Connected' : ts=='warn' ? 'Warning' : 'Error'"></span>
             {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.email.type != 'gmail' %}
@@ -931,8 +935,18 @@
                 <input type="hidden" name="category" value="email"><input type="hidden" name="service" value="gmail"><input type="hidden" name="tab" value="email">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Gmail</button>
               </form>
-              {% elif not conn.google %}<a href="/setup/oauth/google" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Connect Google</a>
-              {% else %}<a href="/setup/oauth/google" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Reconnect</a>{% endif %}
+              {% elif not conn.google %}
+                <a href="/setup/oauth/google" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Connect Google</a>
+              {% else %}
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;"
+                        @click.prevent="ts='checking'; fetch('/api/providers/email/gmail/test',{method:'POST'}).then(r=>r.json()).then(d=>{ts=d.status;tm=d.message||''}).catch(()=>{ts='error';tm='Request failed'})">
+                  <span x-text="ts==='checking'?'Checking\u2026':'Test'">Test</span>
+                </button>
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" @click="configOpen = !configOpen">
+                  <span x-text="configOpen ? 'Close' : 'Configure'">Configure</span>
+                </button>
+                <a href="/setup/oauth/google" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Reconnect</a>
+              {% endif %}
             </div>
           </div>
           {% if conn.email.type == 'gmail' %}
@@ -940,8 +954,21 @@
             {% if conn.google %}Google OAuth token stored in Windows Credential Manager. Covers Gmail, Drive, Sheets, and Gemini.
             {% else %}Sign in with Google to grant access to Gmail and other Google services.{% endif %}
           </div>
+          <div x-show="configOpen" x-cloak style="padding:12px 18px 14px;border-top:1px solid #E8EDF3;background:#FAFCFF;">
+            <form method="post" action="/api/providers/email/config">
+              <div class="conn-cred-row">
+                <label style="min-width:140px;font-size:0.8125rem;font-weight:500;color:#2C4A6E;">Gmail label</label>
+                <input type="text" name="label_name" value="{{ conn.email.label_name }}" style="flex:1;max-width:240px;padding:7px 10px;border:1px solid #C8D8E8;border-radius:4px;font-size:0.8125rem;">
+                <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+              </div>
+              <p class="conn-cred-note">Label applied to processed emails. Default: PostMule</p>
+            </form>
+            <div x-show="tm" x-text="'Last test: ' + tm" style="margin-top:6px;font-size:0.78rem;color:#5A7090;font-style:italic;"></div>
+          </div>
           {% endif %}
         </div>
+
+        <div class="conn-section-label conn-provider--inactive">Available</div>
 
         <div class="conn-provider {% if conn.email.type == 'outlook' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
           <div class="conn-provider-header">
@@ -990,7 +1017,10 @@
           <strong>How PostMule stores your data:</strong> Your data is saved as JSON files — those files live inside your cloud storage provider (e.g., Google Drive). The spreadsheet is a generated view only; editing it has no effect on your data. You can always export your data as CSV or JSON from Settings.
         </div>
 
-        <div class="conn-provider {% if conn.storage.type == 'google_drive' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+        {% if conn.storage.type %}<div class="conn-section-label">Configured</div>{% endif %}
+
+        <div class="conn-provider {% if conn.storage.type == 'google_drive' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}"
+          {% if conn.storage.type == 'google_drive' %}x-data="{ ts: 'idle', tm: '', configOpen: false, initOk: {{ 'true' if conn.google else 'false' }} }"{% endif %}>
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-google" style="flex-shrink:0;">G</div>
             <div style="flex:1;min-width:0;">
@@ -998,8 +1028,9 @@
               <div class="conn-provider-desc-small">Store PDFs and attachments in Google Drive</div>
             </div>
             {% if conn.storage.type == 'google_drive' %}
-              {% if conn.google %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-              {% else %}<span class="conn-provider-badge conn-provider-badge--warn">Setup needed</span>{% endif %}
+              <span class="conn-provider-badge"
+                    :class="ts!='idle' ? (ts=='ok'?'conn-provider-badge--ok':ts=='warn'?'conn-provider-badge--warn':ts=='checking'?'conn-provider-badge--off':'conn-provider-badge--error') : (initOk ? 'conn-provider-badge--ok' : 'conn-provider-badge--warn')"
+                    x-text="ts=='idle' ? (initOk ? 'Active' : 'Setup needed') : ts=='checking' ? 'Checking\u2026' : ts=='ok' ? 'Connected' : ts=='warn' ? 'Warning' : 'Error'"></span>
             {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.storage.type != 'google_drive' %}
@@ -1007,13 +1038,40 @@
                 <input type="hidden" name="category" value="storage"><input type="hidden" name="service" value="google_drive"><input type="hidden" name="tab" value="storage">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Drive</button>
               </form>
-              {% elif not conn.google %}<a href="/setup/oauth/google" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Connect Google</a>{% endif %}
+              {% elif not conn.google %}
+                <a href="/setup/oauth/google" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Connect Google</a>
+              {% else %}
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;"
+                        @click.prevent="ts='checking'; fetch('/api/providers/storage/google_drive/test',{method:'POST'}).then(r=>r.json()).then(d=>{ts=d.status;tm=d.message||''}).catch(()=>{ts='error';tm='Request failed'})">
+                  <span x-text="ts==='checking'?'Checking\u2026':'Test'">Test</span>
+                </button>
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" @click="configOpen = !configOpen">
+                  <span x-text="configOpen ? 'Close' : 'Configure'">Configure</span>
+                </button>
+                <a href="/setup/oauth/google" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Reconnect</a>
+              {% endif %}
             </div>
           </div>
-          {% if conn.storage.type == 'google_drive' and conn.storage.root_folder %}
-          <div class="conn-provider-body">Root folder: <code>{{ conn.storage.root_folder }}</code></div>
+          {% if conn.storage.type == 'google_drive' %}
+          <div class="conn-provider-body">
+            {% if conn.google %}Root folder: <code>{{ conn.storage.root_folder or 'PostMule' }}</code>
+            {% else %}Sign in with Google to connect Drive.{% endif %}
+          </div>
+          <div x-show="configOpen" x-cloak style="padding:12px 18px 14px;border-top:1px solid #E8EDF3;background:#FAFCFF;">
+            <form method="post" action="/api/providers/storage/config">
+              <div class="conn-cred-row">
+                <label style="min-width:140px;font-size:0.8125rem;font-weight:500;color:#2C4A6E;">Root folder</label>
+                <input type="text" name="root_folder" value="{{ conn.storage.root_folder or 'PostMule' }}" style="flex:1;max-width:240px;padding:7px 10px;border:1px solid #C8D8E8;border-radius:4px;font-size:0.8125rem;">
+                <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+              </div>
+              <p class="conn-cred-note">Top-level folder in your Google Drive. Default: PostMule</p>
+            </form>
+            <div x-show="tm" x-text="'Last test: ' + tm" style="margin-top:6px;font-size:0.78rem;color:#5A7090;font-style:italic;"></div>
+          </div>
           {% endif %}
         </div>
+
+        <div class="conn-section-label conn-provider--inactive">Available</div>
 
         <div class="conn-provider {% if conn.storage.type == 's3' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
           <div class="conn-provider-header">
@@ -1195,7 +1253,10 @@
           <strong>Read-only view.</strong> The spreadsheet is generated from your JSON data files — it is not the database. Editing the spreadsheet directly has no effect on PostMule's data.
         </div>
 
-        <div class="conn-provider {% if conn.spreadsheet.type == 'google_sheets' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+        {% if conn.spreadsheet.type and conn.spreadsheet.type != 'none' %}<div class="conn-section-label">Configured</div>{% endif %}
+
+        <div class="conn-provider {% if conn.spreadsheet.type == 'google_sheets' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}"
+          {% if conn.spreadsheet.type == 'google_sheets' %}x-data="{ ts: 'idle', tm: '', configOpen: false, initOk: {{ 'true' if conn.google else 'false' }} }"{% endif %}>
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-google" style="flex-shrink:0;">G</div>
             <div style="flex:1;min-width:0;">
@@ -1203,8 +1264,9 @@
               <div class="conn-provider-desc-small">Sync data to a Google Sheets workbook</div>
             </div>
             {% if conn.spreadsheet.type == 'google_sheets' %}
-              {% if conn.google %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-              {% else %}<span class="conn-provider-badge conn-provider-badge--warn">Setup needed</span>{% endif %}
+              <span class="conn-provider-badge"
+                    :class="ts!='idle' ? (ts=='ok'?'conn-provider-badge--ok':ts=='warn'?'conn-provider-badge--warn':ts=='checking'?'conn-provider-badge--off':'conn-provider-badge--error') : (initOk ? 'conn-provider-badge--ok' : 'conn-provider-badge--warn')"
+                    x-text="ts=='idle' ? (initOk ? 'Active' : 'Setup needed') : ts=='checking' ? 'Checking\u2026' : ts=='ok' ? 'Connected' : ts=='warn' ? 'Warning' : 'Error'"></span>
             {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.spreadsheet.type != 'google_sheets' %}
@@ -1212,13 +1274,40 @@
                 <input type="hidden" name="category" value="spreadsheet"><input type="hidden" name="service" value="google_sheets"><input type="hidden" name="tab" value="spreadsheet">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Sheets</button>
               </form>
-              {% elif not conn.google %}<a href="/setup/oauth/google" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Connect Google</a>{% endif %}
+              {% elif not conn.google %}
+                <a href="/setup/oauth/google" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Connect Google</a>
+              {% else %}
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;"
+                        @click.prevent="ts='checking'; fetch('/api/providers/spreadsheet/google_sheets/test',{method:'POST'}).then(r=>r.json()).then(d=>{ts=d.status;tm=d.message||''}).catch(()=>{ts='error';tm='Request failed'})">
+                  <span x-text="ts==='checking'?'Checking\u2026':'Test'">Test</span>
+                </button>
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" @click="configOpen = !configOpen">
+                  <span x-text="configOpen ? 'Close' : 'Configure'">Configure</span>
+                </button>
+                <a href="/setup/oauth/google" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Reconnect</a>
+              {% endif %}
             </div>
           </div>
-          {% if conn.spreadsheet.type == 'google_sheets' and conn.spreadsheet.workbook_name %}
-          <div class="conn-provider-body">Workbook: <code>{{ conn.spreadsheet.workbook_name }}</code></div>
+          {% if conn.spreadsheet.type == 'google_sheets' %}
+          <div class="conn-provider-body">
+            {% if conn.google %}Workbook: <code>{{ conn.spreadsheet.workbook_name or 'PostMule' }}</code>
+            {% else %}Sign in with Google to connect Sheets.{% endif %}
+          </div>
+          <div x-show="configOpen" x-cloak style="padding:12px 18px 14px;border-top:1px solid #E8EDF3;background:#FAFCFF;">
+            <form method="post" action="/api/providers/spreadsheet/config">
+              <div class="conn-cred-row">
+                <label style="min-width:140px;font-size:0.8125rem;font-weight:500;color:#2C4A6E;">Workbook name</label>
+                <input type="text" name="workbook_name" value="{{ conn.spreadsheet.workbook_name or 'PostMule' }}" style="flex:1;max-width:240px;padding:7px 10px;border:1px solid #C8D8E8;border-radius:4px;font-size:0.8125rem;">
+                <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+              </div>
+              <p class="conn-cred-note">Name of the Google Sheets workbook. Default: PostMule</p>
+            </form>
+            <div x-show="tm" x-text="'Last test: ' + tm" style="margin-top:6px;font-size:0.78rem;color:#5A7090;font-style:italic;"></div>
+          </div>
           {% endif %}
         </div>
+
+        <div class="conn-section-label conn-provider--inactive">Available</div>
 
         <div class="conn-provider {% if conn.spreadsheet.type == 'excel_online' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
           <div class="conn-provider-header">
@@ -1282,7 +1371,10 @@
       {# ── PHYSICAL MAIL ── #}
       <div id="conn-panel-physical" role="tabpanel" aria-labelledby="conn-tab-physical" x-show="tab === 'physical'" class="conn-provider-list">
 
-        <div class="conn-provider {% if conn.mailbox.type == 'vpm' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+        {% if conn.mailbox.type %}<div class="conn-section-label">Configured</div>{% endif %}
+
+        <div class="conn-provider {% if conn.mailbox.type == 'vpm' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}"
+          {% if conn.mailbox.type == 'vpm' %}x-data="{ ts: 'idle', tm: '', initOk: {{ 'true' if conn.mailbox.creds_ok else 'false' }} }"{% endif %}>
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-mail" style="flex-shrink:0;">&#9993;</div>
             <div style="flex:1;min-width:0;">
@@ -1290,15 +1382,22 @@
               <div class="conn-provider-desc-small">VPM digital mailbox service</div>
             </div>
             {% if conn.mailbox.type == 'vpm' %}
-              {% if conn.mailbox.creds_ok %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-              {% else %}<span class="conn-provider-badge conn-provider-badge--warn">Setup needed</span>{% endif %}
+              <span class="conn-provider-badge"
+                    :class="ts!='idle' ? (ts=='ok'?'conn-provider-badge--ok':ts=='warn'?'conn-provider-badge--warn':ts=='checking'?'conn-provider-badge--off':'conn-provider-badge--error') : (initOk ? 'conn-provider-badge--ok' : 'conn-provider-badge--warn')"
+                    x-text="ts=='idle' ? (initOk ? 'Active' : 'Setup needed') : ts=='checking' ? 'Checking\u2026' : ts=='ok' ? 'Connected' : ts=='warn' ? 'Warning' : 'Error'"></span>
             {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.mailbox.type != 'vpm' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
                 <input type="hidden" name="category" value="mailbox"><input type="hidden" name="service" value="vpm"><input type="hidden" name="tab" value="physical">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to VPM</button>
-              </form>{% endif %}
+              </form>
+              {% elif conn.mailbox.creds_ok %}
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;"
+                        @click.prevent="ts='checking'; fetch('/api/providers/mailbox/vpm/test',{method:'POST'}).then(r=>r.json()).then(d=>{ts=d.status;tm=d.message||''}).catch(()=>{ts='error';tm='Request failed'})">
+                  <span x-text="ts==='checking'?'Checking\u2026':'Test'">Test</span>
+                </button>
+              {% endif %}
             </div>
           </div>
           {% if conn.mailbox.type == 'vpm' %}
@@ -1335,10 +1434,13 @@
                 </form>
               </div>
             </div>
+            <div x-show="tm" x-text="'Last test: ' + tm" style="margin-top:6px;font-size:0.78rem;color:#5A7090;font-style:italic;"></div>
             {% endif %}
           </div>
           {% endif %}
         </div>
+
+        <div class="conn-section-label conn-provider--inactive">Available</div>
 
         <div class="conn-provider {% if conn.mailbox.type == 'earth_class' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
           <div class="conn-provider-header">
@@ -1402,16 +1504,20 @@
       {# ── AI / LLM ── #}
       <div id="conn-panel-ai" role="tabpanel" aria-labelledby="conn-tab-ai" x-show="tab === 'ai'" class="conn-provider-list">
 
-        <div class="conn-provider {% if conn.llm.type == 'gemini' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+        {% if conn.llm.type %}<div class="conn-section-label">Configured</div>{% endif %}
+
+        <div class="conn-provider {% if conn.llm.type == 'gemini' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}"
+          {% if conn.llm.type == 'gemini' %}x-data="{ ts: 'idle', tm: '', configOpen: false, initOk: {{ 'true' if conn.google else 'false' }} }"{% endif %}>
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-google" style="flex-shrink:0;">G</div>
             <div style="flex:1;min-width:0;">
               <div class="conn-provider-name">Gemini</div>
-              <div class="conn-provider-desc-small">Google Gemini via OAuth — no API key needed</div>
+              <div class="conn-provider-desc-small">Google Gemini via OAuth &mdash; no API key needed</div>
             </div>
             {% if conn.llm.type == 'gemini' %}
-              {% if conn.google %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-              {% else %}<span class="conn-provider-badge conn-provider-badge--warn">Setup needed</span>{% endif %}
+              <span class="conn-provider-badge"
+                    :class="ts!='idle' ? (ts=='ok'?'conn-provider-badge--ok':ts=='warn'?'conn-provider-badge--warn':ts=='checking'?'conn-provider-badge--off':'conn-provider-badge--error') : (initOk ? 'conn-provider-badge--ok' : 'conn-provider-badge--warn')"
+                    x-text="ts=='idle' ? (initOk ? 'Active' : 'Setup needed') : ts=='checking' ? 'Checking\u2026' : ts=='ok' ? 'Connected' : ts=='warn' ? 'Warning' : 'Error'"></span>
             {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.llm.type != 'gemini' %}
@@ -1419,13 +1525,40 @@
                 <input type="hidden" name="category" value="llm"><input type="hidden" name="service" value="gemini"><input type="hidden" name="tab" value="ai">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Gemini</button>
               </form>
-              {% elif not conn.google %}<a href="/setup/oauth/google" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Connect Google</a>{% endif %}
+              {% elif not conn.google %}
+                <a href="/setup/oauth/google" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Connect Google</a>
+              {% else %}
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;"
+                        @click.prevent="ts='checking'; fetch('/api/providers/llm/gemini/test',{method:'POST'}).then(r=>r.json()).then(d=>{ts=d.status;tm=d.message||''}).catch(()=>{ts='error';tm='Request failed'})">
+                  <span x-text="ts==='checking'?'Checking\u2026':'Test'">Test</span>
+                </button>
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" @click="configOpen = !configOpen">
+                  <span x-text="configOpen ? 'Close' : 'Configure'">Configure</span>
+                </button>
+                <a href="/setup/oauth/google" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Reconnect</a>
+              {% endif %}
             </div>
           </div>
           {% if conn.llm.type == 'gemini' %}
-          <div class="conn-provider-body">Uses your connected Google account &mdash; no separate API key required.</div>
+          <div class="conn-provider-body">
+            {% if conn.google %}Model: <code>{{ conn.llm.model or 'gemini-1.5-flash' }}</code>. Uses your connected Google account.
+            {% else %}Sign in with Google to use Gemini.{% endif %}
+          </div>
+          <div x-show="configOpen" x-cloak style="padding:12px 18px 14px;border-top:1px solid #E8EDF3;background:#FAFCFF;">
+            <form method="post" action="/api/providers/llm/config">
+              <div class="conn-cred-row">
+                <label style="min-width:140px;font-size:0.8125rem;font-weight:500;color:#2C4A6E;">Model</label>
+                <input type="text" name="model" value="{{ conn.llm.model or 'gemini-1.5-flash' }}" style="flex:1;max-width:240px;padding:7px 10px;border:1px solid #C8D8E8;border-radius:4px;font-size:0.8125rem;">
+                <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+              </div>
+              <p class="conn-cred-note">Gemini model name. Default: gemini-1.5-flash</p>
+            </form>
+            <div x-show="tm" x-text="'Last test: ' + tm" style="margin-top:6px;font-size:0.78rem;color:#5A7090;font-style:italic;"></div>
+          </div>
           {% endif %}
         </div>
+
+        <div class="conn-section-label conn-provider--inactive">Available</div>
 
         <div class="conn-provider {% if conn.llm.type == 'anthropic' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
           <div class="conn-provider-header">

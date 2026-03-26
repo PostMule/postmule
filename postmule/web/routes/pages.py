@@ -353,6 +353,7 @@ def _connection_status() -> dict:
             "type": email_type,
             "address": email_address,
             "enabled": bool(email_type),
+            "label_name": (email_providers[0].get("label_name", "PostMule") if email_providers else "PostMule"),
         },
         "storage": {
             "type": storage_type,

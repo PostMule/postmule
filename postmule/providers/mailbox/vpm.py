@@ -79,6 +79,15 @@ class VpmProvider:
             self._token = self._login()
         return self._token
 
+    def health_check(self):
+        """Return a HealthResult indicating whether VPM credentials are valid."""
+        from postmule.providers import HealthResult
+        try:
+            self._login()
+            return HealthResult(ok=True, status="ok", message="VPM login successful")
+        except Exception as exc:
+            return HealthResult(ok=False, status="error", message=str(exc))
+
     def _api_call(self, action: str, **params) -> Any:
         """Make an authenticated VPM API call, re-authenticating once on token expiry."""
         token = self._get_token()

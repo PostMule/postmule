@@ -45,6 +45,16 @@ class GmailProvider:
             self._service = build("gmail", "v1", credentials=self.credentials)
         return self._service
 
+    def health_check(self):
+        """Return a HealthResult indicating whether Gmail credentials are valid."""
+        from postmule.providers import HealthResult
+        try:
+            svc = self._get_service()
+            svc.users().labels().list(userId="me").execute()
+            return HealthResult(ok=True, status="ok", message="Gmail connected")
+        except Exception as exc:
+            return HealthResult(ok=False, status="error", message=str(exc))
+
     def list_unprocessed_emails(
         self,
         sender_filter: str = "noreply@virtualpostmail.com",

@@ -15,20 +15,29 @@ If files are modified, commit them before starting new work. Never let a session
 ---
 
 ## Last Completed
-Issues #42 and #43 — README overhaul + Help page overhaul:
+Issues #44, #46, #47 — Providers tab improvements (all implemented together):
 
-**#42 — README (dual-audience):**
-- `README.md`: restructured for two audiences — plain-English hero + Get Started (installer vs CLI) for non-technical users; Technical Reference section with links at the bottom for developers; feature bullets rewritten without tech stack details
-- `docs/install-cli.md`: new file absorbing CLI Quick Start content from README
+**#44 — Show and edit non-sensitive provider settings:**
+- Flask route `POST /api/providers/<category>/config` in `connections.py` writes whitelisted fields (email→label_name, storage→root_folder, spreadsheet→workbook_name, llm→model) to config.yaml
+- `_connection_status()` in `pages.py` now includes `label_name` in email dict
+- Each active provider card has a Configure button that expands an inline form panel (Alpine.js `configOpen` toggle)
 
-**#43 — Help page (plain English, remove Installation, add Troubleshooting):**
-- Both `mockup_dashboard.html` and `page.html` updated identically
-- Removed Installation tab (wrong place — user hasn't installed yet)
-- Overview → "How It Works": plain English description, mail categories table, where-your-data-lives paragraph; removed Components table (pdfplumber, Flask, etc.) and numbered pipeline steps
-- Configuration → "Settings Reference": plain English description of each Settings section; no YAML field references
-- Added Troubleshooting tab: 5 scenarios (not run today, missing email, needs review, unpaid bill, post-Windows-update breakage) + links to Logs page and GitHub Issues
+**#46 — Browseable catalog of available providers:**
+- "Configured" section label above the active provider card (Jinja conditional)
+- "Available" section label above inactive providers (uses `conn-provider--inactive` CSS class, auto-hides with toggle)
+- "Show all providers" checkbox toggle (`showAll` Alpine state on the outer pane, `:class="{ 'hide-inactive': !showAll }"`)
+- `.hide-inactive .conn-provider--inactive { display: none; }` already existed in style.css
 
-Previously: Mockup interactivity — Mail tab Edit rows (mockup-only, no issue)
+**#47 — Connection health check with Test button:**
+- `HealthResult` dataclass in `postmule/providers/__init__.py` (`ok`, `status`, `message`)
+- `health_check()` added to all 5 provider adapters: GmailProvider, DriveProvider, SheetsProvider, GeminiProvider, VpmProvider
+- Flask route `POST /api/providers/<category>/<service>/test` in `connections.py` instantiates provider and calls `health_check()`, returns JSON
+- Each active card has Test button (Alpine.js fetch → reactive badge: idle/checking/ok/warn/error)
+- New CSS class `.conn-provider-badge--error` added to `style.css`
+
+All five tabs (Email, Storage, Spreadsheet, Physical Mail, AI/LLM) and `mockup_dashboard.html` updated.
+
+Previously: Issues #42 and #43 — README overhaul + Help page overhaul
 
 ## Next
 Work the issues in this order (check `gh issue list --repo PostMule/app` for current state):

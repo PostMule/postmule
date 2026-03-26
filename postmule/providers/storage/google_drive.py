@@ -45,6 +45,16 @@ class DriveProvider:
             self._service = build("drive", "v3", credentials=self.credentials)
         return self._service
 
+    def health_check(self):
+        """Return a HealthResult indicating whether Drive credentials are valid."""
+        from postmule.providers import HealthResult
+        try:
+            svc = self._get_service()
+            svc.about().get(fields="user").execute()
+            return HealthResult(ok=True, status="ok", message="Drive connected")
+        except Exception as exc:
+            return HealthResult(ok=False, status="error", message=str(exc))
+
     # ------------------------------------------------------------------
     # Folder management
     # ------------------------------------------------------------------

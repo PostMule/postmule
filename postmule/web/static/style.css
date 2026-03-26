@@ -833,6 +833,8 @@ nav { display: flex; gap: 4px; flex: 1; }
 .conn-cred-row label { font-size: 0.8125rem; font-weight: 500; color: #2C4A6E; min-width: 120px; }
 .conn-cred-row input[type="text"], .conn-cred-row input[type="password"] { flex: 1; padding: 7px 10px; border: 1px solid #C8D8E8; border-radius: 4px; font-size: 0.8125rem; font-family: var(--font-mono, monospace); background: #FAFCFF; max-width: 360px; }
 .conn-cred-note { font-size: 0.75rem; color: #7A90A8; margin-top: 4px; }
+.conn-provider-badge--error { background: #FDECEA; color: #C62828; }
+.conn-section-label { font-size: 0.6875rem; font-weight: 700; color: #8A9BB0; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 2px 0; }
 
 /* ── Settings — tabs & cards ───────────────────────────────────── */
 .s-tabs {

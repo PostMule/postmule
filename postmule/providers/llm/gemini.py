@@ -86,6 +86,17 @@ class GeminiProvider:
                 )
         return self._client
 
+    def health_check(self):
+        """Return a HealthResult indicating whether the Gemini API key is valid."""
+        from postmule.providers import HealthResult
+        try:
+            import google.generativeai as genai  # type: ignore[import]
+            genai.configure(api_key=self.api_key)
+            list(genai.list_models())
+            return HealthResult(ok=True, status="ok", message=f"Gemini connected ({self.model_name})")
+        except Exception as exc:
+            return HealthResult(ok=False, status="error", message=str(exc))
+
     def classify(
         self,
         ocr_text: str,

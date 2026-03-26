@@ -138,6 +138,144 @@ def set_connection_provider():
     return redirect(url_for("pages.providers") + f"?tab={tab}&saved=1")
 
 
+# ------------------------------------------------------------------
+# Provider health-check and config-save routes (#44, #47)
+# ------------------------------------------------------------------
+
+_CONFIG_FIELDS: dict[str, list[str]] = {
+    "email": ["label_name"],
+    "storage": ["root_folder"],
+    "spreadsheet": ["workbook_name"],
+    "llm": ["model"],
+}
+
+_TAB_MAP = {
+    "mailbox": "mailbox",
+    "email": "email",
+    "storage": "storage",
+    "spreadsheet": "spreadsheet",
+    "llm": "llm",
+    "finance": "finance",
+}
+
+
+def _tab_for(category: str) -> str:
+    return _TAB_MAP.get(category, category)
+
+
+def _get_cred(*keys: str):
+    """Decrypt credentials.enc and return a nested key. Returns None on any error."""
+    try:
+        from postmule.core.credentials import load_credentials
+        creds = load_credentials(_app._enc_path)
+        node = creds
+        for k in keys:
+            if not isinstance(node, dict):
+                return None
+            node = node.get(k)
+        return node
+    except Exception:
+        return None
+
+
+def _build_provider(category: str, service: str):
+    """Instantiate a provider object for health-check, or raise ValueError."""
+    cfg = _app._config_raw
+    if category == "email" and service == "gmail":
+        from postmule.core.credentials import google_credentials_available, build_google_credentials
+        if not google_credentials_available():
+            raise ValueError("Google credentials not configured")
+        creds = build_google_credentials()
+        label = (cfg.get("email", {}).get("providers") or [{}])[0].get("label_name", "PostMule")
+        from postmule.providers.email.gmail import GmailProvider
+        return GmailProvider(creds, label_name=label)
+
+    if category == "storage" and service == "google_drive":
+        from postmule.core.credentials import google_credentials_available, build_google_credentials
+        if not google_credentials_available():
+            raise ValueError("Google credentials not configured")
+        creds = build_google_credentials()
+        root = (cfg.get("storage", {}).get("providers") or [{}])[0].get("root_folder", "PostMule")
+        from postmule.providers.storage.google_drive import DriveProvider
+        return DriveProvider(creds, root_folder=root)
+
+    if category == "spreadsheet" and service == "google_sheets":
+        from postmule.core.credentials import google_credentials_available, build_google_credentials
+        if not google_credentials_available():
+            raise ValueError("Google credentials not configured")
+        creds = build_google_credentials()
+        name = (cfg.get("spreadsheet", {}).get("providers") or [{}])[0].get("workbook_name", "PostMule")
+        from postmule.providers.spreadsheet.google_sheets import SheetsProvider
+        return SheetsProvider(creds, workbook_name=name)
+
+    if category == "llm" and service == "gemini":
+        api_key = _get_cred("gemini", "api_key") or _get_cred("google", "gemini_api_key")
+        if not api_key:
+            raise ValueError("Gemini API key not configured")
+        model = (cfg.get("llm", {}).get("providers") or [{}])[0].get("model", "gemini-1.5-flash")
+        from postmule.providers.llm.gemini import GeminiProvider
+        return GeminiProvider(api_key, model=model)
+
+    if category == "mailbox" and service == "vpm":
+        username = _get_cred("vpm", "username")
+        password = _get_cred("vpm", "password")
+        if not username or not password:
+            raise ValueError("VPM credentials not configured")
+        from postmule.providers.mailbox.vpm import VpmProvider
+        return VpmProvider(username, password)
+
+    raise ValueError(f"Unknown provider: {category}/{service}")
+
+
+@connections_bp.route("/api/providers/<category>/<service>/test", methods=["POST"])
+def test_provider(category: str, service: str):
+    """Run a live health-check against a provider and return JSON."""
+    try:
+        provider = _build_provider(category, service)
+        result = provider.health_check()
+        return jsonify({"ok": result.ok, "status": result.status, "message": result.message})
+    except ValueError as exc:
+        return jsonify({"ok": False, "status": "error", "message": str(exc)})
+    except Exception as exc:
+        log.error(f"health_check {category}/{service} failed: {exc}")
+        return jsonify({"ok": False, "status": "error", "message": str(exc)})
+
+
+@connections_bp.route("/api/providers/<category>/config", methods=["POST"])
+def save_provider_config(category: str):
+    """Save non-sensitive provider settings to config.yaml."""
+    allowed = _CONFIG_FIELDS.get(category, [])
+    tab = _tab_for(category)
+
+    config_path = _app._config_path
+    if not config_path or not config_path.exists():
+        return redirect(url_for("pages.providers") + f"?tab={tab}&error=no_config")
+
+    try:
+        with open(config_path, encoding="utf-8") as f:
+            raw = yaml.safe_load(f) or {}
+        providers = raw.setdefault(category, {}).setdefault("providers", [{}])
+        if not providers:
+            providers.append({})
+        for field in allowed:
+            value = request.form.get(field)
+            if value is not None:
+                providers[0][field] = value.strip()
+        with open(config_path, "w", encoding="utf-8") as f:
+            yaml.dump(raw, f, allow_unicode=True, default_flow_style=False)
+        _app._config_raw = raw
+        try:
+            from postmule.core.config import load_config
+            _app._config = load_config(config_path)
+        except Exception:
+            pass
+    except Exception as exc:
+        log.error(f"Failed to save provider config: {exc}")
+        return redirect(url_for("pages.providers") + f"?tab={tab}&error=save_failed")
+
+    return redirect(url_for("pages.providers") + f"?tab={tab}&saved=1")
+
+
 @connections_bp.route("/api/credential", methods=["POST"])
 def save_credential():
     """Save a credential field to credentials.enc without writing plaintext to disk."""

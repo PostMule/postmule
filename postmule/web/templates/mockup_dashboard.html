@@ -371,9 +371,12 @@
     .conn-provider-name { font-size: 13px; font-weight: 600; color: #0F2044; }
     .conn-provider-desc-small { font-size: 11px; color: #7A90A8; margin-top: 2px; }
     .conn-provider-badge { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
-    .conn-provider-badge--ok   { background: #E8F5E9; color: #1B5E20; border: 1px solid #A5D6A7; }
-    .conn-provider-badge--warn { background: #FFF3E0; color: #E65100; border: 1px solid #FFE0B2; }
-    .conn-provider-badge--off  { background: #F5F6F8; color: #7A90A8; border: 1px solid #DDE3EC; }
+    .conn-provider-badge--ok    { background: #E8F5E9; color: #1B5E20; border: 1px solid #A5D6A7; }
+    .conn-provider-badge--warn  { background: #FFF3E0; color: #E65100; border: 1px solid #FFE0B2; }
+    .conn-provider-badge--off   { background: #F5F6F8; color: #7A90A8; border: 1px solid #DDE3EC; }
+    .conn-provider-badge--error { background: #FDECEA; color: #C62828; }
+    .conn-section-label { font-size: 0.6875rem; font-weight: 700; color: #8A9BB0; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 2px 0; }
+    .hide-inactive .conn-provider--inactive { display: none; }
     .conn-provider-actions { margin-left: auto; }
     .conn-provider-body { padding: 0 16px 12px 60px; font-size: 12px; color: #5A7090; }
     .conn-service-icon { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
@@ -1250,11 +1253,16 @@ Dallas, TX 75266</span>
     </div>
 
     <!-- ── PROVIDERS ────────────────────────────────────────────── -->
-    <div id="sec-providers" class="section" style="display:none;">
-      <h1 class="page-title" style="margin-bottom:8px;">Providers</h1>
+    <div id="sec-providers" class="section" style="display:none;" x-data="{ showAll: true }">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px;">
+        <h1 class="page-title" style="margin-bottom:0;">Providers</h1>
+        <label style="font-size:0.8rem;color:#5A7090;cursor:pointer;display:flex;align-items:center;gap:5px;margin-left:auto;">
+          <input type="checkbox" x-model="showAll" style="cursor:pointer;"> Show all providers
+        </label>
+      </div>
       <p class="page-subtitle">Configure the providers PostMule uses for each service category.</p>
 
-      <div class="conn-tabs" id="conn-tabs">
+      <div class="conn-tabs" id="conn-tabs" :class="{ 'hide-inactive': !showAll }">
         <button class="conn-tab active" onclick="connTab('email',this)">Email</button>
         <button class="conn-tab" onclick="connTab('storage',this)">Storage</button>
         <button class="conn-tab" onclick="connTab('spreadsheet',this)">Spreadsheet</button>
@@ -1267,7 +1275,8 @@ Dallas, TX 75266</span>
 
       <!-- TAB: Email -->
       <div id="ctab-email" class="conn-pane active">
-        <div class="conn-provider conn-provider--active">
+        <div class="conn-section-label">Configured</div>
+        <div class="conn-provider conn-provider--active" x-data="{ ts: 'idle', tm: '', configOpen: true, initOk: true }">
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-google">G</div>
             <div>
@@ -1275,11 +1284,29 @@ Dallas, TX 75266</span>
               <div class="conn-provider-desc-small">user@gmail.com</div>
             </div>
             <span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-            <div class="conn-provider-actions"><button class="btn btn-secondary" onclick="return false;">Reconnect</button></div>
+            <div class="conn-provider-actions" style="display:flex;gap:6px;">
+              <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Test</button>
+              <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" @click="configOpen = !configOpen">
+                <span x-text="configOpen ? 'Close' : 'Configure'">Configure</span>
+              </button>
+              <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Reconnect</button>
+            </div>
           </div>
           <div class="conn-provider-body">Google OAuth refresh token stored in Windows Credential Manager. Covers Gmail, Drive, Sheets, and Gemini.</div>
+          <!-- Configure panel (expanded by default in mockup to show the pattern) -->
+          <div x-show="configOpen" style="padding:12px 18px 14px;border-top:1px solid #E8EDF3;background:#FAFCFF;">
+            <form onsubmit="return false;">
+              <div class="conn-cred-row">
+                <label style="min-width:140px;font-size:0.8125rem;color:#2C4A6E;font-weight:500;">Gmail label</label>
+                <input type="text" class="form-control" value="PostMule" style="flex:1;max-width:260px;">
+                <button class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Save</button>
+              </div>
+              <p class="conn-cred-note">Label applied to processed emails. Default: PostMule</p>
+            </form>
+          </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-section-label conn-provider--inactive">Available</div>
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-ms">Ms</div>
             <div>
@@ -1289,7 +1316,7 @@ Dallas, TX 75266</span>
             <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#8B4CF6;color:white;font-size:10px;font-weight:700;">PM</div>
             <div>
@@ -1299,7 +1326,7 @@ Dallas, TX 75266</span>
             <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#5A7090;color:white;">@</div>
             <div>
@@ -1316,7 +1343,8 @@ Dallas, TX 75266</span>
         <div style="background:#EEF3F9;border:1px solid #C0D0E4;border-radius:6px;padding:10px 14px;font-size:0.8125rem;color:#2C4A6E;line-height:1.5;">
           <strong>How PostMule stores your data:</strong> Your data is saved as JSON files — those files live inside your cloud storage provider. The spreadsheet is a generated view only. You can export your data as CSV or JSON from Settings.
         </div>
-        <div class="conn-provider conn-provider--active">
+        <div class="conn-section-label">Configured</div>
+        <div class="conn-provider conn-provider--active" x-data="{ ts: 'idle', tm: '', configOpen: false, initOk: true }">
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-google">G</div>
             <div>
@@ -1324,65 +1352,82 @@ Dallas, TX 75266</span>
               <div class="conn-provider-desc-small">Root folder: PostMule</div>
             </div>
             <span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            <div class="conn-provider-actions" style="display:flex;gap:6px;">
+              <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Test</button>
+              <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" @click="configOpen = !configOpen">
+                <span x-text="configOpen ? 'Close' : 'Configure'">Configure</span>
+              </button>
+            </div>
+          </div>
+          <div x-show="configOpen" style="padding:12px 18px 14px;border-top:1px solid #E8EDF3;background:#FAFCFF;">
+            <form onsubmit="return false;">
+              <div class="conn-cred-row">
+                <label style="min-width:140px;font-size:0.8125rem;color:#2C4A6E;font-weight:500;">Root folder</label>
+                <input type="text" class="form-control" value="PostMule" style="flex:1;max-width:260px;">
+                <button class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Save</button>
+              </div>
+              <p class="conn-cred-note">Top-level Drive folder for all PostMule files. Default: PostMule</p>
+            </form>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-section-label conn-provider--inactive">Available</div>
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-aws">S3</div>
             <div><div class="conn-provider-name">Amazon S3</div></div>
             <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#0061FF;color:white;">Db</div>
             <div><div class="conn-provider-name">Dropbox</div></div>
             <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#0078D4;color:white;">OD</div>
             <div><div class="conn-provider-name">OneDrive</div></div>
             <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#0061D5;color:white;">Bx</div>
             <div><div class="conn-provider-name">Box</div></div>
             <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#E84C30;color:white;">B2</div>
             <div><div class="conn-provider-name">Backblaze B2</div></div>
             <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#555;color:white;">iC</div>
             <div><div class="conn-provider-name">iCloud Drive</div></div>
             <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#D9272E;color:white;">Mg</div>
             <div><div class="conn-provider-name">MEGA</div></div>
             <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#20B2AA;color:white;">pC</div>
             <div><div class="conn-provider-name">pCloud</div></div>
             <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#4A6080;color:white;">WD</div>
             <div><div class="conn-provider-name">WebDAV</div></div>
@@ -1396,7 +1441,8 @@ Dallas, TX 75266</span>
         <div style="background:#FFF8E7;border:1px solid #E8C96A;border-radius:6px;padding:10px 14px;font-size:0.8125rem;color:#6B4A00;line-height:1.5;">
           <strong>Read-only view.</strong> The spreadsheet is generated from your JSON data files — it is not the database. Editing it directly has no effect on PostMule's data.
         </div>
-        <div class="conn-provider conn-provider--active">
+        <div class="conn-section-label">Configured</div>
+        <div class="conn-provider conn-provider--active" x-data="{ ts: 'idle', tm: '', configOpen: false, initOk: true }">
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-google">G</div>
             <div>
@@ -1404,9 +1450,26 @@ Dallas, TX 75266</span>
               <div class="conn-provider-desc-small">Workbook: PostMule</div>
             </div>
             <span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            <div class="conn-provider-actions" style="display:flex;gap:6px;">
+              <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Test</button>
+              <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" @click="configOpen = !configOpen">
+                <span x-text="configOpen ? 'Close' : 'Configure'">Configure</span>
+              </button>
+            </div>
+          </div>
+          <div x-show="configOpen" style="padding:12px 18px 14px;border-top:1px solid #E8EDF3;background:#FAFCFF;">
+            <form onsubmit="return false;">
+              <div class="conn-cred-row">
+                <label style="min-width:140px;font-size:0.8125rem;color:#2C4A6E;font-weight:500;">Workbook name</label>
+                <input type="text" class="form-control" value="PostMule" style="flex:1;max-width:260px;">
+                <button class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Save</button>
+              </div>
+              <p class="conn-cred-note">Google Sheets workbook name. Default: PostMule</p>
+            </form>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-section-label conn-provider--inactive">Available</div>
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-ms">Ms</div>
             <div><div class="conn-provider-name">Excel Online</div></div>
@@ -1417,7 +1480,8 @@ Dallas, TX 75266</span>
 
       <!-- TAB: Physical Mail -->
       <div id="ctab-physical" class="conn-pane">
-        <div class="conn-provider conn-provider--active">
+        <div class="conn-section-label">Configured</div>
+        <div class="conn-provider conn-provider--active" x-data="{ ts: 'idle', tm: '', initOk: true }">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#E8F5E9;color:#2E7D32;font-size:14px;">&#9993;</div>
             <div>
@@ -1425,10 +1489,14 @@ Dallas, TX 75266</span>
               <div class="conn-provider-desc-small">Credentials set</div>
             </div>
             <span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-            <div class="conn-provider-actions"><button class="btn btn-secondary" onclick="return false;">Update credentials</button></div>
+            <div class="conn-provider-actions" style="display:flex;gap:6px;">
+              <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Test</button>
+              <button class="btn btn-secondary" onclick="return false;">Update credentials</button>
+            </div>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-section-label conn-provider--inactive">Available</div>
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#F5F6F8;color:#7A90A8;font-size:14px;">&#9993;</div>
             <div>
@@ -1438,7 +1506,7 @@ Dallas, TX 75266</span>
             <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#9B59B6;color:white;font-size:10px;font-weight:700;">TM</div>
             <div>
@@ -1448,7 +1516,7 @@ Dallas, TX 75266</span>
             <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#E74C3C;color:white;font-size:10px;font-weight:700;">PS</div>
             <div>
@@ -1462,7 +1530,8 @@ Dallas, TX 75266</span>
 
       <!-- TAB: AI / LLM -->
       <div id="ctab-ai" class="conn-pane">
-        <div class="conn-provider conn-provider--active">
+        <div class="conn-section-label">Configured</div>
+        <div class="conn-provider conn-provider--active" x-data="{ ts: 'idle', tm: '', configOpen: false, initOk: true }">
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-google">G</div>
             <div>
@@ -1470,9 +1539,26 @@ Dallas, TX 75266</span>
               <div class="conn-provider-desc-small">gemini-1.5-flash · uses Google OAuth</div>
             </div>
             <span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            <div class="conn-provider-actions" style="display:flex;gap:6px;">
+              <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Test</button>
+              <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" @click="configOpen = !configOpen">
+                <span x-text="configOpen ? 'Close' : 'Configure'">Configure</span>
+              </button>
+            </div>
+          </div>
+          <div x-show="configOpen" style="padding:12px 18px 14px;border-top:1px solid #E8EDF3;background:#FAFCFF;">
+            <form onsubmit="return false;">
+              <div class="conn-cred-row">
+                <label style="min-width:140px;font-size:0.8125rem;color:#2C4A6E;font-weight:500;">Model</label>
+                <input type="text" class="form-control" value="gemini-1.5-flash" style="flex:1;max-width:260px;">
+                <button class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Save</button>
+              </div>
+              <p class="conn-cred-note">Gemini model name. Default: gemini-1.5-flash</p>
+            </form>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-section-label conn-provider--inactive">Available</div>
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#F0E6FF;color:#6B21A8;font-size:10px;font-weight:700;">ANT</div>
             <div>
@@ -1483,7 +1569,7 @@ Dallas, TX 75266</span>
             <div class="conn-provider-actions"><button class="btn btn-secondary" onclick="return false;">Add API key</button></div>
           </div>
         </div>
-        <div class="conn-provider">
+        <div class="conn-provider conn-provider--inactive">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#E8F5E9;color:#1B5E20;font-size:10px;font-weight:700;">OAI</div>
             <div>
