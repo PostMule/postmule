@@ -25,11 +25,13 @@ Issue #48 — Config generation derives from config.example.yaml at runtime:
 - `installer/build.ps1`: added `--add-data "config.example.yaml;."` to fallback PyInstaller invocation
 - `tests/unit/test_cli.py`: 4 new tests in `TestBuildConfigYaml` — completeness (all top-level keys present), installer values applied, blank VPM defaults preserved, output is valid YAML
 
-Issues #50 (fix 1) and #51 (short-term) — Provider Protocol enforcement + doc freshness:
+Issues #50 (all fixes) and #51 (short-term) — Provider Protocol enforcement + doc freshness:
 - New: `.github/pull_request_template.md` — doc checklist on every PR (config, providers, mockup, /help, README, CLAUDE.md) + test reminders
 - `email/storage/llm/spreadsheet base.py` — `health_check() -> HealthResult` added to each Protocol; omitting it now fails runtime `isinstance()` checks and type-checker validation
 - `tests/unit/test_provider_protocols.py` — updated concrete mock classes to include `health_check()`
-- Note: #50 fix 2 (test_provider_completeness.py) and fix 3 (CONTRIBUTING_PROVIDER.md) still open if desired
+- New: `tests/unit/test_provider_completeness.py` — parametrized across all 17 concrete providers (email x5, storage x4, llm x4, spreadsheet x4); class-level inspect, no credentials/instantiation required
+- New: `docs/CONTRIBUTING_PROVIDER.md` — step-by-step guide for adding a new provider (file layout, Protocol requirements, registry, config.example.yaml, dashboard, test checklist)
+- Added `health_check()` to 13 stubs missing it: imap, outlook_365, outlook_com, proton, dropbox, onedrive, s3, anthropic, ollama, openai, airtable, excel_online (raise NotImplementedError); none returns HealthResult ok=True
 
 Issue #40 — Windows .exe installer with guided setup wizard:
 - New: `installer/postmule.iss` — Inno Setup 6 script; 5 custom Pascal Script wizard pages:
