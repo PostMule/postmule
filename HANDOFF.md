@@ -15,6 +15,12 @@ If files are modified, commit them before starting new work. Never let a session
 ---
 
 ## Last Completed
+Issues #50 (fix 1) and #51 (short-term) — Provider Protocol enforcement + doc freshness:
+- New: `.github/pull_request_template.md` — doc checklist on every PR (config, providers, mockup, /help, README, CLAUDE.md) + test reminders
+- `email/storage/llm/spreadsheet base.py` — `health_check() -> HealthResult` added to each Protocol; omitting it now fails runtime `isinstance()` checks and type-checker validation
+- `tests/unit/test_provider_protocols.py` — updated concrete mock classes to include `health_check()`
+- Note: #50 fix 2 (test_provider_completeness.py) and fix 3 (CONTRIBUTING_PROVIDER.md) still open if desired
+
 Issue #40 — Windows .exe installer with guided setup wizard:
 - New: `installer/postmule.iss` — Inno Setup 6 script; 5 custom Pascal Script wizard pages:
   - Page 1: Google credentials.json (file picker via PowerShell OpenFileDialog, optional)
@@ -70,7 +76,9 @@ Previously: Issues #42 and #43 — README overhaul + Help page overhaul
 ## Next
 Work the issues in this order (check `gh issue list --repo PostMule/app` for current state):
 
-1. **#30** — End-to-end validation (BLOCKED — do not start; user will unblock manually)
+1. **#48** — Config generation must derive from `config.example.yaml` (small — YAML overlay ~20 lines)
+2. **#49** — Installer build pipeline: PyInstaller spec + CI workflow (medium)
+3. **#30** — End-to-end validation (BLOCKED — do not start; user will unblock manually)
 
 ## Mid-Session Decisions (active)
 - **Friendly name is primary, must be unique.** Canonical `name` (LLM-extracted) shown as secondary muted text. Validation must block save if friendly_name already exists on another entity.
