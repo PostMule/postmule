@@ -15,6 +15,11 @@ If files are modified, commit them before starting new work. Never let a session
 ---
 
 ## Last Completed
+Issue #49 — Installer build pipeline: PyInstaller spec + CI workflow:
+- New: `installer/postmule.spec` — PyInstaller spec using `collect_submodules('postmule.providers')` so every provider module is bundled automatically; no manual hidden-import list to maintain. Bundles config.example.yaml, web templates, and web static files.
+- New: `.github/workflows/installer-build.yml` — Windows CI that runs on pushes/PRs touching installer, cli.py, providers, pipeline.py, or config.example.yaml. Steps: install deps + pyinstaller → build exe → smoke-test `configure --help` and `run --help` → install Inno Setup via choco → compile .iss → verify output size. Uploads `PostMuleSetup.exe` as a 30-day artifact on main pushes.
+- Modified: `.gitignore` — added `!installer/postmule.spec` exception (*.spec was already ignored).
+
 Issue #48 — Config generation derives from config.example.yaml at runtime:
 - `postmule/cli.py`: added `_find_example_config()` (dev + PyInstaller via `sys._MEIPASS`); replaced 160-line f-string in `_build_config_yaml()` with ~25-line YAML overlay (`yaml.safe_load` → overlay → `yaml.dump`)
 - `installer/build.ps1`: added `--add-data "config.example.yaml;."` to fallback PyInstaller invocation
@@ -81,8 +86,7 @@ Previously: Issues #42 and #43 — README overhaul + Help page overhaul
 ## Next
 Work the issues in this order (check `gh issue list --repo PostMule/app` for current state):
 
-1. **#49** — Installer build pipeline: PyInstaller spec + CI workflow (medium)
-2. **#30** — End-to-end validation (BLOCKED — do not start; user will unblock manually)
+1. **#30** — End-to-end validation (BLOCKED — do not start; user will unblock manually)
 
 ## Mid-Session Decisions (active)
 - **Friendly name is primary, must be unique.** Canonical `name` (LLM-extracted) shown as secondary muted text. Validation must block save if friendly_name already exists on another entity.

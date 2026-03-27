@@ -31,6 +31,8 @@ MANIFEST
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
+# Exception: our committed PyInstaller spec is intentionally version-controlled.
+!installer/postmule.spec
 
 # Installer logs
 pip-log.txt
