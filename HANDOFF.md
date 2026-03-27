@@ -7,12 +7,12 @@
 ## Last Completed
 > Maintenance: before adding a new entry, delete the previous one. One issue max. Full history is in `git log`.
 
-Issues #50 (all fixes) and #51 — Provider Protocol enforcement + doc freshness:
-- `.github/pull_request_template.md` — doc checklist on every PR + test reminders
-- `health_check() -> HealthResult` added to all 4 Protocol base classes; omitting it fails `isinstance()` checks
-- `tests/unit/test_provider_completeness.py` — parametrized across all 17 concrete providers; class-level inspect, no credentials required
-- `docs/CONTRIBUTING_PROVIDER.md` — step-by-step guide for adding a new provider
-- `health_check()` added to 13 stubs (raise NotImplementedError): imap, outlook_365, outlook_com, proton, dropbox, onedrive, s3, anthropic, ollama, openai, airtable, excel_online
+Issue #52 — Wire `mockup_email_daily.html` as Jinja2 template:
+- `postmule/web/templates/email_daily.html` — production Jinja2 template derived from the mockup
+- `postmule/agents/summary.py` — `_build_summary_html` now renders via Jinja2; new `_build_email_context` helper
+- `docs/decisions.md` — new living doc for non-obvious design decisions (8 entries, issue refs)
+- `docs/architecture.md` — added dry-run, API safety gate, 50-file cap invariants
+- `HANDOFF.md` — Active Design Decisions now points to `docs/decisions.md`
 
 ---
 
