@@ -75,6 +75,7 @@ if (-not $SkipPyInstaller) {
             --console `
             --clean `
             --noconfirm `
+            --add-data "config.example.yaml;." `
             --add-data "postmule\web\templates;postmule\web\templates" `
             --add-data "postmule\web\static;postmule\web\static" `
             --hidden-import "postmule.providers.email.gmail" `

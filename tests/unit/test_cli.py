@@ -7,7 +7,7 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-from postmule.cli import main
+from postmule.cli import _build_config_yaml, _find_example_config, main
 
 
 @pytest.fixture
@@ -178,6 +178,64 @@ class TestUninstallCommand:
         if mock_run.called:
             call_args = mock_run.call_args[0][0]
             assert "-KeepData" in call_args
+
+
+class TestBuildConfigYaml:
+    """_build_config_yaml() must stay in sync with config.example.yaml."""
+
+    def _make_config(self, **kwargs) -> dict:
+        defaults = dict(
+            install_dir=Path("C:/ProgramData/PostMule"),
+            alert_email="user@example.com",
+            vpm_provider="vpm",
+            vpm_sender="",
+            vpm_prefix="",
+            run_time="02:00",
+        )
+        defaults.update(kwargs)
+        return yaml.safe_load(_build_config_yaml(**defaults))
+
+    def test_all_top_level_keys_present(self):
+        """Every top-level key in config.example.yaml must appear in generated output."""
+        example = yaml.safe_load(_find_example_config().read_text(encoding="utf-8"))
+        generated = self._make_config()
+        missing = set(example) - set(generated)
+        assert not missing, f"Generated config missing top-level keys: {missing}"
+
+    def test_installer_values_are_applied(self):
+        cfg = self._make_config(
+            install_dir=Path("C:/custom"),
+            alert_email="alert@test.com",
+            run_time="06:30",
+            vpm_provider="earth_class",
+            vpm_sender="mail@ec.com",
+            vpm_prefix="[EC]",
+        )
+        assert cfg["app"]["install_dir"] == "C:/custom" or "custom" in cfg["app"]["install_dir"]
+        assert cfg["notifications"]["alert_email"] == "alert@test.com"
+        assert cfg["schedule"]["run_time"] == "06:30"
+        assert cfg["mailbox"]["providers"][0]["service"] == "earth_class"
+        assert cfg["mailbox"]["providers"][0]["scan_sender"] == "mail@ec.com"
+        assert cfg["mailbox"]["providers"][0]["scan_subject_prefix"] == "[EC]"
+
+    def test_default_vpm_sender_kept_when_blank(self):
+        cfg = self._make_config(vpm_sender="", vpm_prefix="")
+        vpm = cfg["mailbox"]["providers"][0]
+        # Original defaults from config.example.yaml should be preserved
+        assert vpm["scan_sender"] == "noreply@virtualpostmail.com"
+        assert vpm["scan_subject_prefix"] == "[Scan Request]"
+
+    def test_output_is_valid_yaml(self):
+        raw = _build_config_yaml(
+            install_dir=Path("C:/ProgramData/PostMule"),
+            alert_email="x@y.com",
+            vpm_provider="vpm",
+            vpm_sender="",
+            vpm_prefix="",
+            run_time="02:00",
+        )
+        parsed = yaml.safe_load(raw)
+        assert isinstance(parsed, dict)
 
 
 class TestEncryptCredentials:
