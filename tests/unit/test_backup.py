@@ -177,6 +177,22 @@ class TestExtractZip:
 
         assert restored == []
 
+    def test_round_trip_preserves_content(self, tmp_path):
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        original = b'{"bills": [{"id": "1", "amount": 99.99}]}'
+        (data_dir / "bills_2026.json").write_bytes(original)
+
+        zip_bytes, _ = _create_zip(data_dir, None, None)
+
+        restore_dir = tmp_path / "restore"
+        restore_dir.mkdir()
+        _extract_zip(zip_bytes, restore_dir)
+
+        restored_file = restore_dir / "bills_2026.json"
+        assert restored_file.exists()
+        assert restored_file.read_bytes() == original
+
 
 # ---------------------------------------------------------------------------
 # _prune_old_backups
