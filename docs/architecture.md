@@ -76,6 +76,9 @@ graph TB
 - **Soft deletes only.** No file is permanently deleted automatically.
 - **3-layer write redundancy.** Every Drive write: execute → MD5 verify → audit log.
 - **Provider interfaces.** All external services implement a base protocol in `postmule/providers/*/base.py`. Swap any provider with one config line.
+- **Dry-run everywhere.** The `--dry-run` flag is respected by every agent and every provider — no writes, moves, or sends occur in dry-run mode.
+- **API safety gate.** LLM API usage limits (configured under `api_safety` in `config.yaml`) are checked before every LLM call. Calls are blocked if limits would be exceeded.
+- **50-file cap per run.** No more than 50 files are moved out of Inbox in a single pipeline run, regardless of how many are present.
 
 ## Key File Paths
 

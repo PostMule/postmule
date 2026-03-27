@@ -94,96 +94,147 @@ def _build_summary_html(
     pending_bills: list[dict],
     api_usage: dict,
 ) -> str:
-    total = stats.get("pdfs_processed", 0)
-    status_color = "#2E7D32" if stats.get("status") == "success" else "#C62828"
+    from jinja2 import Environment, FileSystemLoader
+    template_dir = Path(__file__).parent.parent / "web" / "templates"
+    env = Environment(loader=FileSystemLoader(str(template_dir)), autoescape=True)
+    template = env.get_template("email_daily.html")
+    context = _build_email_context(today, stats, items, pending_bills, api_usage)
+    return template.render(**context)
 
-    # Stats bar
-    stat_items = [
-        ("Bills", stats.get("bills", 0), "#E8A020"),
-        ("Notices", stats.get("notices", 0), "#7A9CC4"),
-        ("Forward To Me", stats.get("forward_to_me", 0), "#C62828"),
-        ("Junk", stats.get("junk", 0), "#DDE3EC"),
-        ("Review", stats.get("needs_review", 0), "#7A9CC4"),
-    ]
 
-    stats_html = "".join(
-        f'<td style="text-align:center;padding:8px 16px;">'
-        f'<div style="font-size:22px;font-weight:600;color:{color};">{count}</div>'
-        f'<div style="font-size:11px;color:#7A90A8;letter-spacing:1px;text-transform:uppercase;">{label}</div>'
-        f"</td>"
-        for label, count, color in stat_items
-    )
+def _build_email_context(
+    today: str,
+    stats: dict,
+    items: list[dict],
+    pending_bills: list[dict],
+    api_usage: dict,
+) -> dict:
+    from datetime import date as _date
 
-    # Mail items list
-    items_html = ""
+    # Fall back to len(items) when pdfs_processed is absent (e.g. in tests or
+    # partial stats dicts), so is_quiet and section rendering stay correct.
+    total = stats.get("pdfs_processed", len(items))
+    try:
+        d = _date.fromisoformat(today)
+    except ValueError:
+        d = _date.today()
+    today_label = d.strftime(f"%A, %B {d.day}, %Y")
+
+    # Summary subtitle: "2 bills · 1 notice · 1 forward to you"
+    sub_parts: list[str] = []
+    for key, singular, plural in [
+        ("bills", "bill", "bills"),
+        ("notices", "notice", "notices"),
+        ("forward_to_me", "forward to you", "forwards to you"),
+        ("junk", "junk", "junk"),
+        ("needs_review", "needs review", "need review"),
+    ]:
+        n = stats.get(key, 0)
+        if n:
+            sub_parts.append(f"{n} {singular if n == 1 else plural}")
+    summary_sub = " · ".join(sub_parts)
+
+    # Badge styles (inline — CSS classes not reliable across all email clients)
+    _BADGE: dict[str, tuple[str, str]] = {
+        "bill":    ("Bill",          "background-color:#FFF3CD;color:#7A5C00;border:1px solid #F0C850;"),
+        "notice":  ("Notice",        "background-color:#E8F0FC;color:#1E4A8A;border:1px solid #C0D4F4;"),
+        "forward": ("Forward To Me", "background-color:#FCE8E8;color:#8A1A1A;border:1px solid #F4C0C0;"),
+        "overdue": ("Overdue Bill",  "background-color:#FCE8E8;color:#C62828;border:1px solid #F4C0C0;"),
+        "other":   ("Other",         "background-color:#F0F2F5;color:#5A7090;border:1px solid #D0D8E4;"),
+    }
+    _CAT_BADGE: dict[str, str] = {
+        "Bill": "bill", "Notice": "notice", "ForwardToMe": "forward",
+        "Personal": "other", "Junk": "other", "NeedsReview": "other",
+    }
+
+    # Action Required: ForwardToMe processed items + overdue pending bills
+    action_items: list[dict] = []
+    for item in items:
+        if item.get("category") == "ForwardToMe":
+            parts = [p for p in [item.get("summary"), f"Received {item['processed_date']}" if item.get("processed_date") else None] if p]
+            label, style = _BADGE["forward"]
+            action_items.append({
+                "badge_label": label, "badge_style": style, "urgent": True,
+                "sender": item.get("sender", "Unknown"),
+                "detail": " · ".join(parts),
+                "amount": None,
+            })
+
+    remaining_pending: list[dict] = []
+    for bill in pending_bills:
+        days = _days_until(bill.get("due_date", ""))
+        if days is not None and days < 0:
+            n = abs(days)
+            label, style = _BADGE["overdue"]
+            action_items.append({
+                "badge_label": label, "badge_style": style, "urgent": False,
+                "sender": bill.get("sender", ""),
+                "detail": f"Due {bill.get('due_date', '')} — {n} day{'s' if n != 1 else ''} overdue",
+                "amount": bill.get("amount_due"),
+            })
+        else:
+            remaining_pending.append(bill)
+
+    # New Items: all processed items sorted by category
+    new_items: list[dict] = []
     for item in sorted(items, key=lambda x: x.get("category", "")):
         cat = item.get("category", "")
-        bar_color = {
-            "Bill": "#E8A020", "Notice": "#7A9CC4", "ForwardToMe": "#C62828",
-            "Personal": "#7A9CC4", "Junk": "#DDE3EC", "NeedsReview": "#7A9CC4",
-        }.get(cat, "#DDE3EC")
+        badge_key = _CAT_BADGE.get(cat, "other")
+        badge_label, badge_style = _BADGE[badge_key]
 
-        due = ""
-        if item.get("due_date") and item.get("amount_due") is not None:
-            due = f' &mdash; ${item["amount_due"]:.2f} due {item["due_date"]}'
+        if cat == "Bill":
+            parts: list[str] = []
+            if item.get("processed_date"):
+                parts.append(f"Received {item['processed_date']}")
+            days = _days_until(item.get("due_date", ""))
+            if item.get("due_date"):
+                if days is None or days < 0:
+                    parts.append(f"Due {item['due_date']}")
+                elif days == 0:
+                    parts.append("Due today")
+                elif days == 1:
+                    parts.append(f"Due {item['due_date']} · due tomorrow")
+                else:
+                    parts.append(f"Due {item['due_date']} · {days} days remaining")
+            detail = " · ".join(parts)
+        else:
+            detail_parts = [p for p in [item.get("summary"), f"Received {item['processed_date']}" if item.get("processed_date") else None] if p]
+            detail = " · ".join(detail_parts)
 
-        items_html += f"""
-        <tr>
-          <td style="width:3px;background:{bar_color};"></td>
-          <td style="padding:10px 14px;">
-            <div style="font-weight:600;color:#0F2044;">{item.get('sender','Unknown')}</div>
-            <div style="font-size:12px;color:#5A7090;">{item.get('summary','')}{due}</div>
-          </td>
-          <td style="padding:10px 14px;font-size:11px;color:#B8C8D8;white-space:nowrap;">
-            {item.get('processed_date','')}
-          </td>
-        </tr>
-        """
+        new_items.append({
+            "badge_label": badge_label, "badge_style": badge_style,
+            "sender": item.get("sender", "Unknown"),
+            "detail": detail,
+            "amount": item.get("amount_due") if cat == "Bill" else None,
+            "amount_overdue": False,
+        })
 
-    # Pending bills
-    pending_html = ""
-    for bill in pending_bills:
-        days_until = _days_until(bill.get("due_date", ""))
-        urgency = "#C62828" if days_until is not None and days_until <= 7 else "#E8A020"
-        pending_html += f"""
-        <tr>
-          <td style="padding:6px 14px;color:#0F2044;">{bill.get('sender','')}</td>
-          <td style="padding:6px 14px;color:#0F2044;">${bill.get('amount_due',0):.2f}</td>
-          <td style="padding:6px 14px;color:{urgency};">{bill.get('due_date','')}</td>
-        </tr>
-        """
-
-    # API usage
+    # API usage summary line
     req_pct = 0
     if api_usage.get("request_limit"):
         req_pct = int(api_usage.get("requests", 0) / api_usage["request_limit"] * 100)
+    provider = api_usage.get("provider", "LLM").capitalize()
+    api_summary = (
+        f"{provider} API: {api_usage.get('requests', 0):,}/{api_usage.get('request_limit', 1400):,}"
+        f" requests ({req_pct}%)"
+        f" — {api_usage.get('tokens', 0):,}/{api_usage.get('token_limit', 900000):,} tokens"
+        f" — Est. cost: ${api_usage.get('estimated_cost_usd', 0):.4f}"
+    )
 
-    return f"""
-    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;background:#F5F6F8;padding:24px;">
-
-      <div style="background:#0F2044;border-radius:8px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
-        <div style="font-size:20px;font-weight:600;color:white;">Post<span style="color:#E8A020;">Mule</span></div>
-        <div style="color:#5A7CA4;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-left:auto;">{today}</div>
-      </div>
-
-      <div style="background:white;border-radius:8px;border:1px solid #DDE3EC;margin-bottom:12px;">
-        <table style="width:100%;border-collapse:collapse;">
-          <tr>{stats_html}</tr>
-        </table>
-      </div>
-
-      {"<table style='width:100%;border-collapse:collapse;background:white;border-radius:8px;border:1px solid #DDE3EC;margin-bottom:12px;overflow:hidden;'>" + items_html + "</table>" if items_html else ""}
-
-      {_pending_bills_section(pending_html) if pending_html else ""}
-
-      <div style="background:white;border-radius:8px;border:1px solid #DDE3EC;padding:12px 16px;font-size:11px;color:#7A90A8;">
-        {api_usage.get('provider', 'LLM').capitalize()} API: {api_usage.get('requests',0)}/{api_usage.get('request_limit',1400)} requests ({req_pct}%) &mdash;
-        {api_usage.get('tokens',0):,}/{api_usage.get('token_limit',900000):,} tokens &mdash;
-        Est. cost: ${api_usage.get('estimated_cost_usd',0):.4f}
-      </div>
-
-    </div>
-    """
+    return {
+        "today": today,
+        "today_label": today_label,
+        "total": total,
+        "is_quiet": total == 0 and not action_items and not remaining_pending,
+        "summary_sub": summary_sub,
+        "action_items": action_items,
+        "new_items": new_items,
+        "pending_items": remaining_pending,
+        "run_ok": stats.get("status") == "success",
+        "run_errors": stats.get("errors", 0),
+        "api_summary": api_summary,
+        "dashboard_url": "http://localhost:5000",
+    }
 
 
 def send_bill_due_alert(

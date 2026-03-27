@@ -29,12 +29,4 @@ Issues #50 (all fixes) and #51 — Provider Protocol enforcement + doc freshness
 ---
 
 ## Active Design Decisions
-> These capture non-obvious choices not derivable from the code. Remove entries once they are superseded or fully baked in.
-
-- **Friendly name is primary, must be unique.** Canonical `name` (LLM-extracted) shown as secondary muted text. Validation must block save if friendly_name already exists on another entity.
-- **One entity per account number.** AT&T Mobile (****1234) and AT&T Internet (****5678) are two separate entity records. Matching uses account number + name; falls back to name-only when account is unknown.
-- **Account number display:** strip all spaces and special chars, show last 4 as `****1234`.
-- **Last payment column:** show last matched payment date + amount (e.g. "Mar 18 · $94.00") or `—` if none on record.
-- **Mail reassignment UX:** small "Edit" link per item; expands a row below. Click the category badge to pick a new category. Click the entity name to pick from alphabetical list of friendly names. Save commits, Cancel collapses.
-- **Aliases:** never shown in main entity table row; only visible in expanded chevron detail panel.
-- **Issue #30 (end-to-end):** blocked with a GitHub comment; user will unblock when app is ready.
+> Maintained in `docs/decisions.md`. Check there for the current list.

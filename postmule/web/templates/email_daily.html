@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<!--
+  PostMule — Daily Summary Email
+  Rendered by postmule/agents/summary.py via Jinja2.
+  Design reference: mockup_email_daily.html
+-->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <title>PostMule Daily Summary</title>
+  <style>
+    /* Dark mode overrides (Apple Mail, Gmail app) */
+    @media (prefers-color-scheme: dark) {
+      .email-body        { background-color: #1A2740 !important; }
+      .email-summary     { background-color: #1E2F4A !important; border-color: #2C4060 !important; }
+      .email-summary-txt { color: #E8EFF8 !important; }
+      .email-summary-sub { color: #8A9BB0 !important; }
+      .email-card        { background-color: #1E2F4A !important; border-color: #2C4060 !important; }
+      .email-item        { border-color: #2C4060 !important; }
+      .email-sender      { color: #E8EFF8 !important; }
+      .email-detail      { color: #8A9BB0 !important; }
+      .email-amount      { color: #E8EFF8 !important; }
+      .email-run         { background-color: #1E2F4A !important; border-color: #2C4060 !important; }
+      .email-quiet       { background-color: #1E2F4A !important; border-color: #2C4060 !important; }
+      .email-quiet-title { color: #E8EFF8 !important; }
+    }
+    /* Mobile */
+    @media screen and (max-width: 480px) {
+      .email-hdr  { padding: 20px !important; }
+      .email-sum  { padding: 16px 20px !important; }
+      .email-sec  { padding-left: 12px !important; padding-right: 12px !important; }
+      .email-ftr  { padding: 16px 20px !important; }
+      .email-date { display: none !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F6F8;">
+
+<div style="margin:0 auto;max-width:600px;">
+  <!--[if mso]><table width="600" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td><![endif]-->
+
+  {# ── Header ──────────────────────────────────────────────────────── #}
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0F2044;border-radius:8px 8px 0 0;">
+    <tr>
+      <td class="email-hdr" style="padding:24px 32px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="vertical-align:middle;">
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:700;color:#FFFFFF;letter-spacing:-0.5px;line-height:1;">Post<span style="color:#E8A020;">Mule</span></div>
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7A9CC4;letter-spacing:2px;text-transform:uppercase;margin-top:4px;">Smart mail management</div>
+            </td>
+            <td class="email-date" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7A9CC4;text-align:right;vertical-align:middle;line-height:1.4;">
+              Daily Summary<br>{{ today_label }}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  {# ── Summary bar ──────────────────────────────────────────────────── #}
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FFFFFF;border-left:1px solid #DDE3EC;border-right:1px solid #DDE3EC;">
+    <tr>
+      <td class="email-sum email-summary" style="padding:20px 32px;background-color:#FFFFFF;border-bottom:1px solid #DDE3EC;">
+        {% if is_quiet %}
+        <p class="email-summary-txt" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:600;color:#0F2044;margin:0;line-height:1.4;">Nothing new today.</p>
+        <p class="email-summary-sub" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;margin:4px 0 0;">No mail was received or processed during this run.</p>
+        {% else %}
+        <p class="email-summary-txt" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:600;color:#0F2044;margin:0;line-height:1.4;">{{ total }} item{{ 's' if total != 1 else '' }} processed today.</p>
+        {% if summary_sub %}<p class="email-summary-sub" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;margin:4px 0 0;">{{ summary_sub }}</p>{% endif %}
+        {% endif %}
+      </td>
+    </tr>
+  </table>
+
+  {# ── Body ─────────────────────────────────────────────────────────── #}
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" class="email-body" style="background-color:#F5F6F8;border-left:1px solid #DDE3EC;border-right:1px solid #DDE3EC;padding-bottom:24px;">
+
+    {% if is_quiet %}
+    {# Quiet day card #}
+    <tr>
+      <td class="email-sec" style="padding:20px 24px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" class="email-quiet" style="background-color:#FFFFFF;border:1px solid #DDE3EC;border-radius:6px;">
+          <tr>
+            <td style="text-align:center;padding:40px 32px;">
+              <div style="font-size:32px;line-height:1;margin-bottom:12px;">&#128231;</div>
+              <p class="email-quiet-title" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:600;color:#0F2044;margin:0 0 6px;">All clear.</p>
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#8A9BB0;margin:0;">No new mail arrived. PostMule will check again tomorrow.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    {% else %}
+
+    {% if action_items %}
+    {# Action Required section #}
+    <tr>
+      <td class="email-sec" style="padding:20px 24px 0;">
+        <div style="padding:10px 16px;background-color:#FFF3CD;color:#7A5C00;border:1px solid #F0C850;border-bottom:none;border-radius:6px 6px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">Action Required</div>
+        <div class="email-card" style="background-color:#FFFFFF;border:1px solid #DDE3EC;border-radius:0 0 6px 6px;overflow:hidden;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            {% for item in action_items %}
+            <tr>
+              <td class="email-item" style="padding:14px 16px;{% if not loop.last %}border-bottom:1px solid #EEF2F7;{% endif %}vertical-align:top;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="vertical-align:top;">
+                      <span style="display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:3px;margin-bottom:6px;{{ item.badge_style }}">{{ item.badge_label }}</span>
+                      {% if item.urgent %}<span style="display:inline-block;background-color:#C62828;color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:3px;margin-left:6px;vertical-align:middle;">Urgent</span>{% endif %}
+                      <p class="email-sender" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#0F2044;margin:0 0 3px;">{{ item.sender }}</p>
+                      <p class="email-detail" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;margin:0;line-height:1.5;">{{ item.detail }}</p>
+                    </td>
+                    {% if item.amount is not none %}
+                    <td style="vertical-align:middle;text-align:right;white-space:nowrap;padding-left:12px;">
+                      <span style="font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#C62828;">${{ "%.2f" | format(item.amount) }}</span>
+                    </td>
+                    {% endif %}
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </td>
+    </tr>
+    {% endif %}
+
+    {% if new_items %}
+    {# New Items section #}
+    <tr>
+      <td class="email-sec" style="padding:20px 24px 0;">
+        <div style="padding:10px 16px;background-color:#EDF2FA;color:#2C4A6E;border:1px solid #D0DCEE;border-bottom:none;border-radius:6px 6px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">New Items</div>
+        <div class="email-card" style="background-color:#FFFFFF;border:1px solid #DDE3EC;border-radius:0 0 6px 6px;overflow:hidden;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            {% for item in new_items %}
+            <tr>
+              <td class="email-item" style="padding:14px 16px;{% if not loop.last %}border-bottom:1px solid #EEF2F7;{% endif %}vertical-align:top;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="vertical-align:top;">
+                      <span style="display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:3px;margin-bottom:6px;{{ item.badge_style }}">{{ item.badge_label }}</span>
+                      <p class="email-sender" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#0F2044;margin:0 0 3px;">{{ item.sender }}</p>
+                      <p class="email-detail" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;margin:0;line-height:1.5;">{{ item.detail }}</p>
+                    </td>
+                    {% if item.amount is not none %}
+                    <td style="vertical-align:middle;text-align:right;white-space:nowrap;padding-left:12px;">
+                      <span class="email-amount" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;{% if item.amount_overdue %}color:#C62828;{% else %}color:#0F2044;{% endif %}">${{ "%.2f" | format(item.amount) }}</span>
+                    </td>
+                    {% endif %}
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </td>
+    </tr>
+    {% endif %}
+
+    {% endif %}{# end is_quiet #}
+
+    {% if pending_items %}
+    {# Pending bills #}
+    <tr>
+      <td class="email-sec" style="padding:16px 24px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FFFFFF;border:1px solid #DDE3EC;border-radius:6px;">
+          <tr>
+            <td style="padding:14px 16px;">
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8A9BB0;margin:0 0 8px;">Pending</p>
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;line-height:1.7;margin:0;">
+                {{ pending_items | length }} unpaid bill{{ 's' if pending_items | length != 1 else '' }}
+                &nbsp;&middot;&nbsp;
+                <a href="{{ dashboard_url }}/bills" style="color:#7A9CC4;text-decoration:underline;">View in dashboard &rarr;</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    {% endif %}
+
+    {# Last Run #}
+    <tr>
+      <td class="email-sec" style="padding:16px 24px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" class="email-run" style="background-color:#FFFFFF;border:1px solid #DDE3EC;border-radius:6px;">
+          <tr>
+            <td style="padding:14px 16px;">
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8A9BB0;margin:0 0 8px;">Last Run</p>
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5A7090;line-height:1.7;margin:0;">
+                {% if run_ok %}<span style="color:#2E7D32;font-weight:600;">Completed successfully</span>{% else %}<span style="color:#C62828;font-weight:600;">Completed with errors</span>{% endif %}
+                &nbsp;&middot;&nbsp; {{ total }} item{{ 's' if total != 1 else '' }} processed{% if run_errors %} &nbsp;&middot;&nbsp; {{ run_errors }} error{{ 's' if run_errors != 1 else '' }}{% endif %}<br>
+                {{ api_summary }}
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    {# Dashboard CTA #}
+    <tr>
+      <td style="text-align:center;padding:20px 24px 0;">
+        <a href="{{ dashboard_url }}" style="display:inline-block;background-color:#0F2044;color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;padding:12px 28px;border-radius:6px;text-decoration:none;">Open Dashboard &rarr;</a>
+      </td>
+    </tr>
+
+  </table>
+
+  {# ── Footer ───────────────────────────────────────────────────────── #}
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0F2044;border-radius:0 0 8px 8px;">
+    <tr>
+      <td class="email-ftr" style="padding:20px 32px;text-align:center;">
+        <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5A7CA4;line-height:1.7;margin:0;">
+          You&#39;re receiving this because PostMule is configured to send daily summaries.<br>
+          To stop, disable notifications in <a href="{{ dashboard_url }}/settings" style="color:#7A9CC4;text-decoration:underline;">Settings &rarr; Notifications</a>.<br>
+          PostMule &nbsp;&middot;&nbsp; <a href="https://github.com/PostMule/app" style="color:#7A9CC4;text-decoration:underline;">github.com/PostMule/app</a>
+        </p>
+      </td>
+    </tr>
+  </table>
+
+  <!--[if mso]></td></tr></table><![endif]-->
+</div>
+
+</body>
+</html>

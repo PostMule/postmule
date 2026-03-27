@@ -68,7 +68,7 @@ class TestBuildSummaryHtml:
             api_usage={},
         )
         assert "ATT" in html
-        assert "Monthly bill" in html
+        assert "2025-01-01" in html  # processed_date shown in Bill detail
 
     def test_includes_pending_bills(self):
         pending_bills = [{"sender": "Visa", "amount_due": 50.00, "due_date": "2025-04-01"}]
@@ -105,7 +105,7 @@ class TestBuildSummaryHtml:
             api_usage={"requests": 42, "request_limit": 1400, "tokens": 1000, "token_limit": 900000, "estimated_cost_usd": 0.0},
         )
         assert "42" in html
-        assert "1400" in html
+        assert "1,400" in html
 
 
 class TestPendingBillsSection:
