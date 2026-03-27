@@ -1,9 +1,9 @@
 # PostMule — Claude Code Project Context
+> Maintenance: before adding anything here, ask — is this derivable from the code or docs/ in under 3 file reads? If yes, don't add it.
 
 ## Session Start — Required
 1. Run `git log --oneline -15` and `git status` — commit any uncommitted changes first
-2. State in one sentence what is being built and how it fits the architecture
-3. Check Architecture Invariants below — flag any drift before proceeding
+2. Check Architecture Invariants below — flag any drift before proceeding
 
 ## Architecture Invariants (non-negotiable)
 - Every external service accessed through a provider interface in `postmule/providers/*/`
@@ -60,9 +60,7 @@ PostMule/
 ## Web Dashboard
 - Nav: Mail (`/`), Entities, Settings, Logs, Providers
 - Mail: status widget + filter tabs (All, Bills, Notices, Forward To Me, Unassigned); entity match proposals inline per item
-- Redirects (301): `/bills`→`/mail?tab=bills`, `/forward`→`/mail?tab=forward`, `/pending`→`/mail?tab=unassigned`, `/home`→`/`, `/connections`→`/providers`, `/corrections`→`/logs`
 - Providers page: category tabs + "All / Configured only" toggle
-- Templates: `postmule/web/templates/login.html` and `page.html`
 - Brand reference: `postmule_brand_03_final.html` | Living mockup: `mockup_dashboard.html` (keep in sync)
 
 ## File Naming
