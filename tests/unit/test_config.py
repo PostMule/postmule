@@ -73,6 +73,12 @@ class TestLoadConfig:
         with pytest.raises(ConfigError, match="empty"):
             load_config(empty)
 
+    def test_raises_when_yaml_is_not_a_dict(self, tmp_path):
+        bare = tmp_path / "config.yaml"
+        bare.write_text("just a plain string")
+        with pytest.raises(ConfigError, match="not a valid"):
+            load_config(bare)
+
 
 class TestValidate:
     def test_missing_alert_email_raises(self, tmp_path, minimal_config_data):
@@ -102,3 +108,27 @@ class TestValidate:
         path.write_text(yaml.dump(minimal_config_data))
         with pytest.raises(ConfigError, match="storage"):
             load_config(path)
+
+    def test_multiple_errors_reported_together(self, tmp_path, minimal_config_data):
+        minimal_config_data["notifications"]["alert_email"] = ""
+        minimal_config_data["llm"]["providers"] = [{"service": "gemini", "enabled": False}]
+        path = tmp_path / "config.yaml"
+        path.write_text(yaml.dump(minimal_config_data))
+        with pytest.raises(ConfigError, match="2 problem"):
+            load_config(path)
+
+
+class TestAlertRecipients:
+    def test_deduplicates_when_secondary_equals_primary(self, minimal_config_data):
+        minimal_config_data["notifications"]["alert_email_secondary"] = "test@example.com"
+        cfg = Config(minimal_config_data, Path("config.yaml"))
+        assert cfg.alert_recipients == ["test@example.com"]
+
+    def test_returns_both_when_secondary_is_distinct(self, minimal_config_data):
+        minimal_config_data["notifications"]["alert_email_secondary"] = "other@example.com"
+        cfg = Config(minimal_config_data, Path("config.yaml"))
+        assert cfg.alert_recipients == ["test@example.com", "other@example.com"]
+
+    def test_returns_only_primary_when_no_secondary(self, minimal_config_data):
+        cfg = Config(minimal_config_data, Path("config.yaml"))
+        assert cfg.alert_recipients == ["test@example.com"]
