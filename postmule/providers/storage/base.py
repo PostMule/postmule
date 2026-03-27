@@ -7,6 +7,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
+from postmule.providers import HealthResult
+
 
 @runtime_checkable
 class StorageProvider(Protocol):
@@ -48,4 +50,7 @@ class StorageProvider(Protocol):
 
     def delete_file(self, file_id: str) -> None:
         """Permanently delete a file by ID."""
+        ...
+
+    def health_check(self) -> HealthResult:
         ...

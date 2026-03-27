@@ -7,6 +7,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
+from postmule.providers import HealthResult
+
 
 @dataclass
 class EmailMessage:
@@ -36,4 +38,7 @@ class EmailProvider(Protocol):
         ...
 
     def mark_as_processed(self, message_id: str) -> None:
+        ...
+
+    def health_check(self) -> HealthResult:
         ...

@@ -7,6 +7,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
+from postmule.providers import HealthResult
+
 
 @dataclass
 class ClassificationResult:
@@ -34,4 +36,7 @@ class LLMProvider(Protocol):
         known_names: list[str] | None = None,
         dry_run: bool = False,
     ) -> ClassificationResult:
+        ...
+
+    def health_check(self) -> HealthResult:
         ...

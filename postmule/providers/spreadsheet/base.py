@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable
 
+from postmule.providers import HealthResult
+
 
 @runtime_checkable
 class SpreadsheetProvider(Protocol):
@@ -17,4 +19,7 @@ class SpreadsheetProvider(Protocol):
 
     def write_sheet(self, sheet_name: str, rows: list[list[Any]]) -> None:
         """Write rows to a named sheet tab, creating it if needed."""
+        ...
+
+    def health_check(self) -> HealthResult:
         ...

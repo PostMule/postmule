@@ -30,6 +30,9 @@ class TestSpreadsheetProviderProtocol:
             def write_sheet(self, sheet_name, rows):
                 pass
 
+            def health_check(self):
+                pass
+
         obj = MySpreadsheet()
         assert isinstance(obj, SpreadsheetProvider)
 
@@ -101,6 +104,9 @@ class TestStorageProviderProtocol:
                 return "file-id"
 
             def delete_file(self, file_id):
+                pass
+
+            def health_check(self):
                 pass
 
         return MyStorage()
