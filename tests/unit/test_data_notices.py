@@ -90,3 +90,49 @@ class TestToSheetRows:
         assert row[3] == "IRS"
         assert row[4] == "Alice, Bob"
         assert row[7] == "2025-01-01_Alice_IRS_Notice.pdf"
+
+
+class TestFindNotice:
+    def test_returns_none_when_not_found(self, tmp_path):
+        from postmule.data.notices import find_notice
+        assert find_notice(tmp_path, "nonexistent-id") is None
+
+    def test_finds_notice_by_id(self, tmp_path):
+        from postmule.data.notices import find_notice
+        added = add_notice(tmp_path, {"id": "target-id", "date_received": "2025-03-01", "sender": "IRS"})
+        result = find_notice(tmp_path, "target-id")
+        assert result is not None
+        assert result["sender"] == "IRS"
+
+    def test_returns_none_for_wrong_id(self, tmp_path):
+        from postmule.data.notices import find_notice
+        add_notice(tmp_path, {"id": "real-id", "date_received": "2025-03-01"})
+        assert find_notice(tmp_path, "wrong-id") is None
+
+
+class TestSetEntityOverride:
+    def test_sets_override_and_returns_true(self, tmp_path):
+        from postmule.data.notices import set_entity_override
+        add_notice(tmp_path, {"id": "n1", "date_received": "2025-03-01", "sender": "IRS"})
+        result = set_entity_override(tmp_path, "n1", "entity-uuid")
+        assert result is True
+        saved = load_notices(tmp_path, year=2025)
+        assert saved[0]["entity_override_id"] == "entity-uuid"
+
+    def test_returns_false_when_not_found(self, tmp_path):
+        from postmule.data.notices import set_entity_override
+        assert set_entity_override(tmp_path, "ghost-id", "entity-uuid") is False
+
+
+class TestSetCategoryOverride:
+    def test_sets_category_and_returns_true(self, tmp_path):
+        from postmule.data.notices import set_category_override
+        add_notice(tmp_path, {"id": "n2", "date_received": "2025-03-01", "sender": "IRS"})
+        result = set_category_override(tmp_path, "n2", "Junk")
+        assert result is True
+        saved = load_notices(tmp_path, year=2025)
+        assert saved[0]["category_override"] == "Junk"
+
+    def test_returns_false_when_not_found(self, tmp_path):
+        from postmule.data.notices import set_category_override
+        assert set_category_override(tmp_path, "ghost-id", "Junk") is False

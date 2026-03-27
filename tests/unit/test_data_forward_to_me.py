@@ -98,3 +98,31 @@ class TestToSheetRows:
         assert row[8] == "pending"
         assert row[3] == "Visa"
         assert row[4] == "Alice"
+
+
+class TestSetEntityOverride:
+    def test_sets_override_and_returns_true(self, tmp_path):
+        from postmule.data.forward_to_me import set_entity_override
+        add_item(tmp_path, {"id": "ftm1", "sender": "Visa"})
+        result = set_entity_override(tmp_path, "ftm1", "entity-uuid")
+        assert result is True
+        saved = load_forward_to_me(tmp_path)
+        assert saved[0]["entity_override_id"] == "entity-uuid"
+
+    def test_returns_false_when_not_found(self, tmp_path):
+        from postmule.data.forward_to_me import set_entity_override
+        assert set_entity_override(tmp_path, "ghost-id", "entity-uuid") is False
+
+
+class TestSetCategoryOverride:
+    def test_sets_category_and_returns_true(self, tmp_path):
+        from postmule.data.forward_to_me import set_category_override
+        add_item(tmp_path, {"id": "ftm2", "sender": "Visa"})
+        result = set_category_override(tmp_path, "ftm2", "Personal")
+        assert result is True
+        saved = load_forward_to_me(tmp_path)
+        assert saved[0]["category_override"] == "Personal"
+
+    def test_returns_false_when_not_found(self, tmp_path):
+        from postmule.data.forward_to_me import set_category_override
+        assert set_category_override(tmp_path, "ghost-id", "Personal") is False
