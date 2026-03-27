@@ -6,9 +6,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from postmule.agents.summary import (
+    _build_email_context,
     _build_summary_html,
     _days_until,
+    _html_to_text,
     _pending_bills_section,
+    send_bill_due_alert,
     send_daily_summary,
     send_urgent_alert,
 )
@@ -161,3 +164,163 @@ class TestSendUrgentAlert:
             assert "URGENT" in subject
             html = mock_send.call_args[0][3]
             assert "Visa" in html
+
+
+class TestBuildEmailContext:
+    def _ctx(self, stats=None, items=None, pending=None, api_usage=None, today=None):
+        return _build_email_context(
+            today=today or date.today().isoformat(),
+            stats=stats or {},
+            items=items or [],
+            pending_bills=pending or [],
+            api_usage=api_usage or {},
+        )
+
+    def test_is_quiet_when_nothing_present(self):
+        ctx = self._ctx()
+        assert ctx["is_quiet"] is True
+
+    def test_is_quiet_false_when_items_present(self):
+        ctx = self._ctx(items=[{"category": "Bill", "sender": "ATT", "processed_date": "2025-01-01"}])
+        assert ctx["is_quiet"] is False
+
+    def test_forward_to_me_in_action_items_with_urgent(self):
+        items = [{"category": "ForwardToMe", "sender": "IRS", "summary": "Tax form", "processed_date": "2025-01-01"}]
+        ctx = self._ctx(items=items)
+        assert any(a["urgent"] for a in ctx["action_items"])
+        senders = [a["sender"] for a in ctx["action_items"]]
+        assert "IRS" in senders
+
+    def test_overdue_pending_bill_in_action_items(self):
+        past = (date.today() - timedelta(days=3)).isoformat()
+        pending = [{"sender": "Visa", "due_date": past, "amount_due": 100.0}]
+        ctx = self._ctx(pending=pending)
+        assert any("overdue" in a["detail"].lower() for a in ctx["action_items"])
+
+    def test_non_overdue_pending_bill_stays_in_pending_items(self):
+        future = (date.today() + timedelta(days=5)).isoformat()
+        pending = [{"sender": "Visa", "due_date": future, "amount_due": 100.0}]
+        ctx = self._ctx(pending=pending)
+        assert len(ctx["pending_items"]) == 1
+        assert not ctx["action_items"]
+
+    def test_bill_detail_due_today(self):
+        today_str = date.today().isoformat()
+        items = [{"category": "Bill", "sender": "ATT", "due_date": today_str, "processed_date": today_str}]
+        ctx = self._ctx(items=items)
+        details = [i["detail"] for i in ctx["new_items"]]
+        assert any("Due today" in d for d in details)
+
+    def test_bill_detail_due_tomorrow(self):
+        tomorrow = (date.today() + timedelta(days=1)).isoformat()
+        items = [{"category": "Bill", "sender": "ATT", "due_date": tomorrow, "processed_date": date.today().isoformat()}]
+        ctx = self._ctx(items=items)
+        details = [i["detail"] for i in ctx["new_items"]]
+        assert any("due tomorrow" in d for d in details)
+
+    def test_bill_detail_days_remaining(self):
+        future = (date.today() + timedelta(days=7)).isoformat()
+        items = [{"category": "Bill", "sender": "ATT", "due_date": future, "processed_date": date.today().isoformat()}]
+        ctx = self._ctx(items=items)
+        details = [i["detail"] for i in ctx["new_items"]]
+        assert any("7 days remaining" in d for d in details)
+
+    def test_summary_sub_pluralization(self):
+        ctx = self._ctx(stats={"bills": 1, "notices": 2})
+        assert "1 bill" in ctx["summary_sub"]
+        assert "2 notices" in ctx["summary_sub"]
+
+    def test_api_summary_includes_key_fields(self):
+        ctx = self._ctx(api_usage={
+            "provider": "gemini",
+            "requests": 5,
+            "request_limit": 1400,
+            "tokens": 500,
+            "token_limit": 900000,
+            "estimated_cost_usd": 0.0012,
+        })
+        s = ctx["api_summary"]
+        assert "Gemini" in s
+        assert "5" in s
+        assert "500" in s
+
+
+class TestHtmlToText:
+    def test_br_becomes_newline(self):
+        assert "\n" in _html_to_text("hello<br>world")
+
+    def test_tags_stripped(self):
+        result = _html_to_text("<b>bold</b> text")
+        assert "<b>" not in result
+        assert "bold" in result
+
+    def test_html_entities_decoded(self):
+        result = _html_to_text("a&mdash;b &bull; &amp; &nbsp;c")
+        assert "—" in result
+        assert "•" in result
+        assert "&" in result
+
+    def test_consecutive_blank_lines_collapsed(self):
+        result = _html_to_text("a\n\n\n\nb")
+        assert "\n\n\n" not in result
+
+
+class TestSendBillDueAlert:
+    def _future(self, days):
+        return (date.today() + timedelta(days=days)).isoformat()
+
+    def test_paid_bills_excluded(self):
+        with patch("postmule.agents.summary._send_email") as mock_send:
+            send_bill_due_alert(
+                smtp_config={},
+                alert_email="a@b.com",
+                all_bills=[{"sender": "X", "due_date": self._future(2), "amount_due": 10, "status": "paid"}],
+                dry_run=True,
+            )
+        mock_send.assert_not_called()
+
+    def test_matched_bills_excluded(self):
+        with patch("postmule.agents.summary._send_email") as mock_send:
+            send_bill_due_alert(
+                smtp_config={},
+                alert_email="a@b.com",
+                all_bills=[{"sender": "X", "due_date": self._future(2), "amount_due": 10, "status": "matched"}],
+                dry_run=True,
+            )
+        mock_send.assert_not_called()
+
+    def test_bills_outside_window_excluded(self):
+        with patch("postmule.agents.summary._send_email") as mock_send:
+            send_bill_due_alert(
+                smtp_config={},
+                alert_email="a@b.com",
+                all_bills=[{"sender": "X", "due_date": self._future(30), "amount_due": 10}],
+                alert_days=7,
+                dry_run=True,
+            )
+        mock_send.assert_not_called()
+
+    def test_recently_alerted_bill_skipped(self):
+        yesterday = (date.today() - timedelta(days=1)).isoformat()
+        with patch("postmule.agents.summary._send_email") as mock_send:
+            send_bill_due_alert(
+                smtp_config={},
+                alert_email="a@b.com",
+                all_bills=[{
+                    "sender": "X", "due_date": self._future(3), "amount_due": 10,
+                    "alert_sent_date": yesterday,
+                }],
+                alert_interval_days=3,
+                dry_run=True,
+            )
+        mock_send.assert_not_called()
+
+    def test_dry_run_does_not_call_smtp(self):
+        with patch("postmule.agents.summary._send_email") as mock_send:
+            send_bill_due_alert(
+                smtp_config={},
+                alert_email="a@b.com",
+                all_bills=[{"sender": "X", "due_date": self._future(2), "amount_due": 10}],
+                dry_run=True,
+            )
+        mock_send.assert_not_called()
