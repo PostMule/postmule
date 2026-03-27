@@ -11,7 +11,7 @@ never executed.
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from postmule.providers.spreadsheet.base import SpreadsheetProvider
 from postmule.providers.storage.base import StorageProvider
@@ -179,3 +179,90 @@ class TestStorageProviderProtocol:
         obj = self._make_concrete()
         result = obj.upload_pdf(Path("/tmp/x.pdf"), "x.pdf", "folder-1")
         assert result == "file-id"
+
+
+# ---------------------------------------------------------------------------
+# Per-provider smoke tests
+# ---------------------------------------------------------------------------
+
+class TestGeminiProviderSmoke:
+    def test_classify_dry_run_returns_classification_result(self):
+        from postmule.providers.llm.gemini import GeminiProvider
+        from postmule.providers.llm.base import ClassificationResult
+        provider = GeminiProvider(api_key="dummy-key")
+        result = provider.classify("some OCR text", dry_run=True)
+        assert isinstance(result, ClassificationResult)
+
+    def test_classify_dry_run_does_not_call_api(self):
+        from postmule.providers.llm.gemini import GeminiProvider
+        provider = GeminiProvider(api_key="dummy-key")
+        with patch.object(provider, "_get_client") as mock_client:
+            provider.classify("text", dry_run=True)
+        mock_client.assert_not_called()
+
+    def test_health_check_returns_health_result(self):
+        from postmule.providers.llm.gemini import GeminiProvider
+        from postmule.providers import HealthResult
+        provider = GeminiProvider(api_key="dummy-key")
+        with patch("google.generativeai.configure"), patch("google.generativeai.list_models", return_value=[]):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.status in ("ok", "error", "warn")
+
+
+class TestGmailProviderSmoke:
+    def test_health_check_does_not_raise_with_dummy_creds(self):
+        from postmule.providers.email.gmail import GmailProvider
+        from postmule.providers import HealthResult
+        provider = GmailProvider(credentials=MagicMock())
+        mock_svc = MagicMock()
+        mock_svc.users().labels().list().execute.side_effect = Exception("auth error")
+        with patch.object(provider, "_get_service", return_value=mock_svc):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is False
+
+    def test_health_check_returns_ok_when_service_succeeds(self):
+        from postmule.providers.email.gmail import GmailProvider
+        from postmule.providers import HealthResult
+        provider = GmailProvider(credentials=MagicMock())
+        mock_svc = MagicMock()
+        mock_svc.users().labels().list().execute.return_value = {"labels": []}
+        with patch.object(provider, "_get_service", return_value=mock_svc):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is True
+
+    def test_list_emails_with_pdf_attachments_returns_list(self):
+        from postmule.providers.email.gmail import GmailProvider
+        provider = GmailProvider(credentials=MagicMock())
+        mock_svc = MagicMock()
+        mock_svc.users().messages().list().execute.return_value = {"messages": [], "nextPageToken": None}
+        mock_svc.users().labels().list().execute.return_value = {"labels": [{"id": "L1", "name": "PostMule"}]}
+        with patch.object(provider, "_get_service", return_value=mock_svc):
+            result = provider.list_emails_with_pdf_attachments()
+        assert isinstance(result, list)
+
+
+class TestDriveProviderSmoke:
+    def test_health_check_does_not_raise_with_dummy_creds(self):
+        from postmule.providers.storage.google_drive import DriveProvider
+        from postmule.providers import HealthResult
+        provider = DriveProvider(credentials=MagicMock())
+        mock_svc = MagicMock()
+        mock_svc.about().get().execute.side_effect = Exception("auth error")
+        with patch.object(provider, "_get_service", return_value=mock_svc):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is False
+
+    def test_health_check_returns_ok_when_service_succeeds(self):
+        from postmule.providers.storage.google_drive import DriveProvider
+        from postmule.providers import HealthResult
+        provider = DriveProvider(credentials=MagicMock())
+        mock_svc = MagicMock()
+        mock_svc.about().get().execute.return_value = {"user": {"displayName": "Test"}}
+        with patch.object(provider, "_get_service", return_value=mock_svc):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is True
