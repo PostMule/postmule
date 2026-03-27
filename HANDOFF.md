@@ -15,6 +15,11 @@ If files are modified, commit them before starting new work. Never let a session
 ---
 
 ## Last Completed
+Issue #48 — Config generation derives from config.example.yaml at runtime:
+- `postmule/cli.py`: added `_find_example_config()` (dev + PyInstaller via `sys._MEIPASS`); replaced 160-line f-string in `_build_config_yaml()` with ~25-line YAML overlay (`yaml.safe_load` → overlay → `yaml.dump`)
+- `installer/build.ps1`: added `--add-data "config.example.yaml;."` to fallback PyInstaller invocation
+- `tests/unit/test_cli.py`: 4 new tests in `TestBuildConfigYaml` — completeness (all top-level keys present), installer values applied, blank VPM defaults preserved, output is valid YAML
+
 Issues #50 (fix 1) and #51 (short-term) — Provider Protocol enforcement + doc freshness:
 - New: `.github/pull_request_template.md` — doc checklist on every PR (config, providers, mockup, /help, README, CLAUDE.md) + test reminders
 - `email/storage/llm/spreadsheet base.py` — `health_check() -> HealthResult` added to each Protocol; omitting it now fails runtime `isinstance()` checks and type-checker validation
@@ -76,9 +81,8 @@ Previously: Issues #42 and #43 — README overhaul + Help page overhaul
 ## Next
 Work the issues in this order (check `gh issue list --repo PostMule/app` for current state):
 
-1. **#48** — Config generation must derive from `config.example.yaml` (small — YAML overlay ~20 lines)
-2. **#49** — Installer build pipeline: PyInstaller spec + CI workflow (medium)
-3. **#30** — End-to-end validation (BLOCKED — do not start; user will unblock manually)
+1. **#49** — Installer build pipeline: PyInstaller spec + CI workflow (medium)
+2. **#30** — End-to-end validation (BLOCKED — do not start; user will unblock manually)
 
 ## Mid-Session Decisions (active)
 - **Friendly name is primary, must be unique.** Canonical `name` (LLM-extracted) shown as secondary muted text. Validation must block save if friendly_name already exists on another entity.
