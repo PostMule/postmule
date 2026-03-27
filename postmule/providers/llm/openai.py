@@ -34,3 +34,6 @@ class OpenAIProvider:
 
     def classify(self, ocr_text: str, known_names: list | None = None, dry_run: bool = False):
         raise NotImplementedError("OpenAI provider is not yet implemented.")
+
+    def health_check(self):
+        raise NotImplementedError("OpenAI provider is not yet implemented.")

@@ -41,3 +41,6 @@ class Outlook365Provider:
 
     def mark_as_processed(self, message_id: str) -> None:
         raise NotImplementedError("Outlook 365 provider is not yet implemented.")
+
+    def health_check(self):
+        raise NotImplementedError("Outlook 365 provider is not yet implemented.")

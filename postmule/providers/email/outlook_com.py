@@ -41,3 +41,6 @@ class OutlookComProvider:
 
     def mark_as_processed(self, message_id: str) -> None:
         raise NotImplementedError("Outlook.com provider is not yet implemented.")
+
+    def health_check(self):
+        raise NotImplementedError("Outlook.com provider is not yet implemented.")

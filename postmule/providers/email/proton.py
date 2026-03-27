@@ -48,3 +48,6 @@ class ProtonMailProvider:
 
     def mark_as_processed(self, message_id: str) -> None:
         raise NotImplementedError("Proton Mail provider is not yet implemented.")
+
+    def health_check(self):
+        raise NotImplementedError("Proton Mail provider is not yet implemented.")

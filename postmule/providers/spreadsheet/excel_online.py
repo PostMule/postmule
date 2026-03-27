@@ -38,3 +38,6 @@ class ExcelOnlineProvider:
 
     def write_sheet(self, sheet_name: str, rows: list[list[Any]]) -> None:
         raise NotImplementedError("Excel Online provider is not yet implemented.")
+
+    def health_check(self):
+        raise NotImplementedError("Excel Online provider is not yet implemented.")

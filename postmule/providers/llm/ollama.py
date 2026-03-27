@@ -38,3 +38,6 @@ class OllamaProvider:
 
     def classify(self, ocr_text: str, known_names: list | None = None, dry_run: bool = False):
         raise NotImplementedError("Ollama provider is not yet implemented.")
+
+    def health_check(self):
+        raise NotImplementedError("Ollama provider is not yet implemented.")

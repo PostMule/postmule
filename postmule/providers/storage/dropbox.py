@@ -53,3 +53,6 @@ class DropboxProvider:
 
     def delete_file(self, file_id: str) -> None:
         raise NotImplementedError("Dropbox provider is not yet implemented.")
+
+    def health_check(self):
+        raise NotImplementedError("Dropbox provider is not yet implemented.")

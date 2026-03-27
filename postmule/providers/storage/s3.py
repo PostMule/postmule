@@ -55,3 +55,6 @@ class S3Provider:
 
     def delete_file(self, file_id: str) -> None:
         raise NotImplementedError("Amazon S3 provider is not yet implemented.")
+
+    def health_check(self):
+        raise NotImplementedError("Amazon S3 provider is not yet implemented.")

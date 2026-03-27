@@ -53,3 +53,6 @@ class OneDriveProvider:
 
     def delete_file(self, file_id: str) -> None:
         raise NotImplementedError("OneDrive provider is not yet implemented.")
+
+    def health_check(self):
+        raise NotImplementedError("OneDrive provider is not yet implemented.")

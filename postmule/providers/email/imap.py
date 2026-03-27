@@ -44,3 +44,6 @@ class ImapProvider:
 
     def mark_as_processed(self, message_id: str) -> None:
         raise NotImplementedError("Generic IMAP provider is not yet implemented.")
+
+    def health_check(self):
+        raise NotImplementedError("Generic IMAP provider is not yet implemented.")

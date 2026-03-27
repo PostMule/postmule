@@ -34,3 +34,7 @@ class NoneSpreadsheetProvider:
 
     def write_sheet(self, sheet_name: str, rows: list[list[Any]]) -> None:
         pass
+
+    def health_check(self):
+        from postmule.providers import HealthResult
+        return HealthResult(ok=True, status="ok", message="Spreadsheet view disabled")
