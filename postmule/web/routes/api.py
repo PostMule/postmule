@@ -19,6 +19,7 @@ from postmule.data import entity_corrections as corrections_data
 from postmule.data import entities as entity_data
 from postmule.data import forward_to_me as ftm_data
 from postmule.data import notices as notices_data
+from postmule.data import owners as owners_data
 
 import postmule.web.app as _app
 
@@ -958,3 +959,77 @@ def api_feedback():
     except Exception as exc:
         log.warning("GitHub feedback submission failed: %s", exc)
         return jsonify({"saved": True}), 200
+
+
+# ------------------------------------------------------------------
+# Owner registry
+# ------------------------------------------------------------------
+
+@api_bp.route("/api/owners", methods=["GET"])
+def api_owners_list():
+    """List owners. Active only by default; ?all=true includes inactive."""
+    include_inactive = request.args.get("all", "false").lower() == "true"
+    return jsonify(owners_data.load_owners(_app._data_dir, include_inactive=include_inactive))
+
+
+@api_bp.route("/api/owners", methods=["POST"])
+def api_owners_create():
+    """Create a new owner. Form fields: name (required), type, short_name, color."""
+    name = (request.form.get("name") or "").strip()
+    if not name:
+        return jsonify({"error": "name required"}), 400
+    owner = owners_data.add_owner(
+        _app._data_dir,
+        name,
+        request.form.get("type", "person"),
+        short_name=request.form.get("short_name") or None,
+        color=request.form.get("color") or None,
+    )
+    return jsonify(owner), 201
+
+
+@api_bp.route("/api/owners/<owner_id>", methods=["PATCH"])
+def api_owners_update(owner_id: str):
+    """Update writable fields on an owner. Form fields: name, type, short_name, color, active."""
+    fields = {k: v for k, v in request.form.items()}
+    updated = owners_data.update_owner(_app._data_dir, owner_id, fields)
+    if updated is None:
+        return jsonify({"error": "Owner not found"}), 404
+    return jsonify(updated)
+
+
+@api_bp.route("/api/owners/<owner_id>", methods=["DELETE"])
+def api_owners_delete(owner_id: str):
+    """Soft-delete an owner (sets active=False)."""
+    if not owners_data.deactivate_owner(_app._data_dir, owner_id):
+        return jsonify({"error": "Owner not found"}), 404
+    return ("", 204)
+
+
+@api_bp.route("/api/mail/<mail_id>/owners", methods=["PUT"])
+def api_mail_set_owners(mail_id: str):
+    """Set owner_ids on a mail item. Form field: owner_ids (JSON array of UUIDs)."""
+    raw = request.form.get("owner_ids", "[]")
+    try:
+        owner_ids = json.loads(raw)
+        if not isinstance(owner_ids, list):
+            raise ValueError
+    except (ValueError, json.JSONDecodeError):
+        return jsonify({"error": "owner_ids must be a JSON array"}), 400
+
+    from postmule.data._io import recent_years
+    for year in recent_years():
+        for bill in bills_data.load_bills(_app._data_dir, year):
+            if bill.get("id") == mail_id:
+                bills_data.set_owner_ids(_app._data_dir, mail_id, owner_ids)
+                return ("", 200)
+        for notice in notices_data.load_notices(_app._data_dir, year):
+            if notice.get("id") == mail_id:
+                notices_data.set_owner_ids(_app._data_dir, mail_id, owner_ids)
+                return ("", 200)
+    for ftm in ftm_data.load_forward_to_me(_app._data_dir):
+        if ftm.get("id") == mail_id:
+            ftm_data.set_owner_ids(_app._data_dir, mail_id, owner_ids)
+            return ("", 200)
+
+    return jsonify({"error": "Mail item not found"}), 404

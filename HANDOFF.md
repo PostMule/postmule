@@ -7,12 +7,14 @@
 ## Last Completed
 > Maintenance: before adding a new entry, delete the previous one. One issue max. Full history is in `git log`.
 
-Issues #59–#62 — Test coverage sprint complete:
-- #59: data layer tests (notices, forward_to_me, entity_corrections, _io) — all gaps closed
-- #60: provider smoke tests (GeminiProvider, GmailProvider, DriveProvider) — classify dry_run + health_check
-- #61: integrity agent tests (duplicate_detector 17, gap_detector 5, verifier 5, run_monitor 6) — 32 tests, all passing
-- #62: web dashboard route tests — 38 tests already in place, all passing
-- Full suite: 744 tests, 73% coverage
+Issue #63 — Owner Registry complete:
+- New `postmule/data/owners.py`: full CRUD + `resolve_owner_ids()` (exact/case-insensitive name+short_name match)
+- `owner_ids: list[str]` added to all mail record types (bills, notices, forward_to_me) via `set_owner_ids()`
+- `ProcessedMail` dataclass gets `owner_ids` field; `classify_pdf()` auto-resolves from LLM recipients if `owners` passed
+- 5 new API routes: GET/POST/PATCH/DELETE `/api/owners`, PUT `/api/mail/<id>/owners`
+- Owner filter dropdown added to mail list; owner badges on mail items; Owners tab in Settings
+- Full test coverage: `test_data_owners.py` (34 tests), owners tests in bills/notices/ftm, classification, web routes
+- Full suite: 808 tests, 73% coverage
 
 ---
 
@@ -22,7 +24,6 @@ Issues #59–#62 — Test coverage sprint complete:
 
 **Blocked/Deferred (do not action):**
 - #30 — End-to-end validation (BLOCKED)
-- #29 — SQLite storage layer (DEFERRED)
 
 **Ready to work:** none — await user direction.
 

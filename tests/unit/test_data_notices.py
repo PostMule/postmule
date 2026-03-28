@@ -136,3 +136,25 @@ class TestSetCategoryOverride:
     def test_returns_false_when_not_found(self, tmp_path):
         from postmule.data.notices import set_category_override
         assert set_category_override(tmp_path, "ghost-id", "Junk") is False
+
+
+class TestSetOwnerIds:
+    def test_sets_owner_ids_and_returns_true(self, tmp_path):
+        from postmule.data.notices import set_owner_ids
+        add_notice(tmp_path, {"id": "n3", "date_received": "2025-03-01", "sender": "IRS"})
+        result = set_owner_ids(tmp_path, "n3", ["uuid-alice", "uuid-bob"])
+        assert result is True
+        saved = load_notices(tmp_path, year=2025)
+        assert saved[0]["owner_ids"] == ["uuid-alice", "uuid-bob"]
+
+    def test_clears_owner_ids(self, tmp_path):
+        from postmule.data.notices import set_owner_ids
+        add_notice(tmp_path, {"id": "n4", "date_received": "2025-03-01",
+                              "sender": "IRS", "owner_ids": ["uuid-alice"]})
+        set_owner_ids(tmp_path, "n4", [])
+        saved = load_notices(tmp_path, year=2025)
+        assert saved[0]["owner_ids"] == []
+
+    def test_returns_false_when_not_found(self, tmp_path):
+        from postmule.data.notices import set_owner_ids
+        assert set_owner_ids(tmp_path, "ghost-id", ["uuid-alice"]) is False

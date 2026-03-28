@@ -21,6 +21,11 @@ Routes:
   POST /api/mail/<id>/entity        Override entity association; optionally add alias
   POST /api/run                     Trigger a manual run
   GET  /api/run/status              Check whether a run is in progress
+  GET  /api/owners                  List owners (active; ?all=true for inactive too)
+  POST /api/owners                  Create a new owner
+  PATCH /api/owners/<id>            Update owner fields
+  DELETE /api/owners/<id>           Soft-delete an owner
+  PUT  /api/mail/<id>/owners        Set owner_ids on a mail item
 """
 
 from __future__ import annotations

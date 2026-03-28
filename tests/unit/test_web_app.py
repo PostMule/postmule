@@ -308,3 +308,134 @@ class TestApiRun:
         with patch("postmule.web.app._dashboard_password", return_value=None):
             response = client.post("/api/run", data={})
         assert response.status_code == 500
+
+
+class TestOwnerRoutes:
+    def test_list_owners_empty(self, client):
+        response = client.get("/api/owners")
+        assert response.status_code == 200
+        assert response.json == []
+
+    def test_create_owner(self, client):
+        response = client.post("/api/owners", data={"name": "Alice", "type": "person"})
+        assert response.status_code == 201
+        data = response.json
+        assert data["name"] == "Alice"
+        assert data["type"] == "person"
+        assert "id" in data
+
+    def test_create_owner_missing_name_returns_400(self, client):
+        response = client.post("/api/owners", data={"type": "person"})
+        assert response.status_code == 400
+
+    def test_create_owner_with_color_and_short_name(self, client):
+        response = client.post("/api/owners", data={
+            "name": "Alice Smith", "type": "person",
+            "short_name": "Alice", "color": "#7C3AED",
+        })
+        assert response.status_code == 201
+        data = response.json
+        assert data["short_name"] == "Alice"
+        assert data["color"] == "#7C3AED"
+
+    def test_list_owners_returns_created(self, client):
+        client.post("/api/owners", data={"name": "Alice"})
+        client.post("/api/owners", data={"name": "Bob"})
+        response = client.get("/api/owners")
+        names = [o["name"] for o in response.json]
+        assert "Alice" in names
+        assert "Bob" in names
+
+    def test_update_owner(self, client):
+        create = client.post("/api/owners", data={"name": "Alice"})
+        owner_id = create.json["id"]
+        response = client.patch(f"/api/owners/{owner_id}", data={"name": "Alice Smith"})
+        assert response.status_code == 200
+        assert response.json["name"] == "Alice Smith"
+
+    def test_update_owner_not_found(self, client):
+        response = client.patch("/api/owners/ghost-id", data={"name": "X"})
+        assert response.status_code == 404
+
+    def test_delete_owner(self, client):
+        create = client.post("/api/owners", data={"name": "Alice"})
+        owner_id = create.json["id"]
+        response = client.delete(f"/api/owners/{owner_id}")
+        assert response.status_code == 204
+        # Should no longer appear in active list
+        owners = client.get("/api/owners").json
+        assert not any(o["id"] == owner_id for o in owners)
+
+    def test_delete_owner_not_found(self, client):
+        response = client.delete("/api/owners/ghost-id")
+        assert response.status_code == 404
+
+    def test_delete_shows_in_all_list(self, client):
+        create = client.post("/api/owners", data={"name": "Alice"})
+        owner_id = create.json["id"]
+        client.delete(f"/api/owners/{owner_id}")
+        all_owners = client.get("/api/owners?all=true").json
+        assert any(o["id"] == owner_id for o in all_owners)
+
+
+class TestMailOwnerRoute:
+    def test_set_owner_ids_on_bill(self, client, data_dir):
+        from datetime import date
+        bill = bills_data.add_bill(data_dir, {
+            "date_received": date.today().isoformat(),
+            "sender": "ATT",
+            "status": "pending",
+        })
+        from postmule.data import owners as owners_data
+        owner = owners_data.add_owner(data_dir, "Alice")
+        import json as _json
+        response = client.put(
+            f"/api/mail/{bill['id']}/owners",
+            data={"owner_ids": _json.dumps([owner["id"]])},
+        )
+        assert response.status_code == 200
+        saved = bills_data.load_bills(data_dir)
+        assert saved[0].get("owner_ids") == [owner["id"]]
+
+    def test_set_owner_ids_on_notice(self, client, data_dir):
+        from datetime import date
+        import json as _json
+        notice = notices_data.add_notice(data_dir, {
+            "date_received": date.today().isoformat(),
+            "sender": "IRS",
+        })
+        response = client.put(
+            f"/api/mail/{notice['id']}/owners",
+            data={"owner_ids": _json.dumps([])},
+        )
+        assert response.status_code == 200
+
+    def test_set_owner_ids_on_forward_to_me(self, client, data_dir):
+        import json as _json
+        item = ftm_data.add_item(data_dir, {"sender": "Visa"})
+        response = client.put(
+            f"/api/mail/{item['id']}/owners",
+            data={"owner_ids": _json.dumps([])},
+        )
+        assert response.status_code == 200
+
+    def test_set_owner_ids_invalid_json_returns_400(self, client, data_dir):
+        from datetime import date
+        bill = bills_data.add_bill(data_dir, {
+            "date_received": date.today().isoformat(),
+            "sender": "ATT",
+            "status": "pending",
+        })
+        response = client.put(
+            f"/api/mail/{bill['id']}/owners",
+            data={"owner_ids": "not-json"},
+        )
+        assert response.status_code == 400
+
+    def test_set_owner_ids_mail_not_found(self, client):
+        import json as _json
+        response = client.put(
+            "/api/mail/ghost-id/owners",
+            data={"owner_ids": _json.dumps([])},
+        )
+        assert response.status_code == 404

@@ -138,6 +138,49 @@ class TestBuildFilename:
         assert len(sender_part) <= 30
 
 
+class TestOwnerResolutionInClassify:
+    def _owners(self):
+        return [
+            {"id": "uuid-alice", "name": "Alice", "short_name": None, "active": True},
+            {"id": "uuid-bob", "name": "Bob", "short_name": None, "active": True},
+        ]
+
+    def test_owner_ids_empty_when_no_owners_passed(self, tmp_path):
+        pdf = tmp_path / "test.pdf"
+        pdf.write_bytes(b"%PDF-1.4 empty")
+        llm = _mock_llm(recipients=["Alice"])
+        result = classify_pdf(pdf, llm, dry_run=True)
+        assert result.owner_ids == []
+
+    def test_owner_ids_resolved_from_recipients(self, tmp_path):
+        pdf = tmp_path / "test.pdf"
+        pdf.write_bytes(b"%PDF-1.4 empty")
+        llm = _mock_llm(recipients=["Alice"])
+        result = classify_pdf(pdf, llm, dry_run=True, owners=self._owners())
+        assert result.owner_ids == ["uuid-alice"]
+
+    def test_multiple_recipients_resolved(self, tmp_path):
+        pdf = tmp_path / "test.pdf"
+        pdf.write_bytes(b"%PDF-1.4 empty")
+        llm = _mock_llm(recipients=["Alice", "Bob"])
+        result = classify_pdf(pdf, llm, dry_run=True, owners=self._owners())
+        assert set(result.owner_ids) == {"uuid-alice", "uuid-bob"}
+
+    def test_unmatched_recipient_gives_empty(self, tmp_path):
+        pdf = tmp_path / "test.pdf"
+        pdf.write_bytes(b"%PDF-1.4 empty")
+        llm = _mock_llm(recipients=["Unknown Person"])
+        result = classify_pdf(pdf, llm, dry_run=True, owners=self._owners())
+        assert result.owner_ids == []
+
+    def test_owner_ids_default_is_empty_list(self, tmp_path):
+        pdf = tmp_path / "test.pdf"
+        pdf.write_bytes(b"%PDF-1.4 empty")
+        llm = _mock_llm()
+        result = classify_pdf(pdf, llm, dry_run=True)
+        assert isinstance(result.owner_ids, list)
+
+
 class TestSlugify:
     def test_special_characters_stripped(self):
         result = _slugify("AT&T Mobility")

@@ -126,3 +126,24 @@ class TestSetCategoryOverride:
     def test_returns_false_when_not_found(self, tmp_path):
         from postmule.data.forward_to_me import set_category_override
         assert set_category_override(tmp_path, "ghost-id", "Personal") is False
+
+
+class TestSetOwnerIds:
+    def test_sets_owner_ids_and_returns_true(self, tmp_path):
+        from postmule.data.forward_to_me import set_owner_ids
+        add_item(tmp_path, {"id": "ftm3", "sender": "Visa"})
+        result = set_owner_ids(tmp_path, "ftm3", ["uuid-alice", "uuid-bob"])
+        assert result is True
+        saved = load_forward_to_me(tmp_path)
+        assert saved[0]["owner_ids"] == ["uuid-alice", "uuid-bob"]
+
+    def test_clears_owner_ids(self, tmp_path):
+        from postmule.data.forward_to_me import set_owner_ids
+        add_item(tmp_path, {"id": "ftm4", "sender": "Visa", "owner_ids": ["uuid-alice"]})
+        set_owner_ids(tmp_path, "ftm4", [])
+        saved = load_forward_to_me(tmp_path)
+        assert saved[0]["owner_ids"] == []
+
+    def test_returns_false_when_not_found(self, tmp_path):
+        from postmule.data.forward_to_me import set_owner_ids
+        assert set_owner_ids(tmp_path, "ghost-id", ["uuid-alice"]) is False

@@ -7,12 +7,13 @@ This is the core per-document processing step.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 from typing import Any
 
 from postmule.agents.ocr import extract_text
+from postmule.data.owners import resolve_owner_ids
 from postmule.providers.llm.base import ClassificationResult, LLMProvider
 
 log = logging.getLogger("postmule.classification")
@@ -43,6 +44,7 @@ class ProcessedMail:
     destination_folder: str = ""
     statement_date: str | None = None
     ach_descriptor: str | None = None
+    owner_ids: list[str] = field(default_factory=list)
 
 
 CATEGORY_FOLDERS = {
@@ -61,6 +63,7 @@ def classify_pdf(
     known_names: list[str] | None = None,
     confidence_threshold: float = 0.80,
     dry_run: bool = False,
+    owners: list[dict[str, Any]] | None = None,
 ) -> ProcessedMail:
     """
     Run the full classify pipeline on a single PDF:
@@ -120,6 +123,8 @@ def classify_pdf(
 
     processed.suggested_filename = _build_filename(processed)
     processed.destination_folder = CATEGORY_FOLDERS.get(category, "NeedsReview")
+    if owners:
+        processed.owner_ids = resolve_owner_ids(processed.recipients, owners)
 
     log.info(
         f"{pdf_path.name} -> {category} "

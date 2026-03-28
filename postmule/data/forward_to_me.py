@@ -1,5 +1,19 @@
 """
 ForwardToMe data layer — reads/writes forward_to_me.json.
+
+Schema for each record:
+{
+  "id": "uuid",
+  "date_received": "YYYY-MM-DD",
+  "date_processed": "YYYY-MM-DD",
+  "sender": "...",
+  "recipients": ["Alice"],
+  "summary": "...",
+  "drive_file_id": "...",
+  "filename": "...",
+  "forwarding_status": "pending" | "forwarded",
+  "owner_ids": []          # resolved owner UUIDs (from owners.json); [] = unassigned
+}
 """
 
 from __future__ import annotations
@@ -55,6 +69,17 @@ def set_entity_override(data_dir: Path, item_id: str, entity_id: str) -> bool:
     for item in items:
         if item.get("id") == item_id:
             item["entity_override_id"] = entity_id
+            save_forward_to_me(data_dir, items)
+            return True
+    return False
+
+
+def set_owner_ids(data_dir: Path, item_id: str, owner_ids: list[str]) -> bool:
+    """Set owner_ids on a forward-to-me record. Returns True if found."""
+    items = load_forward_to_me(data_dir)
+    for item in items:
+        if item.get("id") == item_id:
+            item["owner_ids"] = owner_ids
             save_forward_to_me(data_dir, items)
             return True
     return False

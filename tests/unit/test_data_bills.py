@@ -80,3 +80,25 @@ def test_new_fields_default_to_empty_in_sheet_rows(tmp_path):
     data_row = rows[1]
     assert data_row[header.index("Statement Date")] == ""
     assert data_row[header.index("ACH Descriptor")] == ""
+
+
+class TestSetOwnerIds:
+    def test_sets_owner_ids_and_returns_true(self, tmp_path):
+        from postmule.data.bills import set_owner_ids
+        add_bill(tmp_path, {"id": "b1", "date_received": "2025-03-01", "status": "pending"})
+        result = set_owner_ids(tmp_path, "b1", ["uuid-alice", "uuid-bob"])
+        assert result is True
+        saved = load_bills(tmp_path, year=2025)
+        assert saved[0]["owner_ids"] == ["uuid-alice", "uuid-bob"]
+
+    def test_clears_owner_ids(self, tmp_path):
+        from postmule.data.bills import set_owner_ids
+        add_bill(tmp_path, {"id": "b2", "date_received": "2025-03-01",
+                            "status": "pending", "owner_ids": ["uuid-alice"]})
+        set_owner_ids(tmp_path, "b2", [])
+        saved = load_bills(tmp_path, year=2025)
+        assert saved[0]["owner_ids"] == []
+
+    def test_returns_false_when_not_found(self, tmp_path):
+        from postmule.data.bills import set_owner_ids
+        assert set_owner_ids(tmp_path, "ghost-id", ["uuid-alice"]) is False

@@ -369,6 +369,20 @@
     .entity-picker-item:hover { background:#F0F4FA; }
     .entity-picker-item--active { font-weight:600; color:#1A5EA8; background:#EEF4FF; }
 
+    /* ── Owner badges ──────────────────────────────────────────────── */
+    .owner-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.4px; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
+    .owner-badge--person { background: #EEF4FF; color: #1A5EA8; border: 1px solid #BFCFEF; }
+    .owner-badge--company { background: #F3F0FF; color: #5B21B6; border: 1px solid #C4B5FD; }
+    .owner-badge--unassigned { background: #F5F6F8; color: #8A9BB0; border: 1px solid #DDE3EC; font-style: italic; }
+    .owner-badge-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+    .owner-filter-select { padding: 5px 8px; border: 1px solid #DDE3EC; border-radius: 6px; font-size: 12px; color: #5A7090; background: white; flex-shrink: 0; }
+    /* Owner edit chips — like cat-chip but for owners */
+    .owner-chip { font-size: 0.6875rem; font-weight: 600; padding: 3px 10px; border-radius: 10px; border: 1px solid #BFCFEF; background: #F4F7FA; color: #4A6080; cursor: pointer; }
+    .owner-chip:hover { background: #EEF4FF; color: #1A5EA8; border-color: #1A5EA8; }
+    .owner-chip--active { background: #1A5EA8; color: #fff; border-color: #1A5EA8; }
+    .owner-chip--company { border-color: #C4B5FD; }
+    .owner-chip--company.owner-chip--active { background: #5B21B6; border-color: #5B21B6; }
+
     /* ── Connections — tabbed provider list ────────────────────────── */
     .conn-tabs { display: flex; gap: 2px; border-bottom: 2px solid #DDE3EC; margin-bottom: 20px; flex-wrap: wrap; }
     .conn-tab { padding: 8px 16px; border: none; background: none; cursor: pointer; font-size: 13px; color: #5A7090; border-bottom: 2px solid transparent; margin-bottom: -2px; font-family: inherit; }
@@ -550,6 +564,16 @@
             Unassigned <span class="mail-filter-badge">3</span>
           </button>
         </div>
+        <select class="owner-filter-select">
+          <option selected value="">All owners</option>
+          <option value="uuid-alice">Alice</option>
+          <option value="uuid-bob">Bob</option>
+          <option value="uuid-chip">Chip</option>
+          <option value="uuid-doug">Doug</option>
+          <option value="uuid-llc1">Example LLC 1</option>
+          <option value="uuid-llc2">Example LLC 2</option>
+          <option value="__unassigned">Unassigned</option>
+        </select>
         <select class="mail-year-select">
           <option selected>2026</option>
           <option>2025</option>
@@ -613,6 +637,10 @@
               <button class="btn btn-primary btn-sm">Approve</button>
               <button class="btn btn-danger btn-sm">Deny</button>
             </div>
+            <div class="owner-badge-list">
+              <span class="owner-badge owner-badge--person">Alice</span>
+              <span class="owner-badge owner-badge--person">Bob</span>
+            </div>
             <div class="mail-footer" style="margin-top:6px;">
               <span class="badge badge--bill">BILL</span>
               <button class="mail-edit-btn" onclick="toggleMailEdit(this)">Edit</button>
@@ -639,6 +667,15 @@
                   <div class="entity-picker-item" onclick="selectEntity(this)">&#8212; (unassigned)</div>
                 </div>
               </div>
+              <div class="mail-edit-row-label">Owners</div>
+              <div class="cat-chip-list">
+                <button class="owner-chip owner-chip--active" onclick="this.classList.toggle('owner-chip--active')">Alice</button>
+                <button class="owner-chip owner-chip--active" onclick="this.classList.toggle('owner-chip--active')">Bob</button>
+                <button class="owner-chip" onclick="this.classList.toggle('owner-chip--active')">Chip</button>
+                <button class="owner-chip" onclick="this.classList.toggle('owner-chip--active')">Doug</button>
+                <button class="owner-chip owner-chip--company" onclick="this.classList.toggle('owner-chip--active')">Example LLC 1</button>
+                <button class="owner-chip owner-chip--company" onclick="this.classList.toggle('owner-chip--active')">Example LLC 2</button>
+              </div>
               <div class="mail-edit-actions">
                 <button class="btn btn-primary btn-sm" onclick="saveMailEdit(this)">Save</button>
                 <button class="btn btn-secondary btn-sm" onclick="cancelMailEdit(this)">Cancel</button>
@@ -657,6 +694,9 @@
             </div>
             <div class="mail-summary">New credit card enclosed &mdash; physical item requires forwarding</div>
             <div class="mail-forward-alert">&#9888; ACTION REQUIRED — contact VPM to forward this item</div>
+            <div class="owner-badge-list">
+              <span class="owner-badge owner-badge--unassigned">unassigned</span>
+            </div>
             <div class="mail-footer" style="margin-top:6px;">
               <span class="badge badge--forward">FORWARD</span>
               <button class="mail-edit-btn" onclick="toggleMailEdit(this)">Edit</button>
@@ -706,6 +746,9 @@
               <span class="mail-due-overdue">Mar 15, 2026 (OVERDUE)</span>
               <span class="mail-due-label">&middot;</span>
               <span class="mail-due-amount">$182.50</span>
+            </div>
+            <div class="owner-badge-list">
+              <span class="owner-badge owner-badge--company">Example LLC 1</span>
             </div>
             <div class="mail-footer" style="margin-top:6px;">
               <span class="badge badge--bill">BILL</span>
@@ -1721,6 +1764,7 @@ Dallas, TX 75266</span>
       <form onsubmit="return false;">
       <div class="s-tabs">
         <button type="button" class="s-tab active" onclick="sTab('general',this)">General</button>
+        <button type="button" class="s-tab" onclick="sTab('owners',this)">Owners</button>
         <button type="button" class="s-tab" onclick="sTab('notifications',this)">Notifications</button>
         <button type="button" class="s-tab" onclick="sTab('mail',this)">Mail Intake</button>
         <button type="button" class="s-tab" onclick="sTab('finance',this)">Finance</button>
@@ -1789,6 +1833,99 @@ Dallas, TX 75266</span>
             </div>
             <input class="s-input s-input--sm" type="number" value="3">
           </div>
+        </div>
+      </div>
+
+      <!-- TAB: Owners -->
+      <div id="stab-owners" class="s-pane">
+        <div class="s-card">
+          <h3>Owner Registry <span class="help-btn" title="People and companies who receive mail at this address. Used to tag and filter mail items.">?</span></h3>
+          <p style="font-size:12px;color:#5A7090;margin:0 0 12px;">
+            Owners are auto-resolved from LLM-extracted recipient names. You can also assign owners manually on any mail item.
+          </p>
+
+          <!-- Existing owner rows -->
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+            <!-- Person row -->
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#F9FAFB;border:1px solid #DDE3EC;border-radius:6px;">
+              <span class="owner-badge owner-badge--person" style="min-width:24px;justify-content:center;">A</span>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:#0F2044;">Alice Smith</div>
+                <div style="font-size:11px;color:#7A90A8;">Short name: Alice &middot; person</div>
+              </div>
+              <span style="font-size:11px;color:#7A90A8;margin-right:4px;">active</span>
+              <button class="btn btn-secondary btn-sm">Edit</button>
+              <button class="btn btn-danger btn-sm">Remove</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#F9FAFB;border:1px solid #DDE3EC;border-radius:6px;">
+              <span class="owner-badge owner-badge--person" style="min-width:24px;justify-content:center;">B</span>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:#0F2044;">Bob Smith</div>
+                <div style="font-size:11px;color:#7A90A8;">Short name: Bob &middot; person</div>
+              </div>
+              <span style="font-size:11px;color:#7A90A8;margin-right:4px;">active</span>
+              <button class="btn btn-secondary btn-sm">Edit</button>
+              <button class="btn btn-danger btn-sm">Remove</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#F9FAFB;border:1px solid #DDE3EC;border-radius:6px;">
+              <span class="owner-badge owner-badge--person" style="min-width:24px;justify-content:center;">C</span>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:#0F2044;">Chip Jones</div>
+                <div style="font-size:11px;color:#7A90A8;">Short name: Chip &middot; person</div>
+              </div>
+              <span style="font-size:11px;color:#7A90A8;margin-right:4px;">active</span>
+              <button class="btn btn-secondary btn-sm">Edit</button>
+              <button class="btn btn-danger btn-sm">Remove</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#F9FAFB;border:1px solid #DDE3EC;border-radius:6px;">
+              <span class="owner-badge owner-badge--company" style="min-width:24px;justify-content:center;">L1</span>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:#0F2044;">Example LLC 1</div>
+                <div style="font-size:11px;color:#7A90A8;">Short name: LLC1 &middot; company</div>
+              </div>
+              <span style="font-size:11px;color:#7A90A8;margin-right:4px;">active</span>
+              <button class="btn btn-secondary btn-sm">Edit</button>
+              <button class="btn btn-danger btn-sm">Remove</button>
+            </div>
+            <!-- Inactive row -->
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#F9FAFB;border:1px solid #DDE3EC;border-radius:6px;opacity:0.55;">
+              <span class="owner-badge owner-badge--person" style="min-width:24px;justify-content:center;">D</span>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:#0F2044;">Doug Carter</div>
+                <div style="font-size:11px;color:#7A90A8;">Short name: Doug &middot; person</div>
+              </div>
+              <span style="font-size:11px;color:#C62828;margin-right:4px;">inactive</span>
+              <button class="btn btn-secondary btn-sm">Restore</button>
+            </div>
+          </div>
+
+          <!-- Add owner form -->
+          <details style="margin-top:4px;">
+            <summary style="font-size:13px;font-weight:600;color:#1A5EA8;cursor:pointer;list-style:none;">&#43; Add owner</summary>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px;">
+                  <label style="font-size:11px;font-weight:600;color:#8A9BB0;text-transform:uppercase;letter-spacing:0.5px;">Full Name</label>
+                  <input class="s-input" type="text" placeholder="e.g. Alice Smith">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;flex:0 0 110px;">
+                  <label style="font-size:11px;font-weight:600;color:#8A9BB0;text-transform:uppercase;letter-spacing:0.5px;">Short Name</label>
+                  <input class="s-input s-input--md" type="text" placeholder="e.g. Alice">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;flex:0 0 100px;">
+                  <label style="font-size:11px;font-weight:600;color:#8A9BB0;text-transform:uppercase;letter-spacing:0.5px;">Type</label>
+                  <select class="s-select">
+                    <option selected>person</option>
+                    <option>company</option>
+                  </select>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button type="button" class="btn btn-primary btn-sm">Add Owner</button>
+                <button type="button" class="btn btn-secondary btn-sm">Cancel</button>
+              </div>
+            </div>
+          </details>
         </div>
       </div>
 
