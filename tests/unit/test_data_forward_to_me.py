@@ -147,3 +147,24 @@ class TestSetOwnerIds:
     def test_returns_false_when_not_found(self, tmp_path):
         from postmule.data.forward_to_me import set_owner_ids
         assert set_owner_ids(tmp_path, "ghost-id", ["uuid-alice"]) is False
+
+
+class TestSetFiled:
+    def test_sets_filed_true_and_returns_true(self, tmp_path):
+        from postmule.data.forward_to_me import set_filed
+        add_item(tmp_path, {"id": "ftm-filed", "sender": "Visa"})
+        result = set_filed(tmp_path, "ftm-filed", True)
+        assert result is True
+        saved = load_forward_to_me(tmp_path)
+        assert saved[0]["filed"] is True
+
+    def test_sets_filed_false(self, tmp_path):
+        from postmule.data.forward_to_me import set_filed
+        add_item(tmp_path, {"id": "ftm-unfiled", "sender": "Visa", "filed": True})
+        set_filed(tmp_path, "ftm-unfiled", False)
+        saved = load_forward_to_me(tmp_path)
+        assert saved[0]["filed"] is False
+
+    def test_returns_false_when_not_found(self, tmp_path):
+        from postmule.data.forward_to_me import set_filed
+        assert set_filed(tmp_path, "ghost-id", True) is False

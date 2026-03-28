@@ -410,6 +410,54 @@ def api_mail_entity_override(mail_id: str):
     return ("", 200)
 
 
+def _find_mail_type(mail_id: str, data_dir) -> str | None:
+    """Return 'bill', 'notice', or 'ftm' for the given mail_id, or None if not found."""
+    from postmule.data._io import recent_years
+    for year in recent_years():
+        for bill in bills_data.load_bills(data_dir, year):
+            if bill.get("id") == mail_id:
+                return "bill"
+        for notice in notices_data.load_notices(data_dir, year):
+            if notice.get("id") == mail_id:
+                return "notice"
+    for ftm in ftm_data.load_forward_to_me(data_dir):
+        if ftm.get("id") == mail_id:
+            return "ftm"
+    return None
+
+
+def _set_filed(mail_id: str, data_dir, filed: bool) -> bool:
+    """Set filed state on whichever mail type owns mail_id. Returns True if found."""
+    mail_type = _find_mail_type(mail_id, data_dir)
+    if mail_type == "bill":
+        return bills_data.set_filed(data_dir, mail_id, filed)
+    if mail_type == "notice":
+        return notices_data.set_filed(data_dir, mail_id, filed)
+    if mail_type == "ftm":
+        return ftm_data.set_filed(data_dir, mail_id, filed)
+    return False
+
+
+@api_bp.route("/api/mail/<mail_id>/file", methods=["POST"])
+def api_mail_file(mail_id: str):
+    """Mark a mail item as filed (hidden from main mail view)."""
+    if _app._config and _app._config.get("app", {}).get("dry_run"):
+        return jsonify({"ok": True, "dry_run": True})
+    if _set_filed(mail_id, _app._data_dir, True):
+        return ("", 200)
+    return jsonify({"error": "Mail item not found"}), 404
+
+
+@api_bp.route("/api/mail/<mail_id>/unfile", methods=["POST"])
+def api_mail_unfile(mail_id: str):
+    """Return a filed mail item to Open (visible in main mail view)."""
+    if _app._config and _app._config.get("app", {}).get("dry_run"):
+        return jsonify({"ok": True, "dry_run": True})
+    if _set_filed(mail_id, _app._data_dir, False):
+        return ("", 200)
+    return jsonify({"error": "Mail item not found"}), 404
+
+
 _VALID_CATEGORIES = {"Bill", "Notice", "ForwardToMe", "Personal", "Junk", "NeedsReview"}
 
 

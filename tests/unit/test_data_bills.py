@@ -102,3 +102,25 @@ class TestSetOwnerIds:
     def test_returns_false_when_not_found(self, tmp_path):
         from postmule.data.bills import set_owner_ids
         assert set_owner_ids(tmp_path, "ghost-id", ["uuid-alice"]) is False
+
+
+class TestSetFiled:
+    def test_sets_filed_true_and_returns_true(self, tmp_path):
+        from postmule.data.bills import set_filed
+        add_bill(tmp_path, {"id": "b-filed", "date_received": "2025-03-01", "status": "pending"})
+        result = set_filed(tmp_path, "b-filed", True)
+        assert result is True
+        saved = load_bills(tmp_path, year=2025)
+        assert saved[0]["filed"] is True
+
+    def test_sets_filed_false(self, tmp_path):
+        from postmule.data.bills import set_filed
+        add_bill(tmp_path, {"id": "b-unfiled", "date_received": "2025-03-01",
+                            "status": "pending", "filed": True})
+        set_filed(tmp_path, "b-unfiled", False)
+        saved = load_bills(tmp_path, year=2025)
+        assert saved[0]["filed"] is False
+
+    def test_returns_false_when_not_found(self, tmp_path):
+        from postmule.data.bills import set_filed
+        assert set_filed(tmp_path, "ghost-id", True) is False

@@ -19,7 +19,8 @@ Schema for each bill record:
   "status": "pending" | "paid" | "matched",
   "matched_transaction_id": null,
   "alert_sent_date": "YYYY-MM-DD",  # date last bill-due alert was sent (null if never)
-  "owner_ids": []                   # resolved owner UUIDs (from owners.json); [] = unassigned
+  "owner_ids": [],                  # resolved owner UUIDs (from owners.json); [] = unassigned
+  "filed": false                    # true = hidden from main mail view (user filed it away)
 }
 """
 
@@ -121,6 +122,18 @@ def set_owner_ids(data_dir: Path, bill_id: str, owner_ids: list[str]) -> bool:
         for bill in bills:
             if bill.get("id") == bill_id:
                 bill["owner_ids"] = owner_ids
+                save_bills(data_dir, bills, year)
+                return True
+    return False
+
+
+def set_filed(data_dir: Path, bill_id: str, filed: bool) -> bool:
+    """Set filed state on a bill record. Returns True if found."""
+    for year in recent_years():
+        bills = load_bills(data_dir, year)
+        for bill in bills:
+            if bill.get("id") == bill_id:
+                bill["filed"] = filed
                 save_bills(data_dir, bills, year)
                 return True
     return False

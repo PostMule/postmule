@@ -11,7 +11,8 @@ Schema for each notice record:
   "summary": "...",
   "drive_file_id": "...",
   "filename": "2025-01-15_Alice_IRS_Notice.pdf",
-  "owner_ids": []          # resolved owner UUIDs (from owners.json); [] = unassigned
+  "owner_ids": [],         # resolved owner UUIDs (from owners.json); [] = unassigned
+  "filed": false           # true = hidden from main mail view (user filed it away)
 }
 """
 
@@ -85,6 +86,18 @@ def set_owner_ids(data_dir: Path, notice_id: str, owner_ids: list[str]) -> bool:
         for notice in notices:
             if notice.get("id") == notice_id:
                 notice["owner_ids"] = owner_ids
+                save_notices(data_dir, notices, year)
+                return True
+    return False
+
+
+def set_filed(data_dir: Path, notice_id: str, filed: bool) -> bool:
+    """Set filed state on a notice record. Returns True if found."""
+    for year in recent_years():
+        notices = load_notices(data_dir, year)
+        for notice in notices:
+            if notice.get("id") == notice_id:
+                notice["filed"] = filed
                 save_notices(data_dir, notices, year)
                 return True
     return False

@@ -439,3 +439,56 @@ class TestMailOwnerRoute:
             data={"owner_ids": _json.dumps([])},
         )
         assert response.status_code == 404
+
+
+class TestMailFileRoutes:
+    def test_file_bill_returns_200(self, client, data_dir):
+        from datetime import date
+        bill = bills_data.add_bill(data_dir, {
+            "date_received": date.today().isoformat(),
+            "sender": "ATT",
+            "status": "pending",
+        })
+        response = client.post(f"/api/mail/{bill['id']}/file")
+        assert response.status_code == 200
+        saved = bills_data.load_bills(data_dir)
+        assert saved[0].get("filed") is True
+
+    def test_unfile_bill_returns_200(self, client, data_dir):
+        from datetime import date
+        bill = bills_data.add_bill(data_dir, {
+            "date_received": date.today().isoformat(),
+            "sender": "ATT",
+            "status": "pending",
+            "filed": True,
+        })
+        response = client.post(f"/api/mail/{bill['id']}/unfile")
+        assert response.status_code == 200
+        saved = bills_data.load_bills(data_dir)
+        assert saved[0].get("filed") is False
+
+    def test_file_notice_returns_200(self, client, data_dir):
+        from datetime import date
+        notice = notices_data.add_notice(data_dir, {
+            "date_received": date.today().isoformat(),
+            "sender": "IRS",
+        })
+        response = client.post(f"/api/mail/{notice['id']}/file")
+        assert response.status_code == 200
+        saved = notices_data.load_notices(data_dir)
+        assert saved[0].get("filed") is True
+
+    def test_file_forward_to_me_returns_200(self, client, data_dir):
+        item = ftm_data.add_item(data_dir, {"sender": "Visa"})
+        response = client.post(f"/api/mail/{item['id']}/file")
+        assert response.status_code == 200
+        saved = ftm_data.load_forward_to_me(data_dir)
+        assert saved[0].get("filed") is True
+
+    def test_file_not_found_returns_404(self, client):
+        response = client.post("/api/mail/ghost-id/file")
+        assert response.status_code == 404
+
+    def test_unfile_not_found_returns_404(self, client):
+        response = client.post("/api/mail/ghost-id/unfile")
+        assert response.status_code == 404

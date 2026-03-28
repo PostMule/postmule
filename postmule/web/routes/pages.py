@@ -42,9 +42,9 @@ def home():
 def mail():
     year = request.args.get("year", date.today().year, type=int)
     initial_tab = request.args.get("tab", "all")
-    all_bills = bills_data.load_bills(_app._data_dir, year)
-    all_notices = notices_data.load_notices(_app._data_dir, year)
-    all_ftm = ftm_data.load_forward_to_me(_app._data_dir)
+    all_bills = [b for b in bills_data.load_bills(_app._data_dir, year) if not b.get("filed", False)]
+    all_notices = [n for n in notices_data.load_notices(_app._data_dir, year) if not n.get("filed", False)]
+    all_ftm = [f for f in ftm_data.load_forward_to_me(_app._data_dir) if not f.get("filed", False)]
 
     last_run = run_log_data.get_last_run(_app._data_dir)
     pending_ftm_count = len([f for f in all_ftm if f.get("forwarding_status") == "pending"])

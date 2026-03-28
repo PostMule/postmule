@@ -12,7 +12,8 @@ Schema for each record:
   "drive_file_id": "...",
   "filename": "...",
   "forwarding_status": "pending" | "forwarded",
-  "owner_ids": []          # resolved owner UUIDs (from owners.json); [] = unassigned
+  "owner_ids": [],         # resolved owner UUIDs (from owners.json); [] = unassigned
+  "filed": false           # true = hidden from main mail view (user filed it away)
 }
 """
 
@@ -80,6 +81,17 @@ def set_owner_ids(data_dir: Path, item_id: str, owner_ids: list[str]) -> bool:
     for item in items:
         if item.get("id") == item_id:
             item["owner_ids"] = owner_ids
+            save_forward_to_me(data_dir, items)
+            return True
+    return False
+
+
+def set_filed(data_dir: Path, item_id: str, filed: bool) -> bool:
+    """Set filed state on a forward-to-me record. Returns True if found."""
+    items = load_forward_to_me(data_dir)
+    for item in items:
+        if item.get("id") == item_id:
+            item["filed"] = filed
             save_forward_to_me(data_dir, items)
             return True
     return False
