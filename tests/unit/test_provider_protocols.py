@@ -1075,3 +1075,253 @@ class TestExcelOnlineProviderSmoke:
         from postmule.providers.spreadsheet.base import SpreadsheetProvider
         provider = self._make_provider()
         assert isinstance(provider, SpreadsheetProvider)
+
+
+# ---------------------------------------------------------------------------
+# TravelingMailboxProvider smoke tests
+# ---------------------------------------------------------------------------
+
+class TestTravelingMailboxProviderSmoke:
+    def _make_provider(self):
+        from postmule.providers.mailbox.traveling_mailbox import TravelingMailboxProvider
+        return TravelingMailboxProvider(
+            username="user@example.com",
+            password="secret",
+            imap_host="imap.example.com",
+            imap_user="notify@example.com",
+            imap_password="imapsecret",
+        )
+
+    def test_instantiation(self):
+        provider = self._make_provider()
+        assert provider.username == "user@example.com"
+        assert provider.imap_host == "imap.example.com"
+        assert provider.imap_port == 993
+
+    def test_health_check_ok(self):
+        provider = self._make_provider()
+        mock_conn = MagicMock()
+        with patch("postmule.providers.mailbox.traveling_mailbox.imaplib.IMAP4_SSL", return_value=mock_conn):
+            result = provider.health_check()
+        assert result.ok is True
+        assert "IMAP" in result.message
+
+    def test_health_check_failure(self):
+        provider = self._make_provider()
+        with patch("postmule.providers.mailbox.traveling_mailbox.imaplib.IMAP4_SSL", side_effect=OSError("refused")):
+            result = provider.health_check()
+        assert result.ok is False
+        assert "refused" in result.message
+
+    def test_list_unprocessed_items_empty(self):
+        provider = self._make_provider()
+        mock_conn = MagicMock()
+        mock_conn.search.return_value = (None, [b""])
+        with patch("postmule.providers.mailbox.traveling_mailbox.imaplib.IMAP4_SSL", return_value=mock_conn):
+            items = provider.list_unprocessed_items()
+        assert items == []
+
+    def test_list_unprocessed_items_parses_email(self):
+        import email as _email
+        from email.utils import formatdate
+        provider = self._make_provider()
+
+        raw_msg = _email.message.Message()
+        raw_msg["Date"] = formatdate(localtime=False)
+        raw_bytes = raw_msg.as_bytes()
+
+        mock_conn = MagicMock()
+        mock_conn.search.return_value = (None, [b"42"])
+        mock_conn.fetch.return_value = (None, [(None, raw_bytes)])
+        with patch("postmule.providers.mailbox.traveling_mailbox.imaplib.IMAP4_SSL", return_value=mock_conn):
+            items = provider.list_unprocessed_items()
+        assert len(items) == 1
+        assert items[0].mail_item_id == "42"
+        assert items[0].sender == "Traveling Mailbox"
+
+    def test_mark_as_processed(self):
+        provider = self._make_provider()
+        mock_conn = MagicMock()
+        with patch("postmule.providers.mailbox.traveling_mailbox.imaplib.IMAP4_SSL", return_value=mock_conn):
+            provider.mark_as_processed("42")
+        mock_conn.store.assert_called_once_with(b"42", "+FLAGS", "\\Seen")
+
+    def test_extract_pdf_url_found(self):
+        import email as _email
+        provider = self._make_provider()
+
+        html_body = '<a href="https://www.travelingmailbox.com/mailpiece/123">View</a>'
+        msg = _email.message.Message()
+        msg["Content-Type"] = "text/html"
+        msg.set_payload(html_body)
+
+        mock_conn = MagicMock()
+        mock_conn.fetch.return_value = (None, [(None, msg.as_bytes())])
+        with patch("postmule.providers.mailbox.traveling_mailbox.imaplib.IMAP4_SSL", return_value=mock_conn):
+            url = provider._extract_pdf_url("42")
+        assert "travelingmailbox.com" in url
+
+    def test_extract_pdf_url_not_found_raises(self):
+        import email as _email
+        provider = self._make_provider()
+
+        msg = _email.message.Message()
+        msg["Content-Type"] = "text/html"
+        msg.set_payload("<p>No link here</p>")
+
+        mock_conn = MagicMock()
+        mock_conn.fetch.return_value = (None, [(None, msg.as_bytes())])
+        with patch("postmule.providers.mailbox.traveling_mailbox.imaplib.IMAP4_SSL", return_value=mock_conn):
+            with pytest.raises(RuntimeError, match="no PDF link"):
+                provider._extract_pdf_url("42")
+
+    def test_parse_email_date_valid(self):
+        from postmule.providers.mailbox.traveling_mailbox import _parse_email_date
+        from email.utils import formatdate
+        result = _parse_email_date(formatdate(localtime=False))
+        assert len(result) == 10  # YYYY-MM-DD
+
+    def test_parse_email_date_empty_returns_today(self):
+        from postmule.providers.mailbox.traveling_mailbox import _parse_email_date
+        from datetime import date
+        result = _parse_email_date("")
+        assert result == date.today().isoformat()
+
+    def test_extract_csrf_authenticity_token(self):
+        from postmule.providers.mailbox.traveling_mailbox import _extract_csrf
+        html = '<input name="authenticity_token" value="abc123">'
+        assert _extract_csrf(html) == "abc123"
+
+    def test_extract_csrf_meta_tag(self):
+        from postmule.providers.mailbox.traveling_mailbox import _extract_csrf
+        html = '<meta name="csrf-token" content="xyz789">'
+        assert _extract_csrf(html) == "xyz789"
+
+    def test_extract_csrf_none(self):
+        from postmule.providers.mailbox.traveling_mailbox import _extract_csrf
+        assert _extract_csrf("<html></html>") == ""
+
+
+# ---------------------------------------------------------------------------
+# PostScanMailProvider smoke tests
+# ---------------------------------------------------------------------------
+
+class TestPostScanMailProviderSmoke:
+    def _make_provider(self):
+        from postmule.providers.mailbox.postscan import PostScanMailProvider
+        return PostScanMailProvider(
+            username="user@example.com",
+            password="secret",
+            imap_host="imap.example.com",
+            imap_user="notify@example.com",
+            imap_password="imapsecret",
+        )
+
+    def test_instantiation(self):
+        provider = self._make_provider()
+        assert provider.username == "user@example.com"
+        assert provider.imap_port == 993
+
+    def test_health_check_ok(self):
+        provider = self._make_provider()
+        mock_conn = MagicMock()
+        with patch("postmule.providers.mailbox.postscan.imaplib.IMAP4_SSL", return_value=mock_conn):
+            result = provider.health_check()
+        assert result.ok is True
+        assert "PostScan" in result.message
+
+    def test_health_check_failure(self):
+        provider = self._make_provider()
+        with patch("postmule.providers.mailbox.postscan.imaplib.IMAP4_SSL", side_effect=OSError("refused")):
+            result = provider.health_check()
+        assert result.ok is False
+
+    def test_list_unprocessed_items_empty(self):
+        provider = self._make_provider()
+        mock_conn = MagicMock()
+        mock_conn.search.return_value = (None, [b""])
+        with patch("postmule.providers.mailbox.postscan.imaplib.IMAP4_SSL", return_value=mock_conn):
+            items = provider.list_unprocessed_items()
+        assert items == []
+
+    def test_mark_as_processed(self):
+        provider = self._make_provider()
+        mock_conn = MagicMock()
+        with patch("postmule.providers.mailbox.postscan.imaplib.IMAP4_SSL", return_value=mock_conn):
+            provider.mark_as_processed("7")
+        mock_conn.store.assert_called_once_with(b"7", "+FLAGS", "\\Seen")
+
+    def test_extract_pdf_url_found(self):
+        import email as _email
+        provider = self._make_provider()
+
+        html_body = '<a href="https://www.postscanmail.com/view/mail/123">View</a>'
+        msg = _email.message.Message()
+        msg["Content-Type"] = "text/html"
+        msg.set_payload(html_body)
+
+        mock_conn = MagicMock()
+        mock_conn.fetch.return_value = (None, [(None, msg.as_bytes())])
+        with patch("postmule.providers.mailbox.postscan.imaplib.IMAP4_SSL", return_value=mock_conn):
+            url = provider._extract_pdf_url("7")
+        assert "postscanmail.com" in url
+
+    def test_extract_pdf_url_not_found_raises(self):
+        import email as _email
+        provider = self._make_provider()
+
+        msg = _email.message.Message()
+        msg["Content-Type"] = "text/html"
+        msg.set_payload("<p>No link here</p>")
+
+        mock_conn = MagicMock()
+        mock_conn.fetch.return_value = (None, [(None, msg.as_bytes())])
+        with patch("postmule.providers.mailbox.postscan.imaplib.IMAP4_SSL", return_value=mock_conn):
+            with pytest.raises(RuntimeError, match="no PDF link"):
+                provider._extract_pdf_url("7")
+
+    def test_extract_csrf_token_field(self):
+        from postmule.providers.mailbox.postscan import _extract_csrf
+        html = '<input name="_token" value="laravel-token-abc">'
+        assert _extract_csrf(html) == "laravel-token-abc"
+
+    def test_extract_csrf_none(self):
+        from postmule.providers.mailbox.postscan import _extract_csrf
+        assert _extract_csrf("<html></html>") == ""
+
+
+# ---------------------------------------------------------------------------
+# EarthClassMailProvider smoke tests
+# ---------------------------------------------------------------------------
+
+class TestEarthClassMailProviderSmoke:
+    def test_instantiation_does_not_raise(self):
+        from postmule.providers.mailbox.earth_class import EarthClassMailProvider
+        provider = EarthClassMailProvider()
+        assert provider is not None
+
+    def test_health_check_returns_discontinued(self):
+        from postmule.providers.mailbox.earth_class import EarthClassMailProvider
+        provider = EarthClassMailProvider()
+        result = provider.health_check()
+        assert result.ok is False
+        assert result.status == "discontinued"
+        assert "Anytime Mailbox" in result.message
+
+    def test_list_unprocessed_items_raises(self):
+        from postmule.providers.mailbox.earth_class import EarthClassMailProvider
+        provider = EarthClassMailProvider()
+        with pytest.raises(RuntimeError, match="Anytime Mailbox"):
+            provider.list_unprocessed_items()
+
+    def test_download_pdf_raises(self):
+        from postmule.providers.mailbox.earth_class import EarthClassMailProvider
+        provider = EarthClassMailProvider()
+        with pytest.raises(RuntimeError, match="Anytime Mailbox"):
+            provider.download_pdf("123")
+
+    def test_mark_as_processed_raises(self):
+        from postmule.providers.mailbox.earth_class import EarthClassMailProvider
+        provider = EarthClassMailProvider()
+        with pytest.raises(RuntimeError, match="Anytime Mailbox"):
+            provider.mark_as_processed("123")
