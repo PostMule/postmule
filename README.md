@@ -2,7 +2,7 @@
 
 > PostMule automatically sorts your physical mail and bills, tracks due dates, and matches payments to your bank — running privately on your own computer, with no subscription fee.
 
-It replaces services like PayTrust and PayMyBills. Your documents stay in your own Google Drive. Nothing is sent to any third-party server.
+It fills the role that services like the original Paytrust and PayMyBills once played — automated bill management that handles your mail, tracks due dates, and matches payments. PostMule runs on your own computer with no platform fee and no third party accessing your documents.
 
 **[View the interactive mockup →](https://postmule.github.io/app/mockup_dashboard.html)**
 

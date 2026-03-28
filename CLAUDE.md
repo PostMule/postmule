@@ -22,7 +22,7 @@
 - No credentials or sensitive values ever in GitHub (`config.yaml`, `credentials.yaml` gitignored)
 
 ## What PostMule Is
-Open source, self-hosted replacement for PayTrust/PayMyBills. Processes physical mail (VPM) and email-delivered bills, AI-classifies/extracts data, manages bills, sends alerts, reconciles with bank transactions. Runs on Windows 11.
+Open source, self-hosted automated bill management (fills the role the original Paytrust/PayMyBills once played). Processes physical mail (VPM) and email-delivered bills, AI-classifies/extracts data, manages bills, sends alerts, reconciles with bank transactions. Runs on Windows 11.
 
 **Repo:** https://github.com/PostMule/app | **Local:** `C:\ClaudeCodeFiles\ClaudeCode\PostMule\`
 
