@@ -149,6 +149,26 @@ _CONFIG_FIELDS: dict[str, list[str]] = {
     "llm": ["model"],
 }
 
+# Per-service non-sensitive config fields (stored in config.yaml)
+_SERVICE_CONFIG_FIELDS: dict[str, list[str]] = {
+    "gmail": ["label_name"],
+    "imap": ["host", "port", "use_ssl", "processed_folder", "inbox_folder"],
+    "proton": ["bridge_host", "bridge_port", "processed_folder"],
+    "outlook_365": ["processed_category"],
+    "outlook_com": ["processed_category"],
+    "google_drive": ["root_folder"],
+    "s3": ["bucket", "region", "root_prefix"],
+    "dropbox": ["root_folder"],
+    "onedrive": ["root_folder"],
+    "google_sheets": ["workbook_name"],
+    "excel_online": ["workbook_name"],
+    "airtable": ["base_id", "workbook_name"],
+    "gemini": ["model"],
+    "anthropic": ["model"],
+    "openai": ["model"],
+    "ollama": ["host", "model"],
+}
+
 _TAB_MAP = {
     "mailbox": "mailbox",
     "email": "email",
@@ -224,6 +244,84 @@ def _build_provider(category: str, service: str):
         from postmule.providers.mailbox.vpm import VpmProvider
         return VpmProvider(username, password)
 
+    if category == "email" and service == "imap":
+        username = _get_cred("imap", "username")
+        password = _get_cred("imap", "password")
+        if not username or not password:
+            raise ValueError("IMAP credentials not configured")
+        ep = (cfg.get("email", {}).get("providers") or [{}])[0]
+        if not ep.get("host"):
+            raise ValueError("IMAP host not configured")
+        from postmule.providers.email.imap import ImapProvider
+        return ImapProvider(
+            host=ep.get("host", ""),
+            port=int(ep.get("port", 993)),
+            username=username,
+            password=password,
+            use_ssl=str(ep.get("use_ssl", "true")).lower() not in ("false", "0", "no"),
+            processed_folder=ep.get("processed_folder", "PostMule"),
+        )
+
+    if category == "email" and service == "proton":
+        username = _get_cred("proton", "username")
+        password = _get_cred("proton", "password")
+        if not username or not password:
+            raise ValueError("Proton Bridge credentials not configured")
+        ep = (cfg.get("email", {}).get("providers") or [{}])[0]
+        from postmule.providers.email.proton import ProtonMailProvider
+        return ProtonMailProvider(
+            username=username,
+            password=password,
+            bridge_host=ep.get("bridge_host", "127.0.0.1"),
+            bridge_port=int(ep.get("bridge_port", 1143)),
+            processed_folder=ep.get("processed_folder", "PostMule"),
+        )
+
+    if category == "email" and service == "outlook_365":
+        token = _get_cred("outlook_365", "access_token")
+        if not token:
+            raise ValueError("Outlook 365 access token not configured")
+        ep = (cfg.get("email", {}).get("providers") or [{}])[0]
+        from postmule.providers.email.outlook_365 import Outlook365Provider
+        return Outlook365Provider(
+            access_token=token,
+            processed_category=ep.get("processed_category", "PostMule"),
+        )
+
+    if category == "email" and service == "outlook_com":
+        token = _get_cred("outlook_com", "access_token")
+        if not token:
+            raise ValueError("Outlook.com access token not configured")
+        ep = (cfg.get("email", {}).get("providers") or [{}])[0]
+        from postmule.providers.email.outlook_com import OutlookComProvider
+        return OutlookComProvider(
+            access_token=token,
+            processed_category=ep.get("processed_category", "PostMule"),
+        )
+
+    if category == "llm" and service == "anthropic":
+        api_key = _get_cred("anthropic", "api_key")
+        if not api_key:
+            raise ValueError("Anthropic API key not configured")
+        model = (cfg.get("llm", {}).get("providers") or [{}])[0].get("model", "claude-haiku-4-5-20251001")
+        from postmule.providers.llm.anthropic import AnthropicProvider
+        return AnthropicProvider(api_key, model=model)
+
+    if category == "llm" and service == "openai":
+        api_key = _get_cred("openai", "api_key")
+        if not api_key:
+            raise ValueError("OpenAI API key not configured")
+        model = (cfg.get("llm", {}).get("providers") or [{}])[0].get("model", "gpt-4o-mini")
+        from postmule.providers.llm.openai import OpenAIProvider
+        return OpenAIProvider(api_key, model=model)
+
+    if category == "llm" and service == "ollama":
+        lp = (cfg.get("llm", {}).get("providers") or [{}])[0]
+        host = lp.get("host", "http://localhost:11434")
+        model = lp.get("model", "llama3.2")
+        from postmule.providers.llm.ollama import OllamaProvider
+        return OllamaProvider(host=host, model=model)
+
     raise ValueError(f"Unknown provider: {category}/{service}")
 
 
@@ -271,6 +369,41 @@ def save_provider_config(category: str):
             pass
     except Exception as exc:
         log.error(f"Failed to save provider config: {exc}")
+        return redirect(url_for("pages.providers") + f"?tab={tab}&error=save_failed")
+
+    return redirect(url_for("pages.providers") + f"?tab={tab}&saved=1")
+
+
+@connections_bp.route("/api/providers/<category>/<service>/config", methods=["POST"])
+def save_service_config(category: str, service: str):
+    """Save non-sensitive settings for a specific provider service to config.yaml."""
+    allowed = _SERVICE_CONFIG_FIELDS.get(service, [])
+    tab = _tab_for(category)
+
+    config_path = _app._config_path
+    if not config_path or not config_path.exists():
+        return redirect(url_for("pages.providers") + f"?tab={tab}&error=no_config")
+
+    try:
+        with open(config_path, encoding="utf-8") as f:
+            raw = yaml.safe_load(f) or {}
+        providers = raw.setdefault(category, {}).setdefault("providers", [{}])
+        if not providers:
+            providers.append({})
+        for field in allowed:
+            value = request.form.get(field)
+            if value is not None:
+                providers[0][field] = value.strip()
+        with open(config_path, "w", encoding="utf-8") as f:
+            yaml.dump(raw, f, allow_unicode=True, default_flow_style=False)
+        _app._config_raw = raw
+        try:
+            from postmule.core.config import load_config
+            _app._config = load_config(config_path)
+        except Exception:
+            pass
+    except Exception as exc:
+        log.error(f"Failed to save service config: {exc}")
         return redirect(url_for("pages.providers") + f"?tab={tab}&error=save_failed")
 
     return redirect(url_for("pages.providers") + f"?tab={tab}&saved=1")

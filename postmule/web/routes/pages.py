@@ -340,10 +340,15 @@ def _connection_status() -> dict:
     email_providers = cfg.get("email", {}).get("providers", [])
     email_type = ""
     email_address = ""
+    ep0 = email_providers[0] if email_providers else {}
     if email_providers:
         ep = email_providers[0]
         email_type = ep.get("service", "")
         email_address = ep.get("address", "") or ep.get("username", "")
+    imap_creds_ok = bool(_cred_get("imap", "username")) and bool(_cred_get("imap", "password"))
+    proton_creds_ok = bool(_cred_get("proton", "username")) and bool(_cred_get("proton", "password"))
+    outlook_365_token = _cred_get("outlook_365", "access_token")
+    outlook_com_token = _cred_get("outlook_com", "access_token")
 
     # storage
     storage_providers = cfg.get("storage", {}).get("providers", [])
@@ -373,6 +378,7 @@ def _connection_status() -> dict:
         llm_model = lp.get("model", "")
     anthropic_key = _cred_get("anthropic", "api_key")
     openai_key = _cred_get("openai", "api_key")
+    ollama_host = (llm_providers[0].get("host", "http://localhost:11434") if llm_providers else "http://localhost:11434")
 
     # finance
     finance_providers = cfg.get("finance", {}).get("providers", [])
@@ -396,7 +402,21 @@ def _connection_status() -> dict:
             "type": email_type,
             "address": email_address,
             "enabled": bool(email_type),
-            "label_name": (email_providers[0].get("label_name", "PostMule") if email_providers else "PostMule"),
+            "label_name": ep0.get("label_name", "PostMule"),
+            # IMAP
+            "imap_creds_ok": imap_creds_ok,
+            "imap_host": ep0.get("host", "") if email_type == "imap" else "",
+            "imap_port": ep0.get("port", 993) if email_type == "imap" else 993,
+            "imap_ssl": ep0.get("use_ssl", True) if email_type == "imap" else True,
+            "imap_processed_folder": ep0.get("processed_folder", "PostMule") if email_type == "imap" else "PostMule",
+            # Proton
+            "proton_creds_ok": proton_creds_ok,
+            "proton_bridge_host": ep0.get("bridge_host", "127.0.0.1") if email_type == "proton" else "127.0.0.1",
+            "proton_bridge_port": ep0.get("bridge_port", 1143) if email_type == "proton" else 1143,
+            # Outlook
+            "outlook_365_token": outlook_365_token,
+            "outlook_com_token": outlook_com_token,
+            "outlook_processed_category": ep0.get("processed_category", "PostMule"),
         },
         "storage": {
             "type": storage_type,
@@ -416,6 +436,7 @@ def _connection_status() -> dict:
             "model": llm_model,
             "anthropic_key": anthropic_key,
             "openai_key": openai_key,
+            "ollama_host": ollama_host,
         },
         "finance": {
             "type": finance_type,

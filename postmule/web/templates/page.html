@@ -961,61 +961,276 @@
 
         <div class="conn-section-label conn-provider--inactive">Available</div>
 
-        <div class="conn-provider {% if conn.email.type == 'outlook_365' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+        <div class="conn-provider {% if conn.email.type == 'outlook_365' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}"
+          {% if conn.email.type == 'outlook_365' %}x-data="{ ts: 'idle', tm: '', configOpen: false, initOk: {{ 'true' if conn.email.outlook_365_token else 'false' }} }"{% endif %}>
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#0078D4;color:white;flex-shrink:0;">M</div>
             <div style="flex:1;min-width:0;">
               <div class="conn-provider-name">Outlook / Microsoft 365</div>
-              <div class="conn-provider-desc-small">Org accounts — Azure AD OAuth, Microsoft Graph</div>
+              <div class="conn-provider-desc-small">Org accounts — Microsoft Graph API</div>
             </div>
-            {% if conn.email.type == 'outlook_365' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-            {% else %}<span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>{% endif %}
+            {% if conn.email.type == 'outlook_365' %}
+              <span class="conn-provider-badge"
+                    :class="ts!='idle' ? (ts=='ok'?'conn-provider-badge--ok':ts=='warn'?'conn-provider-badge--warn':ts=='checking'?'conn-provider-badge--off':'conn-provider-badge--error') : (initOk ? 'conn-provider-badge--ok' : 'conn-provider-badge--warn')"
+                    x-text="ts=='idle' ? (initOk ? 'Active' : 'Setup needed') : ts=='checking' ? 'Checking\u2026' : ts=='ok' ? 'Connected' : ts=='warn' ? 'Warning' : 'Error'"></span>
+            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.email.type != 'outlook_365' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
                 <input type="hidden" name="category" value="email"><input type="hidden" name="service" value="outlook_365"><input type="hidden" name="tab" value="email">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Outlook 365</button>
-              </form>{% endif %}
+              </form>
+              {% elif conn.email.outlook_365_token %}
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;"
+                        @click.prevent="ts='checking'; fetch('/api/providers/email/outlook_365/test',{method:'POST'}).then(r=>r.json()).then(d=>{ts=d.status;tm=d.message||''}).catch(()=>{ts='error';tm='Request failed'})">
+                  <span x-text="ts==='checking'?'Checking\u2026':'Test'">Test</span>
+                </button>
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" @click="configOpen = !configOpen">
+                  <span x-text="configOpen ? 'Close' : 'Configure'">Configure</span>
+                </button>
+              {% endif %}
             </div>
           </div>
+          {% if conn.email.type == 'outlook_365' %}
+          <div class="conn-provider-body">
+            <div class="conn-cred-form">
+              <div class="conn-cred-row">
+                <label for="ol365-token">Access Token</label>
+                <form method="post" action="/api/credential" style="display:contents;">
+                  <input type="hidden" name="provider" value="outlook_365"><input type="hidden" name="field" value="access_token"><input type="hidden" name="tab" value="email">
+                  <input type="password" id="ol365-token" name="value" placeholder="{% if conn.email.outlook_365_token %}&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;{% else %}Bearer token from Azure AD OAuth{% endif %}" autocomplete="off">
+                  <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+                </form>
+              </div>
+              <p class="conn-cred-note">Microsoft Graph API bearer token. Obtain via Azure AD OAuth flow. Stored in encrypted vault.</p>
+            </div>
+          </div>
+          <div x-show="configOpen" x-cloak style="padding:12px 18px 14px;border-top:1px solid #E8EDF3;background:#FAFCFF;">
+            <form method="post" action="/api/providers/email/outlook_365/config">
+              <div class="conn-cred-row">
+                <label style="min-width:140px;font-size:0.8125rem;font-weight:500;color:#2C4A6E;">PostMule category</label>
+                <input type="text" name="processed_category" value="{{ conn.email.outlook_processed_category or 'PostMule' }}" style="flex:1;max-width:200px;padding:7px 10px;border:1px solid #C8D8E8;border-radius:4px;font-size:0.8125rem;">
+                <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+              </div>
+              <p class="conn-cred-note">Outlook category applied to processed emails. Default: PostMule</p>
+            </form>
+            <div x-show="tm" x-text="'Last test: ' + tm" style="margin-top:6px;font-size:0.78rem;color:#5A7090;font-style:italic;"></div>
+          </div>
+          {% endif %}
         </div>
 
-        <div class="conn-provider {% if conn.email.type == 'outlook_com' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+        <div class="conn-provider {% if conn.email.type == 'outlook_com' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}"
+          {% if conn.email.type == 'outlook_com' %}x-data="{ ts: 'idle', tm: '', configOpen: false, initOk: {{ 'true' if conn.email.outlook_com_token else 'false' }} }"{% endif %}>
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#0078D4;color:white;flex-shrink:0;">@</div>
             <div style="flex:1;min-width:0;">
               <div class="conn-provider-name">outlook.com / Hotmail / Live</div>
-              <div class="conn-provider-desc-small">Personal Microsoft accounts — IMAP or personal OAuth</div>
+              <div class="conn-provider-desc-small">Personal Microsoft accounts — Microsoft Graph API</div>
             </div>
-            {% if conn.email.type == 'outlook_com' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-            {% else %}<span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>{% endif %}
+            {% if conn.email.type == 'outlook_com' %}
+              <span class="conn-provider-badge"
+                    :class="ts!='idle' ? (ts=='ok'?'conn-provider-badge--ok':ts=='warn'?'conn-provider-badge--warn':ts=='checking'?'conn-provider-badge--off':'conn-provider-badge--error') : (initOk ? 'conn-provider-badge--ok' : 'conn-provider-badge--warn')"
+                    x-text="ts=='idle' ? (initOk ? 'Active' : 'Setup needed') : ts=='checking' ? 'Checking\u2026' : ts=='ok' ? 'Connected' : ts=='warn' ? 'Warning' : 'Error'"></span>
+            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.email.type != 'outlook_com' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
                 <input type="hidden" name="category" value="email"><input type="hidden" name="service" value="outlook_com"><input type="hidden" name="tab" value="email">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Outlook.com</button>
-              </form>{% endif %}
+              </form>
+              {% elif conn.email.outlook_com_token %}
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;"
+                        @click.prevent="ts='checking'; fetch('/api/providers/email/outlook_com/test',{method:'POST'}).then(r=>r.json()).then(d=>{ts=d.status;tm=d.message||''}).catch(()=>{ts='error';tm='Request failed'})">
+                  <span x-text="ts==='checking'?'Checking\u2026':'Test'">Test</span>
+                </button>
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" @click="configOpen = !configOpen">
+                  <span x-text="configOpen ? 'Close' : 'Configure'">Configure</span>
+                </button>
+              {% endif %}
             </div>
           </div>
+          {% if conn.email.type == 'outlook_com' %}
+          <div class="conn-provider-body">
+            <div class="conn-cred-form">
+              <div class="conn-cred-row">
+                <label for="olcom-token">Access Token</label>
+                <form method="post" action="/api/credential" style="display:contents;">
+                  <input type="hidden" name="provider" value="outlook_com"><input type="hidden" name="field" value="access_token"><input type="hidden" name="tab" value="email">
+                  <input type="password" id="olcom-token" name="value" placeholder="{% if conn.email.outlook_com_token %}&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;{% else %}Bearer token from Microsoft OAuth{% endif %}" autocomplete="off">
+                  <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+                </form>
+              </div>
+              <p class="conn-cred-note">Microsoft Graph API bearer token for personal accounts. Stored in encrypted vault.</p>
+            </div>
+          </div>
+          <div x-show="configOpen" x-cloak style="padding:12px 18px 14px;border-top:1px solid #E8EDF3;background:#FAFCFF;">
+            <form method="post" action="/api/providers/email/outlook_com/config">
+              <div class="conn-cred-row">
+                <label style="min-width:140px;font-size:0.8125rem;font-weight:500;color:#2C4A6E;">PostMule category</label>
+                <input type="text" name="processed_category" value="{{ conn.email.outlook_processed_category or 'PostMule' }}" style="flex:1;max-width:200px;padding:7px 10px;border:1px solid #C8D8E8;border-radius:4px;font-size:0.8125rem;">
+                <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+              </div>
+              <p class="conn-cred-note">Outlook category applied to processed emails. Default: PostMule</p>
+            </form>
+            <div x-show="tm" x-text="'Last test: ' + tm" style="margin-top:6px;font-size:0.78rem;color:#5A7090;font-style:italic;"></div>
+          </div>
+          {% endif %}
         </div>
 
-        <div class="conn-provider {% if conn.email.type == 'imap' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+        <div class="conn-provider {% if conn.email.type == 'imap' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}"
+          {% if conn.email.type == 'imap' %}x-data="{ ts: 'idle', tm: '', configOpen: false, initOk: {{ 'true' if conn.email.imap_creds_ok else 'false' }} }"{% endif %}>
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#5A7090;color:white;flex-shrink:0;">@</div>
             <div style="flex:1;min-width:0;">
               <div class="conn-provider-name">Generic IMAP</div>
               <div class="conn-provider-desc-small">Any IMAP-compatible email account</div>
             </div>
-            {% if conn.email.type == 'imap' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-            {% else %}<span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>{% endif %}
+            {% if conn.email.type == 'imap' %}
+              <span class="conn-provider-badge"
+                    :class="ts!='idle' ? (ts=='ok'?'conn-provider-badge--ok':ts=='warn'?'conn-provider-badge--warn':ts=='checking'?'conn-provider-badge--off':'conn-provider-badge--error') : (initOk ? 'conn-provider-badge--ok' : 'conn-provider-badge--warn')"
+                    x-text="ts=='idle' ? (initOk ? 'Active' : 'Setup needed') : ts=='checking' ? 'Checking\u2026' : ts=='ok' ? 'Connected' : ts=='warn' ? 'Warning' : 'Error'"></span>
+            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
             <div class="conn-provider-actions">
               {% if conn.email.type != 'imap' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
                 <input type="hidden" name="category" value="email"><input type="hidden" name="service" value="imap"><input type="hidden" name="tab" value="email">
                 <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to IMAP</button>
-              </form>{% endif %}
+              </form>
+              {% elif conn.email.imap_creds_ok %}
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;"
+                        @click.prevent="ts='checking'; fetch('/api/providers/email/imap/test',{method:'POST'}).then(r=>r.json()).then(d=>{ts=d.status;tm=d.message||''}).catch(()=>{ts='error';tm='Request failed'})">
+                  <span x-text="ts==='checking'?'Checking\u2026':'Test'">Test</span>
+                </button>
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" @click="configOpen = !configOpen">
+                  <span x-text="configOpen ? 'Close' : 'Configure'">Configure</span>
+                </button>
+              {% endif %}
             </div>
           </div>
+          {% if conn.email.type == 'imap' %}
+          <div class="conn-provider-body">
+            {% if not conn.email.imap_creds_ok %}
+            <p style="margin:0 0 8px;">Enter your IMAP server settings and credentials.</p>
+            {% else %}
+            Server: <code>{{ conn.email.imap_host or '—' }}:{{ conn.email.imap_port }}</code> &mdash; credentials stored in encrypted vault.
+            {% endif %}
+            <div class="conn-cred-form" style="margin-top:8px;">
+              <div class="conn-cred-row">
+                <label for="imap-user">Username</label>
+                <form method="post" action="/api/credential" style="display:contents;">
+                  <input type="hidden" name="provider" value="imap"><input type="hidden" name="field" value="username"><input type="hidden" name="tab" value="email">
+                  <input type="text" id="imap-user" name="value" placeholder="your@email.com" autocomplete="username">
+                  <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+                </form>
+              </div>
+              <div class="conn-cred-row">
+                <label for="imap-pass">Password</label>
+                <form method="post" action="/api/credential" style="display:contents;">
+                  <input type="hidden" name="provider" value="imap"><input type="hidden" name="field" value="password"><input type="hidden" name="tab" value="email">
+                  <input type="password" id="imap-pass" name="value" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" autocomplete="current-password">
+                  <button type="submit" class="btn {% if conn.email.imap_creds_ok %}btn-secondary{% else %}btn-primary{% endif %}" style="padding:5px 12px;font-size:0.8rem;">{% if conn.email.imap_creds_ok %}Update{% else %}Save{% endif %}</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div x-show="configOpen" x-cloak style="padding:12px 18px 14px;border-top:1px solid #E8EDF3;background:#FAFCFF;">
+            <form method="post" action="/api/providers/email/imap/config">
+              <div class="conn-cred-row">
+                <label style="min-width:110px;font-size:0.8125rem;font-weight:500;color:#2C4A6E;">IMAP host</label>
+                <input type="text" name="host" value="{{ conn.email.imap_host or '' }}" placeholder="imap.example.com" style="flex:1;max-width:220px;padding:7px 10px;border:1px solid #C8D8E8;border-radius:4px;font-size:0.8125rem;">
+              </div>
+              <div class="conn-cred-row" style="margin-top:6px;">
+                <label style="min-width:110px;font-size:0.8125rem;font-weight:500;color:#2C4A6E;">Port</label>
+                <input type="number" name="port" value="{{ conn.email.imap_port or 993 }}" style="width:80px;padding:7px 10px;border:1px solid #C8D8E8;border-radius:4px;font-size:0.8125rem;">
+                <label style="font-size:0.8125rem;margin-left:14px;display:flex;align-items:center;gap:6px;">
+                  <input type="checkbox" name="use_ssl" value="true" {% if conn.email.imap_ssl %}checked{% endif %}> SSL
+                </label>
+              </div>
+              <div class="conn-cred-row" style="margin-top:6px;">
+                <label style="min-width:110px;font-size:0.8125rem;font-weight:500;color:#2C4A6E;">Processed folder</label>
+                <input type="text" name="processed_folder" value="{{ conn.email.imap_processed_folder or 'PostMule' }}" style="flex:1;max-width:160px;padding:7px 10px;border:1px solid #C8D8E8;border-radius:4px;font-size:0.8125rem;">
+                <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+              </div>
+              <p class="conn-cred-note">Server settings only — credentials are saved separately above.</p>
+            </form>
+            <div x-show="tm" x-text="'Last test: ' + tm" style="margin-top:6px;font-size:0.78rem;color:#5A7090;font-style:italic;"></div>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="conn-provider {% if conn.email.type == 'proton' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}"
+          {% if conn.email.type == 'proton' %}x-data="{ ts: 'idle', tm: '', configOpen: false, initOk: {{ 'true' if conn.email.proton_creds_ok else 'false' }} }"{% endif %}>
+          <div class="conn-provider-header">
+            <div class="conn-service-icon" style="background:#6D4AFF;color:white;flex-shrink:0;">PM</div>
+            <div style="flex:1;min-width:0;">
+              <div class="conn-provider-name">Proton Mail</div>
+              <div class="conn-provider-desc-small">Via Proton Bridge — local IMAP proxy, no cloud credentials</div>
+            </div>
+            {% if conn.email.type == 'proton' %}
+              <span class="conn-provider-badge"
+                    :class="ts!='idle' ? (ts=='ok'?'conn-provider-badge--ok':ts=='warn'?'conn-provider-badge--warn':ts=='checking'?'conn-provider-badge--off':'conn-provider-badge--error') : (initOk ? 'conn-provider-badge--ok' : 'conn-provider-badge--warn')"
+                    x-text="ts=='idle' ? (initOk ? 'Active' : 'Setup needed') : ts=='checking' ? 'Checking\u2026' : ts=='ok' ? 'Connected' : ts=='warn' ? 'Warning' : 'Error'"></span>
+            {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
+            <div class="conn-provider-actions">
+              {% if conn.email.type != 'proton' %}
+              <form method="post" action="/api/connection/provider" style="margin:0;">
+                <input type="hidden" name="category" value="email"><input type="hidden" name="service" value="proton"><input type="hidden" name="tab" value="email">
+                <button type="submit" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;">Switch to Proton</button>
+              </form>
+              {% elif conn.email.proton_creds_ok %}
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;"
+                        @click.prevent="ts='checking'; fetch('/api/providers/email/proton/test',{method:'POST'}).then(r=>r.json()).then(d=>{ts=d.status;tm=d.message||''}).catch(()=>{ts='error';tm='Request failed'})">
+                  <span x-text="ts==='checking'?'Checking\u2026':'Test'">Test</span>
+                </button>
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" @click="configOpen = !configOpen">
+                  <span x-text="configOpen ? 'Close' : 'Configure'">Configure</span>
+                </button>
+              {% endif %}
+            </div>
+          </div>
+          {% if conn.email.type == 'proton' %}
+          <div class="conn-provider-body">
+            {% if not conn.email.proton_creds_ok %}
+            <p style="margin:0 0 8px;">Requires <a href="https://proton.me/mail/bridge" target="_blank" rel="noopener">Proton Bridge</a> running locally. Enter your Bridge credentials.</p>
+            {% else %}
+            Bridge at <code>{{ conn.email.proton_bridge_host }}:{{ conn.email.proton_bridge_port }}</code> &mdash; credentials stored in encrypted vault.
+            {% endif %}
+            <div class="conn-cred-form" style="margin-top:8px;">
+              <div class="conn-cred-row">
+                <label for="proton-user">Proton address</label>
+                <form method="post" action="/api/credential" style="display:contents;">
+                  <input type="hidden" name="provider" value="proton"><input type="hidden" name="field" value="username"><input type="hidden" name="tab" value="email">
+                  <input type="text" id="proton-user" name="value" placeholder="you@proton.me" autocomplete="username">
+                  <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+                </form>
+              </div>
+              <div class="conn-cred-row">
+                <label for="proton-pass">Bridge password</label>
+                <form method="post" action="/api/credential" style="display:contents;">
+                  <input type="hidden" name="provider" value="proton"><input type="hidden" name="field" value="password"><input type="hidden" name="tab" value="email">
+                  <input type="password" id="proton-pass" name="value" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" autocomplete="current-password">
+                  <button type="submit" class="btn {% if conn.email.proton_creds_ok %}btn-secondary{% else %}btn-primary{% endif %}" style="padding:5px 12px;font-size:0.8rem;">{% if conn.email.proton_creds_ok %}Update{% else %}Save{% endif %}</button>
+                </form>
+              </div>
+              <p class="conn-cred-note">Use the Proton Bridge password, not your Proton account password.</p>
+            </div>
+          </div>
+          <div x-show="configOpen" x-cloak style="padding:12px 18px 14px;border-top:1px solid #E8EDF3;background:#FAFCFF;">
+            <form method="post" action="/api/providers/email/proton/config">
+              <div class="conn-cred-row">
+                <label style="min-width:120px;font-size:0.8125rem;font-weight:500;color:#2C4A6E;">Bridge host</label>
+                <input type="text" name="bridge_host" value="{{ conn.email.proton_bridge_host or '127.0.0.1' }}" style="flex:1;max-width:160px;padding:7px 10px;border:1px solid #C8D8E8;border-radius:4px;font-size:0.8125rem;">
+              </div>
+              <div class="conn-cred-row" style="margin-top:6px;">
+                <label style="min-width:120px;font-size:0.8125rem;font-weight:500;color:#2C4A6E;">Bridge port</label>
+                <input type="number" name="bridge_port" value="{{ conn.email.proton_bridge_port or 1143 }}" style="width:80px;padding:7px 10px;border:1px solid #C8D8E8;border-radius:4px;font-size:0.8125rem;">
+                <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;margin-left:8px;">Save</button>
+              </div>
+              <p class="conn-cred-note">Proton Bridge IMAP defaults: 127.0.0.1 port 1143. Change only if you customised Bridge.</p>
+            </form>
+            <div x-show="tm" x-text="'Last test: ' + tm" style="margin-top:6px;font-size:0.78rem;color:#5A7090;font-style:italic;"></div>
+          </div>
+          {% endif %}
         </div>
 
       </div>
@@ -1570,7 +1785,8 @@
 
         <div class="conn-section-label conn-provider--inactive">Available</div>
 
-        <div class="conn-provider {% if conn.llm.type == 'anthropic' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+        <div class="conn-provider {% if conn.llm.type == 'anthropic' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}"
+          {% if conn.llm.type == 'anthropic' %}x-data="{ ts: 'idle', tm: '', configOpen: false, initOk: {{ 'true' if conn.llm.anthropic_key else 'false' }} }"{% endif %}>
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-ai" style="flex-shrink:0;">AI</div>
             <div style="flex:1;min-width:0;">
@@ -1578,10 +1794,20 @@
               <div class="conn-provider-desc-small">Anthropic Claude API &mdash; most capable option</div>
             </div>
             {% if conn.llm.type == 'anthropic' %}
-              {% if conn.llm.anthropic_key %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-              {% else %}<span class="conn-provider-badge conn-provider-badge--warn">Setup needed</span>{% endif %}
+              <span class="conn-provider-badge"
+                :class="ts==='ok' ? 'conn-provider-badge--ok' : ts==='error' ? 'conn-provider-badge--warn' : (initOk ? 'conn-provider-badge--ok' : 'conn-provider-badge--warn')"
+                x-text="ts==='ok' ? 'Connected' : ts==='error' ? 'Error' : (initOk ? 'Active' : 'Setup needed')"></span>
             {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
             <div class="conn-provider-actions">
+              {% if conn.llm.type == 'anthropic' and conn.llm.anthropic_key %}
+              <button type="button" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;"
+                :disabled="ts==='testing'"
+                @click="ts='testing'; fetch('/api/providers/llm/anthropic/test',{method:'POST'}).then(r=>r.json()).then(d=>{ts=d.ok?'ok':'error';tm=d.message}).catch(e=>{ts='error';tm=String(e)})">
+                <span x-text="ts==='testing' ? 'Testing…' : 'Test'">Test</span>
+              </button>
+              <button type="button" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;"
+                @click="configOpen=!configOpen" x-text="configOpen ? 'Close' : 'Configure'">Configure</button>
+              {% endif %}
               {% if conn.llm.type != 'anthropic' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
                 <input type="hidden" name="category" value="llm"><input type="hidden" name="service" value="anthropic"><input type="hidden" name="tab" value="ai">
@@ -1602,11 +1828,22 @@
               </div>
               <p class="conn-cred-note">Stored in encrypted credentials vault. Never written to disk in plaintext.</p>
             </div>
+            <div x-show="configOpen" x-cloak style="margin-top:10px;border-top:1px solid #E8EDF2;padding-top:10px;">
+              <form method="post" action="/api/providers/llm/anthropic/config" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px;">
+                  <label style="font-size:0.8rem;color:#5A7090;">Model</label>
+                  <input type="text" name="model" value="{{ conn.llm.model or 'claude-3-5-flash-20241022' }}" placeholder="claude-3-5-flash-20241022" style="padding:5px 8px;border:1px solid #D0D9E4;border-radius:6px;font-size:0.85rem;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+              </form>
+            </div>
+            <div x-show="tm" x-text="'Last test: ' + tm" style="margin-top:6px;font-size:0.78rem;color:#5A7090;font-style:italic;"></div>
           </div>
           {% endif %}
         </div>
 
-        <div class="conn-provider {% if conn.llm.type == 'openai' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+        <div class="conn-provider {% if conn.llm.type == 'openai' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}"
+          {% if conn.llm.type == 'openai' %}x-data="{ ts: 'idle', tm: '', configOpen: false, initOk: {{ 'true' if conn.llm.openai_key else 'false' }} }"{% endif %}>
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#10A37F;color:white;flex-shrink:0;">AI</div>
             <div style="flex:1;min-width:0;">
@@ -1614,10 +1851,20 @@
               <div class="conn-provider-desc-small">GPT-4o and other OpenAI models</div>
             </div>
             {% if conn.llm.type == 'openai' %}
-              {% if conn.llm.openai_key %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
-              {% else %}<span class="conn-provider-badge conn-provider-badge--warn">Setup needed</span>{% endif %}
+              <span class="conn-provider-badge"
+                :class="ts==='ok' ? 'conn-provider-badge--ok' : ts==='error' ? 'conn-provider-badge--warn' : (initOk ? 'conn-provider-badge--ok' : 'conn-provider-badge--warn')"
+                x-text="ts==='ok' ? 'Connected' : ts==='error' ? 'Error' : (initOk ? 'Active' : 'Setup needed')"></span>
             {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
             <div class="conn-provider-actions">
+              {% if conn.llm.type == 'openai' and conn.llm.openai_key %}
+              <button type="button" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;"
+                :disabled="ts==='testing'"
+                @click="ts='testing'; fetch('/api/providers/llm/openai/test',{method:'POST'}).then(r=>r.json()).then(d=>{ts=d.ok?'ok':'error';tm=d.message}).catch(e=>{ts='error';tm=String(e)})">
+                <span x-text="ts==='testing' ? 'Testing…' : 'Test'">Test</span>
+              </button>
+              <button type="button" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;"
+                @click="configOpen=!configOpen" x-text="configOpen ? 'Close' : 'Configure'">Configure</button>
+              {% endif %}
               {% if conn.llm.type != 'openai' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
                 <input type="hidden" name="category" value="llm"><input type="hidden" name="service" value="openai"><input type="hidden" name="tab" value="ai">
@@ -1638,20 +1885,43 @@
               </div>
               <p class="conn-cred-note">Stored in encrypted credentials vault.</p>
             </div>
+            <div x-show="configOpen" x-cloak style="margin-top:10px;border-top:1px solid #E8EDF2;padding-top:10px;">
+              <form method="post" action="/api/providers/llm/openai/config" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px;">
+                  <label style="font-size:0.8rem;color:#5A7090;">Model</label>
+                  <input type="text" name="model" value="{{ conn.llm.model or 'gpt-4o' }}" placeholder="gpt-4o" style="padding:5px 8px;border:1px solid #D0D9E4;border-radius:6px;font-size:0.85rem;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+              </form>
+            </div>
+            <div x-show="tm" x-text="'Last test: ' + tm" style="margin-top:6px;font-size:0.78rem;color:#5A7090;font-style:italic;"></div>
           </div>
           {% endif %}
         </div>
 
-        <div class="conn-provider {% if conn.llm.type == 'ollama' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}">
+        <div class="conn-provider {% if conn.llm.type == 'ollama' %}conn-provider--active{% else %}conn-provider--inactive{% endif %}"
+          {% if conn.llm.type == 'ollama' %}x-data="{ ts: 'idle', tm: '', configOpen: false }"{% endif %}>
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#5A7090;color:white;flex-shrink:0;">Ol</div>
             <div style="flex:1;min-width:0;">
               <div class="conn-provider-name">Ollama</div>
               <div class="conn-provider-desc-small">Self-hosted local LLM via Ollama</div>
             </div>
-            {% if conn.llm.type == 'ollama' %}<span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            {% if conn.llm.type == 'ollama' %}
+              <span class="conn-provider-badge"
+                :class="ts==='ok' ? 'conn-provider-badge--ok' : ts==='error' ? 'conn-provider-badge--warn' : 'conn-provider-badge--ok'"
+                x-text="ts==='ok' ? 'Connected' : ts==='error' ? 'Error' : 'Active'"></span>
             {% else %}<span class="conn-provider-badge conn-provider-badge--off">Not active</span>{% endif %}
             <div class="conn-provider-actions">
+              {% if conn.llm.type == 'ollama' %}
+              <button type="button" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;"
+                :disabled="ts==='testing'"
+                @click="ts='testing'; fetch('/api/providers/llm/ollama/test',{method:'POST'}).then(r=>r.json()).then(d=>{ts=d.ok?'ok':'error';tm=d.message}).catch(e=>{ts='error';tm=String(e)})">
+                <span x-text="ts==='testing' ? 'Testing…' : 'Test'">Test</span>
+              </button>
+              <button type="button" class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;"
+                @click="configOpen=!configOpen" x-text="configOpen ? 'Close' : 'Configure'">Configure</button>
+              {% endif %}
               {% if conn.llm.type != 'ollama' %}
               <form method="post" action="/api/connection/provider" style="margin:0;">
                 <input type="hidden" name="category" value="llm"><input type="hidden" name="service" value="ollama"><input type="hidden" name="tab" value="ai">
@@ -1660,7 +1930,23 @@
             </div>
           </div>
           {% if conn.llm.type == 'ollama' %}
-          <div class="conn-provider-body">Runs locally &mdash; no API key needed. Configure the endpoint URL in <a href="/settings">Settings</a>.</div>
+          <div class="conn-provider-body">
+            <div x-show="configOpen" x-cloak style="border-bottom:1px solid #E8EDF2;padding-bottom:10px;margin-bottom:10px;">
+              <form method="post" action="/api/providers/llm/ollama/config" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px;">
+                  <label style="font-size:0.8rem;color:#5A7090;">Ollama Host</label>
+                  <input type="text" name="host" value="{{ conn.llm.ollama_host or 'http://localhost:11434' }}" placeholder="http://localhost:11434" style="padding:5px 8px;border:1px solid #D0D9E4;border-radius:6px;font-size:0.85rem;">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px;">
+                  <label style="font-size:0.8rem;color:#5A7090;">Model</label>
+                  <input type="text" name="model" value="{{ conn.llm.model or 'llama3' }}" placeholder="llama3" style="padding:5px 8px;border:1px solid #D0D9E4;border-radius:6px;font-size:0.85rem;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;">Save</button>
+              </form>
+            </div>
+            <p style="margin:0;font-size:0.85rem;color:#5A7090;">Runs locally &mdash; no API key needed. Ollama must be running at the configured host.</p>
+            <div x-show="tm" x-text="'Last test: ' + tm" style="margin-top:6px;font-size:0.78rem;color:#5A7090;font-style:italic;"></div>
+          </div>
           {% endif %}
         </div>
 
