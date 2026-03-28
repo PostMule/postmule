@@ -171,8 +171,8 @@
     .recent-item-date { font-size: 12px; color: #8A9BB0; flex-shrink: 0; white-space: nowrap; }
 
     /* ── Mail items ────────────────────────────────────────────────── */
-    .mail-item { background: white; border-radius: 8px; border: 1px solid #DDE3EC; margin-bottom: 8px; display: flex; overflow: hidden; }
-    .mail-bar { width: 3px; flex-shrink: 0; }
+    .mail-item { background: white; border-radius: 8px; border: 1px solid #DDE3EC; margin-bottom: 8px; display: flex; }
+    .mail-bar { width: 3px; flex-shrink: 0; border-radius: 8px 0 0 8px; }
     .mail-bar--bill    { background: #E8A020; }
     .mail-bar--forward { background: #C62828; }
     .mail-bar--notice  { background: #7A9CC4; }
@@ -363,7 +363,7 @@
     .mail-edit-entity-label { font-size: 0.6875rem; font-weight: 600; color: #8A9BB0; white-space: nowrap; }
     .mail-edit-entity-name { font-size: 0.8125rem; font-weight: 600; color: #0F2044; cursor: pointer; text-decoration: underline dotted; }
     .mail-edit-actions { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-    .entity-picker { position:absolute; top:calc(100% + 4px); left:0; background:white; border:1px solid #C5D0DE; border-radius:6px; box-shadow:0 4px 12px rgba(15,32,68,0.14); z-index:50; min-width:200px; overflow:hidden; }
+    .entity-picker { position:absolute; top:calc(100% + 4px); left:0; background:white; border:1px solid #C5D0DE; border-radius:6px; box-shadow:0 4px 12px rgba(15,32,68,0.14); z-index:500; min-width:200px; overflow:hidden; }
     .entity-picker-item { display:block; padding:7px 12px; font-size:0.8125rem; color:#0F2044; cursor:pointer; border-bottom:1px solid #EEF2F7; }
     .entity-picker-item:last-child { border-bottom:none; }
     .entity-picker-item:hover { background:#F0F4FA; }
