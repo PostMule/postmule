@@ -118,6 +118,57 @@ class TestValidate:
             load_config(path)
 
 
+class TestEmailProvidersByRole:
+    def test_returns_enabled_providers_with_role(self, minimal_config_data):
+        minimal_config_data["email"]["providers"] = [
+            {"service": "gmail", "role": "mailbox_notifications", "enabled": True},
+            {"service": "imap", "role": "bill_intake", "enabled": True},
+        ]
+        cfg = Config(minimal_config_data, Path("config.yaml"))
+        result = cfg.email_providers_by_role("mailbox_notifications")
+        assert len(result) == 1
+        assert result[0]["service"] == "gmail"
+
+    def test_excludes_disabled_providers(self, minimal_config_data):
+        minimal_config_data["email"]["providers"] = [
+            {"service": "gmail", "role": "mailbox_notifications", "enabled": False},
+            {"service": "imap", "role": "mailbox_notifications", "enabled": True},
+        ]
+        cfg = Config(minimal_config_data, Path("config.yaml"))
+        result = cfg.email_providers_by_role("mailbox_notifications")
+        assert len(result) == 1
+        assert result[0]["service"] == "imap"
+
+    def test_returns_empty_when_no_match(self, minimal_config_data):
+        minimal_config_data["email"]["providers"] = [
+            {"service": "gmail", "role": "bill_intake", "enabled": True},
+        ]
+        cfg = Config(minimal_config_data, Path("config.yaml"))
+        assert cfg.email_providers_by_role("mailbox_notifications") == []
+
+    def test_enabled_defaults_to_true_when_absent(self, minimal_config_data):
+        minimal_config_data["email"]["providers"] = [
+            {"service": "imap", "role": "bill_intake"},
+        ]
+        cfg = Config(minimal_config_data, Path("config.yaml"))
+        result = cfg.email_providers_by_role("bill_intake")
+        assert len(result) == 1
+
+    def test_returns_multiple_accounts_same_role(self, minimal_config_data):
+        minimal_config_data["email"]["providers"] = [
+            {"service": "gmail", "role": "bill_intake", "enabled": True},
+            {"service": "imap", "role": "bill_intake", "enabled": True},
+        ]
+        cfg = Config(minimal_config_data, Path("config.yaml"))
+        result = cfg.email_providers_by_role("bill_intake")
+        assert len(result) == 2
+
+    def test_returns_empty_when_providers_missing(self, minimal_config_data):
+        minimal_config_data["email"] = {}
+        cfg = Config(minimal_config_data, Path("config.yaml"))
+        assert cfg.email_providers_by_role("mailbox_notifications") == []
+
+
 class TestAlertRecipients:
     def test_deduplicates_when_secondary_equals_primary(self, minimal_config_data):
         minimal_config_data["notifications"]["alert_email_secondary"] = "test@example.com"

@@ -282,7 +282,7 @@ class TestPipelineBillIntakeIntegration:
         drive.list_folder.return_value = []
 
         providers = Providers(
-            gmail=MagicMock(),
+            mailbox_notification_providers=[MagicMock()],
             drive=drive,
             sheets=MagicMock(),
             llm=MagicMock(),
@@ -324,7 +324,7 @@ class TestPipelineBillIntakeIntegration:
         drive.list_folder.return_value = []
 
         providers = Providers(
-            gmail=MagicMock(),
+            mailbox_notification_providers=[MagicMock()],
             drive=drive,
             sheets=MagicMock(),
             llm=MagicMock(),

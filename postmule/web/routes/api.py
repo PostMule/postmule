@@ -172,22 +172,7 @@ def api_settings():
             ]
         },
         "email": {
-            "providers": [
-                {
-                    "service": form.get("email_mbox_type", "gmail"),
-                    "enabled": cb("email_mbox_enabled"),
-                    "role": "mailbox_notifications",
-                    "address": form.get("email_mbox_address", ""),
-                    "label": form.get("email_mbox_label", "PostMule"),
-                },
-                {
-                    "service": form.get("email_bills_type", "gmail"),
-                    "enabled": cb("email_bills_enabled"),
-                    "role": "bill_intake",
-                    "address": form.get("email_bills_address", ""),
-                    "label": form.get("email_bills_label", "PostMule-Bills"),
-                },
-            ]
+            "providers": existing.get("email", {}).get("providers", []),
         },
         "storage": {
             "providers": [

@@ -79,6 +79,13 @@ class Config:
     def dashboard_port(self) -> int:
         return int(self.get("deployment", "dashboard_port", default=5000))
 
+    def email_providers_by_role(self, role: str) -> list[dict]:
+        """Return enabled email provider entries with the given role."""
+        return [
+            p for p in (self.get("email", "providers") or [])
+            if p.get("role") == role and p.get("enabled", True)
+        ]
+
     def as_dict(self) -> dict[str, Any]:
         return copy.deepcopy(self._data)
 

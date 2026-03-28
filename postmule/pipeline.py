@@ -47,13 +47,13 @@ def _to_folder_key(name: str) -> str:
 
 @dataclass
 class Providers:
-    gmail: Any
     drive: Any
     sheets: Any
     llm: Any
     safety_agent: Any
     folder_ids: dict = field(default_factory=dict)
     vpm: Any = None  # VpmProvider — set when VPM credentials are configured
+    mailbox_notification_providers: list = field(default_factory=list)  # EmailProvider(s) with role: mailbox_notifications
     bill_intake_providers: list = field(default_factory=list)  # EmailProvider(s) with role: bill_intake
 
 
@@ -137,23 +137,37 @@ def run_daily_pipeline(
                     download_dir=Path(tmpdir),
                     dry_run=dry_run,
                 )
+                stats["emails_found"] = ingestion.emails_found
+                errors.extend(ingestion.errors)
+                processed_pdfs = ingestion.ingested
+                if ingestion.errors:
+                    stats["status"] = "partial"
             else:
-                log.info("Using Gmail for ingestion")
-                ingestion = email_ingestion.run_ingestion(
-                    gmail=providers.gmail,
-                    drive=providers.drive,
-                    inbox_folder_id=providers.folder_ids.get("inbox", ""),
-                    download_dir=Path(tmpdir),
-                    sender_filter=mailbox_provider_cfg.get("scan_sender", "noreply@virtualpostmail.com"),
-                    subject_filter=mailbox_provider_cfg.get("scan_subject_prefix", "[Scan Request]"),
-                    dry_run=dry_run,
-                )
-            stats["emails_found"] = ingestion.emails_found
-            errors.extend(ingestion.errors)
-            processed_pdfs = ingestion.ingested
-
-            if ingestion.errors:
-                stats["status"] = "partial"
+                scan_sender = mailbox_provider_cfg.get("scan_sender", "noreply@virtualpostmail.com")
+                scan_subject = mailbox_provider_cfg.get("scan_subject_prefix", "[Scan Request]")
+                if not providers.mailbox_notification_providers:
+                    log.warning("No mailbox notification email providers configured — skipping ingestion")
+                for ep in providers.mailbox_notification_providers:
+                    try:
+                        ingestion = email_ingestion.run_ingestion(
+                            gmail=ep,
+                            drive=providers.drive,
+                            inbox_folder_id=providers.folder_ids.get("inbox", ""),
+                            download_dir=Path(tmpdir),
+                            sender_filter=scan_sender,
+                            subject_filter=scan_subject,
+                            dry_run=dry_run,
+                        )
+                        stats["emails_found"] += ingestion.emails_found
+                        errors.extend(ingestion.errors)
+                        processed_pdfs = list(processed_pdfs) + ingestion.ingested
+                        if ingestion.errors:
+                            stats["status"] = "partial"
+                    except Exception as exc:
+                        msg = f"Mailbox notification ingestion failed: {exc}"
+                        log.error(msg)
+                        errors.append(msg)
+                        stats["status"] = "partial"
 
             # ------------------------------------------------------------------
             # Step 1b: Bill email intake (bill_intake role providers)
@@ -375,10 +389,78 @@ def run_daily_pipeline(
 # Private helpers
 # ------------------------------------------------------------------
 
+def _instantiate_email_provider(ep_cfg: dict, credentials: dict, google_creds) -> Any:
+    """Instantiate an email provider from a config entry. Returns None if creds missing."""
+    service = ep_cfg.get("service", "gmail")
+    account_id = ep_cfg.get("id", "")
+    # Credentials for this account are stored under accounts.<id>
+    acct_creds = credentials.get("accounts", {}).get(account_id, {}) if account_id else {}
+
+    if service == "gmail":
+        from postmule.providers.email.gmail import GmailProvider
+        label = ep_cfg.get("label", "PostMule")
+        return GmailProvider(google_creds, label_name=label)
+
+    if service == "imap":
+        username = acct_creds.get("username", "")
+        password = acct_creds.get("password", "")
+        if not username or not password:
+            log.warning(f"IMAP account {account_id!r} credentials not configured — skipping")
+            return None
+        from postmule.providers.email.imap import ImapProvider
+        return ImapProvider(
+            host=ep_cfg.get("host", ""),
+            port=int(ep_cfg.get("port", 993)),
+            username=username,
+            password=password,
+            use_ssl=str(ep_cfg.get("use_ssl", "true")).lower() not in ("false", "0", "no"),
+            processed_folder=ep_cfg.get("processed_folder", "PostMule"),
+        )
+
+    if service == "proton":
+        username = acct_creds.get("username", "")
+        password = acct_creds.get("password", "")
+        if not username or not password:
+            log.warning(f"ProtonMail account {account_id!r} credentials not configured — skipping")
+            return None
+        from postmule.providers.email.proton import ProtonMailProvider
+        return ProtonMailProvider(
+            username=username,
+            password=password,
+            bridge_host=ep_cfg.get("bridge_host", "127.0.0.1"),
+            bridge_port=int(ep_cfg.get("bridge_port", 1143)),
+            processed_folder=ep_cfg.get("processed_folder", "PostMule"),
+        )
+
+    if service == "outlook_365":
+        token = acct_creds.get("access_token", "")
+        if not token:
+            log.warning(f"Outlook 365 account {account_id!r} token not configured — skipping")
+            return None
+        from postmule.providers.email.outlook_365 import Outlook365Provider
+        return Outlook365Provider(
+            access_token=token,
+            processed_category=ep_cfg.get("processed_category", "PostMule"),
+        )
+
+    if service == "outlook_com":
+        token = acct_creds.get("access_token", "")
+        if not token:
+            log.warning(f"Outlook.com account {account_id!r} token not configured — skipping")
+            return None
+        from postmule.providers.email.outlook_com import OutlookComProvider
+        return OutlookComProvider(
+            access_token=token,
+            processed_category=ep_cfg.get("processed_category", "PostMule"),
+        )
+
+    log.warning(f"Email service '{service}' is not supported — skipping account {account_id!r}")
+    return None
+
+
 def _build_providers(cfg: Config, credentials: dict, data_dir: Path):
     """Instantiate all providers from config + credentials."""
     from postmule.core.api_safety import build_safety_agent
-    from postmule.providers.email.gmail import GmailProvider
     from postmule.providers.llm.gemini import GeminiProvider
     from postmule.providers.spreadsheet.google_sheets import SheetsProvider
     from postmule.providers.storage.google_drive import DriveProvider
@@ -388,7 +470,6 @@ def _build_providers(cfg: Config, credentials: dict, data_dir: Path):
 
     storage_provider_cfg = (cfg.get("storage", "providers") or [{}])[0]
     spreadsheet_provider_cfg = (cfg.get("spreadsheet", "providers") or [{}])[0]
-    email_provider_cfg = (cfg.get("email", "providers") or [{}])[0]
     llm_provider_cfg = (cfg.get("llm", "providers") or [{}])[0]
     llm_provider_name = llm_provider_cfg.get("service", "gemini")
     llm_creds = credentials.get(llm_provider_name, {})
@@ -396,10 +477,6 @@ def _build_providers(cfg: Config, credentials: dict, data_dir: Path):
     drive = DriveProvider(
         google_creds,
         root_folder=storage_provider_cfg.get("root_folder", "PostMule"),
-    )
-    gmail = GmailProvider(
-        google_creds,
-        label_name=email_provider_cfg.get("label", "PostMule"),
     )
     sheets = SheetsProvider(
         google_creds,
@@ -417,20 +494,24 @@ def _build_providers(cfg: Config, credentials: dict, data_dir: Path):
     folders_cfg = storage_provider_cfg.get("folders") or {}
     folder_ids = drive.ensure_folder_structure(folders_cfg)
 
-    # Build bill_intake email providers
+    # Build email providers by role
+    mailbox_notification_providers = []
     bill_intake_providers = []
     for ep_cfg in cfg.get("email", "providers") or []:
-        if ep_cfg.get("role") != "bill_intake":
-            continue
         if not ep_cfg.get("enabled", True):
             continue
+        role = ep_cfg.get("role", "mailbox_notifications")
+        provider = _instantiate_email_provider(ep_cfg, credentials, google_creds)
+        if provider is None:
+            continue
         service = ep_cfg.get("service", "gmail")
-        if service == "gmail":
-            label = ep_cfg.get("label", "PostMule-Bills")
-            bill_intake_providers.append(GmailProvider(google_creds, label_name=label))
-            log.info(f"Bill intake provider configured: Gmail (label={label})")
-        else:
-            log.warning(f"Bill intake provider '{service}' is not yet supported — skipping")
+        account_id = ep_cfg.get("id", "")
+        if role == "mailbox_notifications":
+            mailbox_notification_providers.append(provider)
+            log.info(f"Mailbox notification provider: {service} (id={account_id})")
+        elif role == "bill_intake":
+            bill_intake_providers.append(provider)
+            log.info(f"Bill intake provider: {service} (id={account_id})")
 
     # Build VPM provider if credentials are available
     vpm = None
@@ -444,16 +525,16 @@ def _build_providers(cfg: Config, credentials: dict, data_dir: Path):
             vpm = VpmProvider(vpm_username, vpm_password)
             log.info("VPM direct API provider configured")
         else:
-            log.debug("VPM credentials not set — ingestion will use Gmail fallback")
+            log.debug("VPM credentials not set — ingestion will use email fallback")
 
     return Providers(
-        gmail=gmail,
         drive=drive,
         sheets=sheets,
         llm=llm,
         safety_agent=safety_agent,
         folder_ids=folder_ids,
         vpm=vpm,
+        mailbox_notification_providers=mailbox_notification_providers,
         bill_intake_providers=bill_intake_providers,
     )
 

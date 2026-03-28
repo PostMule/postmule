@@ -1464,27 +1464,31 @@ Dallas, TX 75266</span>
         <button class="conn-tab" onclick="connTab('developer',this)">Developer</button>
       </div>
 
-      <!-- TAB: Email -->
+      <!-- TAB: Email — multi-account -->
       <div id="ctab-email" class="conn-pane active">
-        <div class="conn-section-label">Configured</div>
-        <div class="conn-provider conn-provider--active" x-data="{ ts: 'idle', tm: '', configOpen: true, initOk: true }">
+        <div style="background:#EEF3F9;border:1px solid #C0D0E4;border-radius:6px;padding:10px 14px;font-size:0.8125rem;color:#2C4A6E;line-height:1.5;margin-bottom:12px;">
+          <strong>Multiple accounts supported.</strong> Add any number of Gmail, IMAP, Outlook, or ProtonMail accounts. Each account gets a role: <em>Mailbox Notifications</em> (VPM scan alerts) or <em>Bill Intake</em> (PDFs from billers).
+        </div>
+
+        <!-- Account 1: Gmail — mailbox_notifications -->
+        <div class="conn-section-label">Configured accounts</div>
+        <div class="conn-provider conn-provider--active" x-data="{ ts: 'idle', tm: '', configOpen: false }">
           <div class="conn-provider-header">
             <div class="conn-service-icon conn-icon-google">G</div>
             <div>
               <div class="conn-provider-name">Gmail</div>
-              <div class="conn-provider-desc-small">user@gmail.com</div>
+              <div class="conn-provider-desc-small">notify@gmail.com</div>
             </div>
+            <span class="conn-provider-badge" style="background:#E8F4FD;color:#1A73E8;font-size:0.7rem;padding:2px 8px;border-radius:4px;font-weight:600;">Mailbox Notifications</span>
             <span class="conn-provider-badge conn-provider-badge--ok">Active</span>
             <div class="conn-provider-actions" style="display:flex;gap:6px;">
               <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Test</button>
               <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" @click="configOpen = !configOpen">
                 <span x-text="configOpen ? 'Close' : 'Configure'">Configure</span>
               </button>
-              <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Reconnect</button>
+              <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;color:#C0392B;border-color:#C0392B;" onclick="return false;">Remove</button>
             </div>
           </div>
-          <div class="conn-provider-body">Google OAuth refresh token stored in Windows Credential Manager. Covers Gmail, Drive, Sheets, and Gemini.</div>
-          <!-- Configure panel (expanded by default in mockup to show the pattern) -->
           <div x-show="configOpen" style="padding:12px 18px 14px;border-top:1px solid #E8EDF3;background:#FAFCFF;">
             <form onsubmit="return false;">
               <div class="conn-cred-row">
@@ -1496,45 +1500,82 @@ Dallas, TX 75266</span>
             </form>
           </div>
         </div>
-        <div class="conn-section-label conn-provider--inactive">Available</div>
-        <div class="conn-provider conn-provider--inactive">
-          <div class="conn-provider-header">
-            <div class="conn-service-icon conn-icon-ms">M</div>
-            <div>
-              <div class="conn-provider-name">Outlook / Microsoft 365</div>
-              <div class="conn-provider-desc-small">Org accounts — Azure AD OAuth, Microsoft Graph</div>
-            </div>
-            <span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>
-          </div>
-        </div>
-        <div class="conn-provider conn-provider--inactive">
-          <div class="conn-provider-header">
-            <div class="conn-service-icon" style="background:#0078D4;color:white;font-size:10px;font-weight:700;">@</div>
-            <div>
-              <div class="conn-provider-name">outlook.com / Hotmail / Live</div>
-              <div class="conn-provider-desc-small">Personal Microsoft accounts — IMAP or personal OAuth</div>
-            </div>
-            <span class="conn-provider-badge conn-provider-badge--stub">Coming soon</span>
-          </div>
-        </div>
-        <div class="conn-provider conn-provider--inactive">
-          <div class="conn-provider-header">
-            <div class="conn-service-icon" style="background:#8B4CF6;color:white;font-size:10px;font-weight:700;">PM</div>
-            <div>
-              <div class="conn-provider-name">ProtonMail</div>
-              <div class="conn-provider-desc-small">Requires Proton Bridge (IMAP/SMTP)</div>
-            </div>
-            <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
-          </div>
-        </div>
-        <div class="conn-provider conn-provider--inactive">
+
+        <!-- Account 2: IMAP — bill_intake -->
+        <div class="conn-provider conn-provider--active" x-data="{ ts: 'idle', tm: '', configOpen: true }">
           <div class="conn-provider-header">
             <div class="conn-service-icon" style="background:#5A7090;color:white;">@</div>
             <div>
               <div class="conn-provider-name">Generic IMAP</div>
-              <div class="conn-provider-desc-small">Any standards-compliant IMAP server</div>
+              <div class="conn-provider-desc-small">bills@myisp.net</div>
             </div>
-            <span class="conn-provider-badge conn-provider-badge--off">Not active</span>
+            <span class="conn-provider-badge" style="background:#FDF3E8;color:#E67E22;font-size:0.7rem;padding:2px 8px;border-radius:4px;font-weight:600;">Bill Intake</span>
+            <span class="conn-provider-badge conn-provider-badge--ok">Active</span>
+            <div class="conn-provider-actions" style="display:flex;gap:6px;">
+              <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Test</button>
+              <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" @click="configOpen = !configOpen">
+                <span x-text="configOpen ? 'Close' : 'Configure'">Configure</span>
+              </button>
+              <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;color:#C0392B;border-color:#C0392B;" onclick="return false;">Remove</button>
+            </div>
+          </div>
+          <!-- Configure panel expanded by default to show the IMAP pattern -->
+          <div x-show="configOpen" style="padding:12px 18px 14px;border-top:1px solid #E8EDF3;background:#FAFCFF;">
+            <form onsubmit="return false;">
+              <div class="conn-cred-row">
+                <label style="min-width:140px;font-size:0.8125rem;color:#2C4A6E;font-weight:500;">IMAP host</label>
+                <input type="text" class="form-control" value="imap.myisp.net" style="flex:1;max-width:260px;">
+                <button class="btn btn-primary" style="padding:5px 12px;font-size:0.8rem;" onclick="return false;">Save</button>
+              </div>
+              <div class="conn-cred-row" style="margin-top:8px;">
+                <label style="min-width:140px;font-size:0.8125rem;color:#2C4A6E;font-weight:500;">Port</label>
+                <input type="number" class="form-control" value="993" style="flex:1;max-width:100px;">
+              </div>
+              <div class="conn-cred-row" style="margin-top:8px;">
+                <label style="min-width:140px;font-size:0.8125rem;color:#2C4A6E;font-weight:500;">Username</label>
+                <input type="text" class="form-control" value="bills@myisp.net" style="flex:1;max-width:260px;">
+              </div>
+              <div class="conn-cred-row" style="margin-top:8px;">
+                <label style="min-width:140px;font-size:0.8125rem;color:#2C4A6E;font-weight:500;">Password</label>
+                <input type="password" class="form-control" placeholder="••••••••" style="flex:1;max-width:260px;">
+              </div>
+              <p class="conn-cred-note">Credentials stored in credentials.enc — never written to disk in plaintext.</p>
+            </form>
+          </div>
+        </div>
+
+        <!-- Add Account button + inline form -->
+        <div style="margin-top:14px;" x-data="{ addOpen: false }">
+          <button class="btn btn-secondary" style="font-size:0.8125rem;padding:6px 16px;" @click="addOpen = !addOpen">
+            + Add Email Account
+          </button>
+          <div x-show="addOpen" style="margin-top:10px;padding:14px 18px;border:1px solid #C0D0E4;border-radius:6px;background:#FAFCFF;">
+            <form onsubmit="return false;" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.8rem;color:#2C4A6E;font-weight:500;">Provider</label>
+                <select class="form-control" style="min-width:160px;font-size:0.8125rem;">
+                  <option value="gmail">Gmail</option>
+                  <option value="imap">Generic IMAP</option>
+                  <option value="outlook_365">Outlook / Microsoft 365</option>
+                  <option value="outlook_com">Outlook.com / Hotmail</option>
+                  <option value="proton">ProtonMail</option>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.8rem;color:#2C4A6E;font-weight:500;">Role</label>
+                <select class="form-control" style="min-width:200px;font-size:0.8125rem;">
+                  <option value="mailbox_notifications">Mailbox Notifications</option>
+                  <option value="bill_intake">Bill Intake</option>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.8rem;color:#2C4A6E;font-weight:500;">Email address (label)</label>
+                <input type="email" class="form-control" placeholder="you@example.com" style="min-width:220px;font-size:0.8125rem;">
+              </div>
+              <button class="btn btn-primary" style="padding:6px 16px;font-size:0.8125rem;" onclick="return false;">Add Account</button>
+              <button class="btn btn-secondary" style="padding:6px 12px;font-size:0.8125rem;" @click="addOpen = false">Cancel</button>
+            </form>
+            <p class="conn-cred-note" style="margin-top:8px;">A stable ID is generated for the account. Configure credentials after adding.</p>
           </div>
         </div>
       </div>

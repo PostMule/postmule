@@ -75,7 +75,7 @@ def _make_all_providers():
         "needs_review": "review", "duplicates": "dupes",
     }
     return Providers(
-        gmail=gmail,
+        mailbox_notification_providers=[gmail],
         drive=drive,
         sheets=sheets,
         llm=llm,
@@ -115,7 +115,8 @@ class TestRunDailyPipelineProviderFailure:
 class TestRunDailyPipelineWithEmails:
     def test_processes_email_pdfs(self, minimal_config, credentials, tmp_path):
         providers = _make_all_providers()
-        gmail, drive, llm = providers.gmail, providers.drive, providers.llm
+        gmail = providers.mailbox_notification_providers[0]
+        drive, llm = providers.drive, providers.llm
 
         # Set up a fake email with a PDF
         from postmule.agents.email_ingestion import IngestedPDF
