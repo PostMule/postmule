@@ -409,6 +409,122 @@ class TestGmailProviderSmoke:
         assert isinstance(result, list)
 
 
+class TestImapProviderSmoke:
+    def _make_provider(self):
+        from postmule.providers.email.imap import ImapProvider
+        return ImapProvider(host="imap.example.com", username="user@example.com", password="pw")
+
+    def test_health_check_connection_error(self):
+        from postmule.providers import HealthResult
+        provider = self._make_provider()
+        with patch.object(provider, "_connect", side_effect=RuntimeError("connection refused")):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is False
+
+    def test_health_check_ok(self):
+        from postmule.providers import HealthResult
+        provider = self._make_provider()
+        mock_conn = MagicMock()
+        mock_conn.select.return_value = ("OK", [b"1"])
+        with patch.object(provider, "_connect", return_value=mock_conn):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is True
+
+    def test_list_emails_with_pdf_attachments_returns_list(self):
+        provider = self._make_provider()
+        mock_conn = MagicMock()
+        mock_conn.uid.return_value = ("OK", [b""])
+        with patch.object(provider, "_connect", return_value=mock_conn):
+            result = provider.list_emails_with_pdf_attachments()
+        assert isinstance(result, list)
+
+    def test_satisfies_email_provider_protocol(self):
+        from postmule.providers.email.base import EmailProvider
+        provider = self._make_provider()
+        assert isinstance(provider, EmailProvider)
+
+
+class TestProtonMailProviderSmoke:
+    def test_delegates_to_imap(self):
+        from postmule.providers.email.imap import ImapProvider
+        from postmule.providers.email.proton import ProtonMailProvider
+        provider = ProtonMailProvider(username="user@proton.me", password="bridge-pw")
+        assert isinstance(provider, ImapProvider)
+        assert provider.host == "127.0.0.1"
+        assert provider.port == 1143
+
+    def test_health_check_includes_bridge_message(self):
+        from postmule.providers import HealthResult
+        from postmule.providers.email.proton import ProtonMailProvider
+        provider = ProtonMailProvider(username="user@proton.me", password="bridge-pw")
+        mock_conn = MagicMock()
+        mock_conn.select.return_value = ("OK", [b"1"])
+        with patch.object(provider, "_connect", return_value=mock_conn):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is True
+        assert "Bridge" in result.message
+
+    def test_satisfies_email_provider_protocol(self):
+        from postmule.providers.email.base import EmailProvider
+        from postmule.providers.email.proton import ProtonMailProvider
+        provider = ProtonMailProvider(username="user@proton.me", password="bridge-pw")
+        assert isinstance(provider, EmailProvider)
+
+
+class TestOutlookProviderSmoke:
+    def test_outlook_365_health_check_ok(self):
+        from postmule.providers import HealthResult
+        from postmule.providers.email.outlook_365 import Outlook365Provider
+        provider = Outlook365Provider(access_token="dummy-token")
+        with patch.object(provider, "_get", return_value={"displayName": "Test User"}):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is True
+
+    def test_outlook_365_health_check_error(self):
+        from postmule.providers import HealthResult
+        from postmule.providers.email.outlook_365 import Outlook365Provider
+        provider = Outlook365Provider(access_token="dummy-token")
+        with patch.object(provider, "_get", side_effect=Exception("401 Unauthorized")):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is False
+
+    def test_outlook_com_health_check_ok(self):
+        from postmule.providers import HealthResult
+        from postmule.providers.email.outlook_com import OutlookComProvider
+        provider = OutlookComProvider(access_token="dummy-token")
+        with patch.object(provider, "_get", return_value={"mail": "user@outlook.com"}):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is True
+
+    def test_list_emails_returns_list(self):
+        from postmule.providers.email.outlook_365 import Outlook365Provider
+        provider = Outlook365Provider(access_token="dummy-token")
+        with patch.object(provider, "_get", return_value={"value": []}):
+            result = provider.list_emails_with_pdf_attachments()
+        assert isinstance(result, list)
+
+    def test_mark_as_processed_applies_category(self):
+        from postmule.providers.email.outlook_365 import Outlook365Provider
+        provider = Outlook365Provider(access_token="dummy-token")
+        with patch.object(provider, "_patch") as mock_patch:
+            provider.mark_as_processed("msg-123")
+        mock_patch.assert_called_once()
+        call_body = mock_patch.call_args[0][1]
+        assert "PostMule" in call_body.get("categories", [])
+
+    def test_satisfies_email_provider_protocol(self):
+        from postmule.providers.email.base import EmailProvider
+        from postmule.providers.email.outlook_365 import Outlook365Provider
+        provider = Outlook365Provider(access_token="dummy-token")
+        assert isinstance(provider, EmailProvider)
+
+
 class TestDriveProviderSmoke:
     def test_health_check_does_not_raise_with_dummy_creds(self):
         from postmule.providers.storage.google_drive import DriveProvider

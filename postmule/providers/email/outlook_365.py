@@ -1,8 +1,8 @@
 """
-Outlook 365 email provider — stub (not yet implemented).
+Outlook / Microsoft 365 email provider — Microsoft Graph API.
 
 Covers Microsoft 365 / work accounts (outlook.office365.com).
-Implementation will use the Microsoft Graph API with OAuth2.
+Uses the Microsoft Graph API with an OAuth2 access token.
 
 Config example:
     email:
@@ -15,32 +15,36 @@ Config example:
 
 from __future__ import annotations
 
+from postmule.providers.email._graph import GraphEmailProvider
+
 SERVICE_KEY = "outlook_365"
 DISPLAY_NAME = "Outlook / Microsoft 365"
 
 
-class Outlook365Provider:
+class Outlook365Provider(GraphEmailProvider):
     """
     Outlook 365 (Microsoft 365 / work accounts) email provider.
 
-    Not yet implemented. Configure service: outlook_365 in config.yaml
-    once this provider is available.
+    Uses the Microsoft Graph API. Requires a valid OAuth2 access token —
+    obtain via the Azure AD OAuth flow in the Providers setup page.
+
+    Args:
+        access_token:       Microsoft Graph API bearer token.
+        processed_category: Outlook category name applied to processed mail (default: PostMule).
+        sender_filter:      Default From address filter (applied when no override given).
+        subject_filter:     Default Subject filter.
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        raise NotImplementedError(
-            "Outlook 365 provider is not yet implemented. "
-            "Use service: gmail or service: imap in config.yaml for now."
+    def __init__(
+        self,
+        access_token: str,
+        processed_category: str = "PostMule",
+        sender_filter: str = "",
+        subject_filter: str = "",
+    ) -> None:
+        super().__init__(
+            access_token=access_token,
+            processed_category=processed_category,
+            default_sender_filter=sender_filter,
+            default_subject_filter=subject_filter,
         )
-
-    def list_unprocessed_emails(self, sender_filter: str, subject_filter: str) -> list:
-        raise NotImplementedError("Outlook 365 provider is not yet implemented.")
-
-    def list_emails_with_pdf_attachments(self) -> list:
-        raise NotImplementedError("Outlook 365 provider is not yet implemented.")
-
-    def mark_as_processed(self, message_id: str) -> None:
-        raise NotImplementedError("Outlook 365 provider is not yet implemented.")
-
-    def health_check(self):
-        raise NotImplementedError("Outlook 365 provider is not yet implemented.")
