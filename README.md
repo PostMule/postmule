@@ -4,6 +4,8 @@
 
 It replaces services like PayTrust and PayMyBills. Your documents stay in your own Google Drive. Nothing is sent to any third-party server.
 
+**[View the interactive mockup →](https://postmule.github.io/app/mockup_dashboard.html)**
+
 ---
 
 ## Get Started
