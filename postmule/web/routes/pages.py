@@ -15,6 +15,7 @@ from postmule.data import notices as notices_data
 from postmule.data import run_log as run_log_data
 from postmule.data._io import recent_years
 from postmule.data.entities import find_entity_by_account, mask_account_number
+from postmule.data import owners as owners_data
 
 import postmule.web.app as _app
 
@@ -40,8 +41,8 @@ def home():
 @pages_bp.route("/")
 @pages_bp.route("/mail")
 def mail():
-    year = request.args.get("year", date.today().year, type=int)
     initial_tab = request.args.get("tab", "all")
+    year = date.today().year
     all_bills = [b for b in bills_data.load_bills(_app._data_dir, year) if not b.get("filed", False)]
     all_notices = [n for n in notices_data.load_notices(_app._data_dir, year) if not n.get("filed", False)]
     all_ftm = [f for f in ftm_data.load_forward_to_me(_app._data_dir) if not f.get("filed", False)]
@@ -66,7 +67,6 @@ def mail():
         page="mail",
         title="Mail",
         items=items,
-        year=year,
         entities=all_entities,
         last_run=last_run,
         pending_ftm_count=pending_ftm_count,
@@ -91,6 +91,49 @@ def forward():
 @pages_bp.route("/pending")
 def pending():
     return redirect(url_for("pages.mail", tab="unassigned"))
+
+
+@pages_bp.route("/reports")
+def reports():
+    from postmule.data.search import search_mail
+
+    types_raw = request.args.getlist("type")
+    entity_id = request.args.get("entity_id") or None
+    owner_id = request.args.get("owner_id") or None
+    lifecycle = request.args.get("lifecycle", "all")
+    q = request.args.get("q") or None
+    date_from = request.args.get("date_from") or None
+    date_to = request.args.get("date_to") or None
+
+    results = search_mail(
+        _app._data_dir,
+        types=types_raw or None,
+        entity_id=entity_id,
+        owner_id=owner_id,
+        lifecycle=lifecycle,
+        q=q,
+        date_from=date_from,
+        date_to=date_to,
+    )
+    all_entities = entity_data.load_entities(_app._data_dir)
+    all_owners = owners_data.load_owners(_app._data_dir)
+
+    return render_template(
+        "page.html",
+        page="reports",
+        title="Reports",
+        items=results,
+        entities=all_entities,
+        owners=all_owners,
+        f_types=types_raw,
+        f_entity_id=entity_id or "",
+        f_owner_id=owner_id or "",
+        f_lifecycle=lifecycle,
+        f_q=q or "",
+        f_date_from=date_from or "",
+        f_date_to=date_to or "",
+        today=date.today().isoformat(),
+    )
 
 
 def _last_payment_display(date_str: str, amount) -> str:

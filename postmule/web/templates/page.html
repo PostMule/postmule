@@ -268,12 +268,7 @@
         </button>
       </div>
       <div class="mail-filter-right">
-        <label for="mail-year-select" class="visually-hidden">Filter by year</label>
-        <select id="mail-year-select" class="mail-year-select" aria-label="Filter by year" @change="changeYear($event.target.value)">
-          {% for yr in range(today[:4]|int, today[:4]|int - 4, -1) %}
-          <option value="{{ yr }}" {% if yr == year %}selected{% endif %}>{{ yr }}</option>
-          {% endfor %}
-        </select>
+        <a href="/reports" class="btn btn-secondary btn-sm">Archive &rarr;</a>
       </div>
     </div>
 
@@ -417,12 +412,8 @@
     <script>
     function mailHub(initialTab) {
       var tabKeyMap = { bills: 'Bill', forward: 'ForwardToMe', notices: 'Notice', unassigned: 'unassigned', all: 'all' };
-      var tabRevMap = { Bill: 'bills', ForwardToMe: 'forward', Notice: 'notices', unassigned: 'unassigned', all: 'all' };
       return {
         typeFilter: tabKeyMap[initialTab] || 'all',
-        changeYear: function(yr) {
-          window.location.href = '/mail?year=' + yr + '&tab=' + (tabRevMap[this.typeFilter] || 'all');
-        }
       };
     }
     </script>
@@ -2547,6 +2538,187 @@
     }
     </script>
     {% endif %}
+
+    {% elif page == 'reports' %}
+    <div class="page-title-row">
+      <h1 class="page-title">Reports</h1>
+      <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false">
+        <button class="help-btn" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Reports">?</button>
+        <div class="help-popover" x-show="open" @click.outside="open = false" x-cloak>
+          <p>Search and browse all mail — past and present, including filed items. Use this page to find historical records, manage lifecycle state, and view mail for a specific person or entity.</p>
+          <p>The main Mail view shows only current unfiled items. Reports shows everything.</p>
+        </div>
+      </div>
+    </div>
+
+    {# ── Search form ──────────────────────────────────────────────── #}
+    <form method="get" action="/reports" class="reports-form" x-data="reportsForm()">
+      <div class="reports-form-row">
+        <div class="reports-form-field">
+          <label class="reports-label" for="rpt-q">Search</label>
+          <input id="rpt-q" class="reports-input" type="text" name="q" value="{{ f_q }}"
+                 placeholder="Sender, summary, filename&hellip;" autocomplete="off">
+        </div>
+        <div class="reports-form-field">
+          <label class="reports-label">Type</label>
+          <div class="reports-type-checks">
+            {% for cat, label in [('Bill','Bill'),('Notice','Notice'),('ForwardToMe','Forward To Me'),('Personal','Personal'),('Junk','Junk'),('NeedsReview','Needs Review')] %}
+            <label class="reports-check-label">
+              <input type="checkbox" name="type" value="{{ cat }}" {% if cat in f_types %}checked{% endif %}> {{ label }}
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="reports-form-row">
+        <div class="reports-form-field">
+          <label class="reports-label" for="rpt-lifecycle">Status</label>
+          <select id="rpt-lifecycle" class="reports-select" name="lifecycle">
+            <option value="all" {% if f_lifecycle == 'all' %}selected{% endif %}>All (Open + Filed)</option>
+            <option value="open" {% if f_lifecycle == 'open' %}selected{% endif %}>Open only</option>
+            <option value="filed" {% if f_lifecycle == 'filed' %}selected{% endif %}>Filed only</option>
+          </select>
+        </div>
+        <div class="reports-form-field">
+          <label class="reports-label" for="rpt-entity">Entity</label>
+          <select id="rpt-entity" class="reports-select" name="entity_id">
+            <option value="">All entities</option>
+            {% for e in entities %}
+            <option value="{{ e.id }}" {% if e.id == f_entity_id %}selected{% endif %}>{{ e.canonical_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="reports-form-field">
+          <label class="reports-label" for="rpt-owner">Owner / Recipient</label>
+          <select id="rpt-owner" class="reports-select" name="owner_id">
+            <option value="">All owners</option>
+            {% for o in owners %}
+            <option value="{{ o.id }}" {% if o.id == f_owner_id %}selected{% endif %}>{{ o.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="reports-form-row">
+        <div class="reports-form-field">
+          <label class="reports-label" for="rpt-date-from">From</label>
+          <input id="rpt-date-from" class="reports-input reports-input--date" type="date" name="date_from" value="{{ f_date_from }}">
+        </div>
+        <div class="reports-form-field">
+          <label class="reports-label" for="rpt-date-to">To</label>
+          <input id="rpt-date-to" class="reports-input reports-input--date" type="date" name="date_to" value="{{ f_date_to }}">
+        </div>
+        <div class="reports-form-field reports-form-presets">
+          <label class="reports-label">Preset</label>
+          <div class="reports-preset-btns">
+            <button type="button" class="btn btn-secondary btn-sm" @click="setPreset(30)">30 days</button>
+            <button type="button" class="btn btn-secondary btn-sm" @click="setPreset(60)">60 days</button>
+            <button type="button" class="btn btn-secondary btn-sm" @click="setPreset(90)">90 days</button>
+            <button type="button" class="btn btn-secondary btn-sm" @click="setPresetYear(0)">This year</button>
+            <button type="button" class="btn btn-secondary btn-sm" @click="setPresetYear(-1)">Last year</button>
+          </div>
+        </div>
+        <div class="reports-form-field reports-form-submit">
+          <label class="reports-label">&nbsp;</label>
+          <button type="submit" class="btn btn-primary">Search</button>
+          <a href="/reports" class="btn btn-secondary">Clear</a>
+        </div>
+      </div>
+    </form>
+
+    {# ── Results ──────────────────────────────────────────────────── #}
+    <div class="reports-results">
+      <div class="reports-results-header">
+        <span class="reports-count">{{ items|length }} result{% if items|length != 1 %}s{% endif %}</span>
+      </div>
+      {% if items %}
+      <div class="table-wrap">
+        <table class="data-table reports-table" aria-label="Mail search results">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Sender / Entity</th>
+              <th>Recipients</th>
+              <th>Summary</th>
+              <th>Status</th>
+              <th>Filed</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+          {% set badge_class = {
+            'Bill':        'badge--bill',
+            'ForwardToMe': 'badge--forward',
+            'Notice':      'badge--notice',
+            'Personal':    'badge--personal',
+            'Junk':        'badge--junk',
+            'NeedsReview': 'badge--needs-review'
+          } %}
+          {% set type_display = {
+            'Bill':        'BILL',
+            'Notice':      'NOTICE',
+            'ForwardToMe': 'FORWARD',
+            'Personal':    'PERSONAL',
+            'Junk':        'JUNK',
+            'NeedsReview': 'NEEDS REVIEW'
+          } %}
+          {% for item in items %}
+          <tr x-data="{ filing: false, filed: {{ 'true' if item.get('filed') else 'false' }} }">
+            <td class="td-date">{{ item.get('date_received', '') }}</td>
+            <td><span class="badge {{ badge_class.get(item._type, 'badge--junk') }}">{{ type_display.get(item._type, item._type.upper()) }}</span></td>
+            <td class="td-sender">
+              {{ item.get('sender', '') }}
+              {% if item.get('entity_override_id') %}<span class="entity-override-badge" title="Entity manually overridden">&#10003;</span>{% endif %}
+            </td>
+            <td>{{ item.get('recipients', [])|join(', ') }}</td>
+            <td class="td-summary">{{ item.get('summary', '') }}</td>
+            <td>
+              {% if item._type == 'Bill' and item.get('status') %}<span class="status-badge">{{ item.get('status','').upper() }}</span>{% endif %}
+              {% if item._type == 'ForwardToMe' and item.get('forwarding_status') %}<span class="status-badge">{{ item.get('forwarding_status','').upper() }}</span>{% endif %}
+            </td>
+            <td>
+              <span x-text="filed ? 'Filed' : 'Open'" :class="filed ? 'reports-filed-yes' : 'reports-filed-no'"></span>
+            </td>
+            <td class="td-actions">
+              {% if item.get('drive_file_id') %}<a href="/pdf/{{ item.get('id') }}" target="_blank" class="pdf-link">PDF</a>{% endif %}
+              <button class="btn btn-secondary btn-sm reports-file-btn"
+                      x-text="filed ? 'Unfile' : 'File'"
+                      :disabled="filing"
+                      @click="
+                        filing = true;
+                        fetch('/api/mail/{{ item.get('id') }}/' + (filed ? 'unfile' : 'file'), {method:'POST'})
+                          .then(function(r){ if(r.ok){ filed = !filed; } filing = false; })
+                          .catch(function(){ filing = false; });
+                      "></button>
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-muted reports-empty">No results found. Try adjusting your search filters.</div>
+      {% endif %}
+    </div>
+
+    <script>
+    function reportsForm() {
+      return {
+        setPreset: function(days) {
+          var to = new Date();
+          var from = new Date();
+          from.setDate(from.getDate() - days);
+          document.getElementById('rpt-date-to').value = to.toISOString().slice(0, 10);
+          document.getElementById('rpt-date-from').value = from.toISOString().slice(0, 10);
+        },
+        setPresetYear: function(offset) {
+          var year = new Date().getFullYear() + offset;
+          document.getElementById('rpt-date-from').value = year + '-01-01';
+          document.getElementById('rpt-date-to').value = year + '-12-31';
+        }
+      };
+    }
+    </script>
 
     {% elif page == 'help' %}
     <div class="page-title-row">

@@ -71,6 +71,7 @@ _failed_attempts: dict[str, list[float]] = defaultdict(list)
 
 _NAV_ITEMS = [
     ("mail", "/", "Mail"),
+    ("reports", "/reports", "Reports"),
     ("entities", "/entities", "Entities"),
     ("settings", "/settings", "Settings"),
     ("logs", "/logs", "Logs"),

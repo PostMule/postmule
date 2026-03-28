@@ -72,9 +72,64 @@ class TestMailRoute:
         assert response.status_code == 200
         assert b"ATT" in response.data
 
-    def test_mail_with_year_param(self, client):
-        response = client.get("/mail?year=2024")
+    def test_mail_does_not_show_filed_items(self, client, data_dir):
+        from datetime import date
+        today = date.today().isoformat()
+        bills_data.add_bill(data_dir, {
+            "date_received": today, "sender": "Filed-Co",
+            "status": "pending", "filed": True,
+        })
+        response = client.get("/mail")
         assert response.status_code == 200
+        assert b"Filed-Co" not in response.data
+
+
+class TestReportsRoute:
+    def test_reports_returns_200(self, client):
+        response = client.get("/reports")
+        assert response.status_code == 200
+
+    def test_reports_shows_all_items_by_default(self, client, data_dir):
+        from datetime import date
+        today = date.today().isoformat()
+        bills_data.add_bill(data_dir, {
+            "date_received": today, "sender": "ATT-Report",
+            "status": "pending",
+        })
+        response = client.get("/reports")
+        assert response.status_code == 200
+        assert b"ATT-Report" in response.data
+
+    def test_reports_shows_filed_items(self, client, data_dir):
+        from datetime import date
+        today = date.today().isoformat()
+        bills_data.add_bill(data_dir, {
+            "date_received": today, "sender": "FiledBill",
+            "status": "pending", "filed": True,
+        })
+        response = client.get("/reports?lifecycle=filed")
+        assert response.status_code == 200
+        assert b"FiledBill" in response.data
+
+    def test_reports_freetext_search(self, client, data_dir):
+        from datetime import date
+        today = date.today().isoformat()
+        bills_data.add_bill(data_dir, {
+            "date_received": today, "sender": "Comcast-Unique",
+            "status": "pending",
+        })
+        bills_data.add_bill(data_dir, {
+            "date_received": today, "sender": "Other-Co",
+            "status": "pending",
+        })
+        response = client.get("/reports?q=Comcast-Unique")
+        assert response.status_code == 200
+        assert b"Comcast-Unique" in response.data
+        assert b"Other-Co" not in response.data
+
+    def test_reports_nav_link_present(self, client):
+        response = client.get("/")
+        assert b"/reports" in response.data
 
 
 class TestBillsRoute:

@@ -1722,3 +1722,129 @@ html[data-theme="high-contrast"] .a11y-size-btn.active {
   color: #000;
   border-color: #FFD700;
 }
+
+/* ── Reports page ─────────────────────────────────────────────── */
+.reports-form {
+  background: #F5F6F8;
+  border: 1px solid #E1E4E8;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+.reports-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-bottom: 12px;
+}
+.reports-form-row:last-child {
+  margin-bottom: 0;
+}
+.reports-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+.reports-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #5A7090;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.reports-input {
+  height: 32px;
+  padding: 0 8px;
+  font-size: 0.8125rem;
+  border: 1px solid #D0D7DE;
+  border-radius: 6px;
+  background: #fff;
+  color: #0F2044;
+  min-width: 200px;
+}
+.reports-input--date {
+  min-width: 140px;
+}
+.reports-input:focus {
+  outline: none;
+  border-color: #7A9CC4;
+  box-shadow: 0 0 0 3px rgba(122, 156, 196, 0.2);
+}
+.reports-select {
+  height: 32px;
+  padding: 0 8px;
+  font-size: 0.8125rem;
+  border: 1px solid #D0D7DE;
+  border-radius: 6px;
+  background: #fff;
+  color: #0F2044;
+  min-width: 160px;
+}
+.reports-type-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding-top: 2px;
+}
+.reports-check-label {
+  font-size: 0.8125rem;
+  color: #0F2044;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.reports-preset-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-top: 2px;
+}
+.reports-form-submit {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 6px;
+}
+.reports-results-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.reports-count {
+  font-size: 0.8125rem;
+  color: #5A7090;
+  font-weight: 500;
+}
+.reports-table .td-summary {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  color: #5A7090;
+}
+.reports-table .td-actions {
+  white-space: nowrap;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.reports-filed-yes {
+  font-size: 0.75rem;
+  color: #5A7090;
+  background: #EEF0F3;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.reports-filed-no {
+  font-size: 0.75rem;
+  color: #1E7E3E;
+  background: #E6F4EA;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.reports-empty {
+  padding: 32px 0;
+  text-align: center;
+}

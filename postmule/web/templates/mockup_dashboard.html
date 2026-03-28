@@ -481,6 +481,7 @@
       </a>
       <nav>
         <a href="#" id="nav-mail"        class="nav-link active" onclick="showSection('mail');return false;">Mail</a>
+        <a href="#" id="nav-reports"     class="nav-link"        onclick="showSection('reports');return false;">Reports</a>
         <a href="#" id="nav-entities"    class="nav-link"        onclick="showSection('entities');return false;">Entities</a>
         <a href="#" id="nav-settings"    class="nav-link"        onclick="showSection('settings');return false;">Settings</a>
         <a href="#" id="nav-logs"        class="nav-link"        onclick="showSection('logs');return false;">Logs</a>
@@ -574,11 +575,7 @@
           <option value="uuid-llc2">Example LLC 2</option>
           <option value="__unassigned">Unassigned</option>
         </select>
-        <select class="mail-year-select">
-          <option selected>2026</option>
-          <option>2025</option>
-          <option>2024</option>
-        </select>
+        <a href="#" class="btn btn-secondary btn-sm" onclick="showSection('reports');return false;">Archive &rarr;</a>
       </div>
 
       <!-- Unassigned section — shown when Unassigned tab is active -->
@@ -964,6 +961,123 @@
         </div>
 
       </div><!-- #mail-pane-items -->
+    </div>
+
+    <!-- ── REPORTS ──────────────────────────────────────────────── -->
+    <div id="sec-reports" class="section" style="display:none;">
+      <div class="page-title-row">
+        <h1 class="page-title">Reports</h1>
+      </div>
+
+      <!-- Search form -->
+      <div style="background:#F5F6F8;border:1px solid #E1E4E8;border-radius:8px;padding:16px 20px;margin-bottom:20px;">
+        <div style="display:flex;flex-wrap:wrap;gap:12px 20px;margin-bottom:12px;">
+          <div style="display:flex;flex-direction:column;gap:4px;min-width:200px;">
+            <label style="font-size:0.75rem;font-weight:600;color:#5A7090;text-transform:uppercase;letter-spacing:0.03em;">Search</label>
+            <input type="text" placeholder="Sender, summary, filename&hellip;" style="height:32px;padding:0 8px;font-size:0.8125rem;border:1px solid #D0D7DE;border-radius:6px;background:#fff;color:#0F2044;min-width:200px;">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:0.75rem;font-weight:600;color:#5A7090;text-transform:uppercase;letter-spacing:0.03em;">Type</label>
+            <div style="display:flex;flex-wrap:wrap;gap:4px 12px;padding-top:2px;font-size:0.8125rem;">
+              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" checked> Bill</label>
+              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" checked> Notice</label>
+              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" checked> Forward To Me</label>
+              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox"> Personal</label>
+              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox"> Junk</label>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px 20px;margin-bottom:12px;">
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:0.75rem;font-weight:600;color:#5A7090;text-transform:uppercase;letter-spacing:0.03em;">Status</label>
+            <select style="height:32px;padding:0 8px;font-size:0.8125rem;border:1px solid #D0D7DE;border-radius:6px;background:#fff;color:#0F2044;min-width:160px;">
+              <option selected>All (Open + Filed)</option>
+              <option>Open only</option>
+              <option>Filed only</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:0.75rem;font-weight:600;color:#5A7090;text-transform:uppercase;letter-spacing:0.03em;">Entity</label>
+            <select style="height:32px;padding:0 8px;font-size:0.8125rem;border:1px solid #D0D7DE;border-radius:6px;background:#fff;color:#0F2044;min-width:160px;">
+              <option selected>All entities</option>
+              <option>AT&amp;T</option>
+              <option>Verizon</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:0.75rem;font-weight:600;color:#5A7090;text-transform:uppercase;letter-spacing:0.03em;">Owner / Recipient</label>
+            <select style="height:32px;padding:0 8px;font-size:0.8125rem;border:1px solid #D0D7DE;border-radius:6px;background:#fff;color:#0F2044;min-width:160px;">
+              <option selected>All owners</option>
+              <option>Alice</option>
+              <option>Bob</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;">
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:0.75rem;font-weight:600;color:#5A7090;text-transform:uppercase;letter-spacing:0.03em;">From</label>
+            <input type="date" value="2026-01-01" style="height:32px;padding:0 8px;font-size:0.8125rem;border:1px solid #D0D7DE;border-radius:6px;background:#fff;color:#0F2044;min-width:140px;">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:0.75rem;font-weight:600;color:#5A7090;text-transform:uppercase;letter-spacing:0.03em;">To</label>
+            <input type="date" value="2026-03-27" style="height:32px;padding:0 8px;font-size:0.8125rem;border:1px solid #D0D7DE;border-radius:6px;background:#fff;color:#0F2044;min-width:140px;">
+          </div>
+          <div style="display:flex;gap:4px;padding-bottom:1px;">
+            <button class="btn btn-secondary btn-sm">30 days</button>
+            <button class="btn btn-secondary btn-sm">60 days</button>
+            <button class="btn btn-secondary btn-sm">This year</button>
+            <button class="btn btn-secondary btn-sm">Last year</button>
+          </div>
+          <div style="display:flex;gap:6px;padding-bottom:1px;">
+            <button class="btn btn-primary">Search</button>
+            <button class="btn btn-secondary">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div style="margin-bottom:10px;font-size:0.8125rem;color:#5A7090;font-weight:500;">12 results</div>
+      <div class="table-wrap">
+        <table class="data-table" aria-label="Mail search results">
+          <thead>
+            <tr>
+              <th>Date</th><th>Type</th><th>Sender / Entity</th><th>Recipients</th><th>Summary</th><th>Status</th><th>Filed</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-date">2026-03-15</td>
+              <td><span class="badge badge--bill">BILL</span></td>
+              <td class="td-sender">AT&amp;T</td>
+              <td>Alice</td>
+              <td class="td-summary" style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.8rem;color:#5A7090;">Monthly wireless bill — $94.00 due Apr 5</td>
+              <td><span class="status-badge">PENDING</span></td>
+              <td><span style="font-size:0.75rem;color:#1E7E3E;background:#E6F4EA;border-radius:4px;padding:2px 6px;">Open</span></td>
+              <td style="white-space:nowrap;display:flex;gap:6px;align-items:center;"><a href="#" class="pdf-link">PDF</a> <button class="btn btn-secondary btn-sm">File</button></td>
+            </tr>
+            <tr>
+              <td class="td-date">2026-02-28</td>
+              <td><span class="badge badge--notice">NOTICE</span></td>
+              <td class="td-sender">IRS</td>
+              <td>Alice, Bob</td>
+              <td class="td-summary" style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.8rem;color:#5A7090;">CP2000 — proposed changes to 2024 tax return</td>
+              <td></td>
+              <td><span style="font-size:0.75rem;color:#5A7090;background:#EEF0F3;border-radius:4px;padding:2px 6px;">Filed</span></td>
+              <td style="white-space:nowrap;display:flex;gap:6px;align-items:center;"><a href="#" class="pdf-link">PDF</a> <button class="btn btn-secondary btn-sm">Unfile</button></td>
+            </tr>
+            <tr>
+              <td class="td-date">2026-02-10</td>
+              <td><span class="badge badge--bill">BILL</span></td>
+              <td class="td-sender">Verizon</td>
+              <td>Bob</td>
+              <td class="td-summary" style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.8rem;color:#5A7090;">Internet service — $59.99 due Mar 1</td>
+              <td><span class="status-badge">MATCHED</span></td>
+              <td><span style="font-size:0.75rem;color:#5A7090;background:#EEF0F3;border-radius:4px;padding:2px 6px;">Filed</span></td>
+              <td style="white-space:nowrap;display:flex;gap:6px;align-items:center;"><a href="#" class="pdf-link">PDF</a> <button class="btn btn-secondary btn-sm">Unfile</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- ── ENTITIES ──────────────────────────────────────────────── -->
@@ -2550,7 +2664,7 @@ government id</textarea>
 
 <script>
   const NAV_MAP = {
-    mail: 'mail', entities: 'entities',
+    mail: 'mail', reports: 'reports', entities: 'entities',
     logs: 'logs', providers: 'providers', settings: 'settings', help: 'help'
   };
 
