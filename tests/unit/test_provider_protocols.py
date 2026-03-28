@@ -882,3 +882,196 @@ class TestOneDriveProviderSmoke:
         from postmule.providers.storage.base import StorageProvider
         provider = self._make_provider()
         assert isinstance(provider, StorageProvider)
+
+
+# ---------------------------------------------------------------------------
+# AirtableProvider smoke tests
+# ---------------------------------------------------------------------------
+
+class TestAirtableProviderSmoke:
+    def _make_provider(self):
+        from postmule.providers.spreadsheet.airtable import AirtableProvider
+        return AirtableProvider(access_token="pat-token", base_id="appABC123")
+
+    def test_instantiation(self):
+        provider = self._make_provider()
+        assert provider.base_id == "appABC123"
+        assert provider.access_token == "pat-token"
+
+    def test_health_check_ok(self):
+        provider = self._make_provider()
+        with patch.object(provider, "_get", return_value={"id": "usr123"}):
+            result = provider.health_check()
+        assert result.ok is True
+        assert "Airtable connected" in result.message
+
+    def test_health_check_error(self):
+        provider = self._make_provider()
+        with patch.object(provider, "_get", side_effect=Exception("401 Unauthorized")):
+            result = provider.health_check()
+        assert result.ok is False
+        assert "401" in result.message
+
+    def test_get_or_create_workbook_returns_base_id(self):
+        provider = self._make_provider()
+        with patch.object(provider, "_get", return_value={"tables": []}):
+            result = provider.get_or_create_workbook()
+        assert result == "appABC123"
+
+    def test_write_sheet_creates_table_and_records(self):
+        provider = self._make_provider()
+        get_responses = [
+            {"tables": []},      # _get_or_create_table: not found
+            {"records": []},     # _delete_all_records: empty
+        ]
+        mock_post = MagicMock(side_effect=[
+            {"id": "tblXYZ"},    # table creation
+            {"records": []},     # record creation
+        ])
+        with patch.object(provider, "_get", side_effect=get_responses):
+            with patch.object(provider, "_post", mock_post):
+                provider.write_sheet("Bills", [["Date", "Amount"], ["2025-01-01", "50"]])
+        assert mock_post.call_count == 2
+
+    def test_write_sheet_uses_existing_table(self):
+        provider = self._make_provider()
+        get_responses = [
+            {"tables": [{"name": "Bills", "id": "tblEXIST"}]},
+            {"records": []},
+        ]
+        with patch.object(provider, "_get", side_effect=get_responses):
+            with patch.object(provider, "_post", return_value={"records": []}) as mp:
+                provider.write_sheet("Bills", [["Date"], ["2025-01-01"]])
+        # Only one POST (create records), no table creation
+        assert mp.call_count == 1
+
+    def test_write_sheet_empty_rows_noop(self):
+        provider = self._make_provider()
+        with patch.object(provider, "_get", MagicMock()) as mock_get:
+            provider.write_sheet("Bills", [])
+        mock_get.assert_not_called()
+
+    def test_write_sheet_deletes_existing_records(self):
+        provider = self._make_provider()
+        get_responses = [
+            {"tables": [{"name": "RunLog", "id": "tblRUN"}]},
+            {"records": [{"id": "rec1"}, {"id": "rec2"}]},
+            {"records": []},
+        ]
+        mock_delete = MagicMock(return_value={"deletedRecords": ["rec1", "rec2"]})
+        with patch.object(provider, "_get", side_effect=get_responses):
+            with patch.object(provider, "_delete", mock_delete):
+                with patch.object(provider, "_post", return_value={"records": []}):
+                    provider.write_sheet("RunLog", [["Col"], ["v"]])
+        assert mock_delete.called
+
+    def test_satisfies_spreadsheet_provider_protocol(self):
+        from postmule.providers.spreadsheet.base import SpreadsheetProvider
+        provider = self._make_provider()
+        assert isinstance(provider, SpreadsheetProvider)
+
+
+# ---------------------------------------------------------------------------
+# ExcelOnlineProvider smoke tests
+# ---------------------------------------------------------------------------
+
+class TestExcelOnlineProviderSmoke:
+    def _make_provider(self):
+        from postmule.providers.spreadsheet.excel_online import ExcelOnlineProvider
+        return ExcelOnlineProvider(access_token="bearer-token", workbook_name="PostMule.xlsx")
+
+    def test_instantiation(self):
+        provider = self._make_provider()
+        assert provider.workbook_name == "PostMule.xlsx"
+        assert provider.access_token == "bearer-token"
+        assert provider._item_id is None
+
+    def test_health_check_ok(self):
+        provider = self._make_provider()
+        with patch.object(provider, "_get", return_value={"quota": {"used": 2_000_000_000}}):
+            result = provider.health_check()
+        assert result.ok is True
+        assert "Excel Online connected" in result.message
+
+    def test_health_check_error(self):
+        provider = self._make_provider()
+        with patch.object(provider, "_get", side_effect=Exception("Network error")):
+            result = provider.health_check()
+        assert result.ok is False
+        assert "Network error" in result.message
+
+    def test_get_or_create_workbook_finds_existing(self):
+        provider = self._make_provider()
+        with patch.object(provider, "_get", return_value={
+            "value": [{"id": "item-wb", "name": "PostMule.xlsx", "file": {}}]
+        }):
+            result = provider.get_or_create_workbook()
+        assert result == "item-wb"
+        assert provider._item_id == "item-wb"
+
+    def test_get_or_create_workbook_creates_new(self):
+        provider = self._make_provider()
+        with patch.object(provider, "_get", return_value={"value": []}):
+            with patch.object(provider, "_put_bytes", return_value={"id": "item-new"}):
+                with patch("postmule.providers.spreadsheet.excel_online._blank_xlsx", return_value=b"xlsx"):
+                    result = provider.get_or_create_workbook()
+        assert result == "item-new"
+
+    def test_get_or_create_workbook_returns_cached(self):
+        provider = self._make_provider()
+        provider._item_id = "item-cached"
+        with patch.object(provider, "_get", MagicMock()) as mock_get:
+            result = provider.get_or_create_workbook()
+        assert result == "item-cached"
+        mock_get.assert_not_called()
+
+    def test_write_sheet_requires_workbook_first(self):
+        provider = self._make_provider()
+        with pytest.raises(RuntimeError, match="get_or_create_workbook"):
+            provider.write_sheet("Bills", [["Date"]])
+
+    def test_write_sheet_creates_worksheet_and_writes(self):
+        provider = self._make_provider()
+        provider._item_id = "item-wb"
+        with patch.object(provider, "_get", return_value={"value": []}):
+            with patch.object(provider, "_post", return_value={}) as mock_post:
+                with patch.object(provider, "_patch", return_value={}) as mock_patch:
+                    provider.write_sheet("Bills", [["Date", "Amount"], ["2025-01-01", "50"]])
+        mock_patch.assert_called_once()
+        call_args = mock_patch.call_args
+        assert "Bills" in call_args[0][0]
+        assert call_args[0][1]["values"] == [["Date", "Amount"], ["2025-01-01", "50"]]
+
+    def test_write_sheet_uses_existing_worksheet(self):
+        provider = self._make_provider()
+        provider._item_id = "item-wb"
+        with patch.object(provider, "_get", return_value={"value": [{"name": "Bills"}]}):
+            with patch.object(provider, "_post", return_value={}) as mock_post:
+                with patch.object(provider, "_patch", return_value={}) as mock_patch:
+                    provider.write_sheet("Bills", [["Date"], ["2025-01-01"]])
+        mock_patch.assert_called_once()
+        # No worksheet creation — only clear POST
+        clear_calls = [c for c in mock_post.call_args_list if "clear" in str(c)]
+        assert len(clear_calls) == 1
+
+    def test_write_sheet_empty_rows_no_patch(self):
+        provider = self._make_provider()
+        provider._item_id = "item-wb"
+        with patch.object(provider, "_get", return_value={"value": [{"name": "Bills"}]}):
+            with patch.object(provider, "_post", return_value={}):
+                with patch.object(provider, "_patch", return_value={}) as mock_patch:
+                    provider.write_sheet("Bills", [])
+        mock_patch.assert_not_called()
+
+    def test_col_letter_conversion(self):
+        from postmule.providers.spreadsheet.excel_online import _col_letter
+        assert _col_letter(1) == "A"
+        assert _col_letter(26) == "Z"
+        assert _col_letter(27) == "AA"
+        assert _col_letter(52) == "AZ"
+        assert _col_letter(53) == "BA"
+
+    def test_satisfies_spreadsheet_provider_protocol(self):
+        from postmule.providers.spreadsheet.base import SpreadsheetProvider
+        provider = self._make_provider()
+        assert isinstance(provider, SpreadsheetProvider)
