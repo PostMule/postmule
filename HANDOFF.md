@@ -7,14 +7,12 @@
 ## Last Completed
 > Maintenance: before adding a new entry, delete the previous one. One issue max. Full history is in `git log`.
 
-Issue #63 — Owner Registry complete:
-- New `postmule/data/owners.py`: full CRUD + `resolve_owner_ids()` (exact/case-insensitive name+short_name match)
-- `owner_ids: list[str]` added to all mail record types (bills, notices, forward_to_me) via `set_owner_ids()`
-- `ProcessedMail` dataclass gets `owner_ids` field; `classify_pdf()` auto-resolves from LLM recipients if `owners` passed
-- 5 new API routes: GET/POST/PATCH/DELETE `/api/owners`, PUT `/api/mail/<id>/owners`
-- Owner filter dropdown added to mail list; owner badges on mail items; Owners tab in Settings
-- Full test coverage: `test_data_owners.py` (34 tests), owners tests in bills/notices/ftm, classification, web routes
-- Full suite: 808 tests, 73% coverage
+Issue #64 — Mail lifecycle (Open/Filed) complete:
+- `set_filed(data_dir, id, bool)` added to `bills.py`, `notices.py`, `forward_to_me.py`
+- `POST /api/mail/<id>/file` and `/api/mail/<id>/unfile` routes (dry-run aware)
+- Main mail view (`pages.py`) filters out `filed=True` items by default
+- File button added to all mail edit panels in `mockup_dashboard.html`
+- Full suite: 823 tests, 74% coverage
 
 ---
 
@@ -28,8 +26,7 @@ Issue #63 — Owner Registry complete:
 **Priority order (start at the top):**
 
 Tier 1 — Core workflow (in order):
-1. #64 — Mail lifecycle: add Open/Filed states — foundational, daily friction, required before #65
-2. #65 — Reports section: unified mail search/archive — depends on #64
+1. #65 — Reports section: unified mail search/archive — depends on #64 (done)
 3. #66 — Remove year filter from main mail view — trivial cleanup, bundle at end of #65
 
 Tier 2 — Provider breadth (self-hosted value prop):
