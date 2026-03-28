@@ -210,6 +210,171 @@ class TestGeminiProviderSmoke:
         assert result.status in ("ok", "error", "warn")
 
 
+class TestAnthropicProviderSmoke:
+    def test_classify_dry_run_returns_classification_result(self):
+        from postmule.providers.llm.anthropic import AnthropicProvider
+        from postmule.providers.llm.base import ClassificationResult
+        provider = AnthropicProvider(api_key="dummy-key")
+        result = provider.classify("some OCR text", dry_run=True)
+        assert isinstance(result, ClassificationResult)
+        assert result.summary == "[dry-run — no API call made]"
+
+    def test_classify_dry_run_does_not_call_api(self):
+        from postmule.providers.llm.anthropic import AnthropicProvider
+        provider = AnthropicProvider(api_key="dummy-key")
+        with patch.object(provider, "_get_client") as mock_client:
+            provider.classify("text", dry_run=True)
+        mock_client.assert_not_called()
+
+    def test_health_check_returns_health_result_on_error(self):
+        import sys
+        from postmule.providers.llm.anthropic import AnthropicProvider
+        from postmule.providers import HealthResult
+        provider = AnthropicProvider(api_key="dummy-key")
+        mock_anthropic = MagicMock()
+        mock_client = MagicMock()
+        mock_client.models.list.side_effect = Exception("auth error")
+        mock_anthropic.Anthropic.return_value = mock_client
+        with patch.dict(sys.modules, {"anthropic": mock_anthropic}):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is False
+
+    def test_health_check_ok_when_api_succeeds(self):
+        import sys
+        from postmule.providers.llm.anthropic import AnthropicProvider
+        from postmule.providers import HealthResult
+        provider = AnthropicProvider(api_key="dummy-key")
+        mock_anthropic = MagicMock()
+        mock_client = MagicMock()
+        mock_client.models.list.return_value = MagicMock()
+        mock_anthropic.Anthropic.return_value = mock_client
+        with patch.dict(sys.modules, {"anthropic": mock_anthropic}):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is True
+
+    def test_satisfies_llm_provider_protocol(self):
+        from postmule.providers.llm.anthropic import AnthropicProvider
+        from postmule.providers.llm.base import LLMProvider
+        provider = AnthropicProvider(api_key="dummy-key")
+        assert isinstance(provider, LLMProvider)
+
+
+class TestOpenAIProviderSmoke:
+    def test_classify_dry_run_returns_classification_result(self):
+        from postmule.providers.llm.openai import OpenAIProvider
+        from postmule.providers.llm.base import ClassificationResult
+        provider = OpenAIProvider(api_key="dummy-key")
+        result = provider.classify("some OCR text", dry_run=True)
+        assert isinstance(result, ClassificationResult)
+        assert result.summary == "[dry-run — no API call made]"
+
+    def test_classify_dry_run_does_not_call_api(self):
+        from postmule.providers.llm.openai import OpenAIProvider
+        provider = OpenAIProvider(api_key="dummy-key")
+        with patch.object(provider, "_get_client") as mock_client:
+            provider.classify("text", dry_run=True)
+        mock_client.assert_not_called()
+
+    def test_health_check_returns_health_result_on_error(self):
+        import sys
+        from postmule.providers.llm.openai import OpenAIProvider
+        from postmule.providers import HealthResult
+        provider = OpenAIProvider(api_key="dummy-key")
+        mock_openai = MagicMock()
+        mock_client = MagicMock()
+        mock_client.models.list.side_effect = Exception("auth error")
+        mock_openai.OpenAI.return_value = mock_client
+        with patch.dict(sys.modules, {"openai": mock_openai}):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is False
+
+    def test_health_check_ok_when_api_succeeds(self):
+        import sys
+        from postmule.providers.llm.openai import OpenAIProvider
+        from postmule.providers import HealthResult
+        provider = OpenAIProvider(api_key="dummy-key")
+        mock_openai = MagicMock()
+        mock_client = MagicMock()
+        mock_client.models.list.return_value = MagicMock()
+        mock_openai.OpenAI.return_value = mock_client
+        with patch.dict(sys.modules, {"openai": mock_openai}):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is True
+
+    def test_satisfies_llm_provider_protocol(self):
+        from postmule.providers.llm.openai import OpenAIProvider
+        from postmule.providers.llm.base import LLMProvider
+        provider = OpenAIProvider(api_key="dummy-key")
+        assert isinstance(provider, LLMProvider)
+
+
+class TestOllamaProviderSmoke:
+    def test_classify_dry_run_returns_classification_result(self):
+        from postmule.providers.llm.ollama import OllamaProvider
+        from postmule.providers.llm.base import ClassificationResult
+        provider = OllamaProvider()
+        result = provider.classify("some OCR text", dry_run=True)
+        assert isinstance(result, ClassificationResult)
+        assert result.summary == "[dry-run — no API call made]"
+
+    def test_classify_dry_run_does_not_make_http_request(self):
+        from postmule.providers.llm.ollama import OllamaProvider
+        provider = OllamaProvider()
+        with patch("requests.post") as mock_post:
+            provider.classify("text", dry_run=True)
+        mock_post.assert_not_called()
+
+    def test_health_check_server_unreachable(self):
+        from postmule.providers.llm.ollama import OllamaProvider
+        from postmule.providers import HealthResult
+        provider = OllamaProvider(host="http://localhost:11434")
+        with patch("requests.get", side_effect=Exception("connection refused")):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is False
+
+    def test_health_check_model_not_pulled(self):
+        from postmule.providers.llm.ollama import OllamaProvider
+        from postmule.providers import HealthResult
+        provider = OllamaProvider(model="llama3.2")
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"models": [{"name": "mistral:latest"}]}
+        mock_resp.raise_for_status.return_value = None
+        with patch("requests.get", return_value=mock_resp):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is False
+        assert "pull" in result.message
+
+    def test_health_check_ok_when_model_available(self):
+        from postmule.providers.llm.ollama import OllamaProvider
+        from postmule.providers import HealthResult
+        provider = OllamaProvider(model="llama3.2")
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"models": [{"name": "llama3.2:latest"}]}
+        mock_resp.raise_for_status.return_value = None
+        with patch("requests.get", return_value=mock_resp):
+            result = provider.health_check()
+        assert isinstance(result, HealthResult)
+        assert result.ok is True
+
+    def test_no_api_key_required(self):
+        from postmule.providers.llm.ollama import OllamaProvider
+        # Should not raise — Ollama needs no credentials
+        provider = OllamaProvider()
+        assert provider is not None
+
+    def test_satisfies_llm_provider_protocol(self):
+        from postmule.providers.llm.ollama import OllamaProvider
+        from postmule.providers.llm.base import LLMProvider
+        provider = OllamaProvider()
+        assert isinstance(provider, LLMProvider)
+
+
 class TestGmailProviderSmoke:
     def test_health_check_does_not_raise_with_dummy_creds(self):
         from postmule.providers.email.gmail import GmailProvider
