@@ -2,8 +2,14 @@
 > Maintenance: before adding anything here, ask — is this derivable from the code or docs/ in under 3 file reads? If yes, don't add it.
 
 ## Session Start — Required
-1. Run `git log --oneline -15` and `git status` — commit any uncommitted changes first
+1. Run `git log --oneline -15` and `git status` — commit and push any uncommitted/unpushed changes first
 2. Check Architecture Invariants below — flag any drift before proceeding
+
+## Session End — Required (before handoff)
+1. Commit all changes
+2. `git push` — branch must be current with origin before updating HANDOFF.md
+3. Update HANDOFF.md
+4. Confirm push succeeded (`git status` shows "nothing to commit, working tree clean" and "Your branch is up to date")
 
 ## Architecture Invariants (non-negotiable)
 - Every external service accessed through a provider interface in `postmule/providers/*/`
