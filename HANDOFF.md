@@ -25,7 +25,23 @@ Issue #63 — Owner Registry complete:
 **Blocked/Deferred (do not action):**
 - #30 — End-to-end validation (BLOCKED)
 
-**Ready to work:** none — await user direction.
+**Priority order (start at the top):**
+
+Tier 1 — Core workflow (in order):
+1. #64 — Mail lifecycle: add Open/Filed states — foundational, daily friction, required before #65
+2. #65 — Reports section: unified mail search/archive — depends on #64
+3. #66 — Remove year filter from main mail view — trivial cleanup, bundle at end of #65
+
+Tier 2 — Provider breadth (self-hosted value prop):
+4. #72 — LLM stubs: Ollama (offline/free), Anthropic, OpenAI — interface already defined, low risk
+5. #69 — Email stubs: IMAP first (unblocks Yahoo/Fastmail/self-hosted), then Outlook, ProtonMail
+6. #67 — Provider config UI — more valuable after more providers exist (#69, #72 done)
+
+Tier 3 — Later:
+7. #70 — Storage stubs (Dropbox, OneDrive, S3)
+8. #71 — Spreadsheet stubs (Airtable, Excel Online)
+9. #73 — Mailbox stubs (needs API investigation first)
+10. #68 — Multi-email providers (most complex, depends on #67 + #69)
 
 ---
 
