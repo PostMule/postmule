@@ -522,6 +522,29 @@ def api_entity_save(entity_id: str):
     return jsonify({"ok": True})
 
 
+@api_bp.route("/api/entity/create", methods=["POST"])
+def api_entity_create():
+    """Create a new entity inline (typically pre-filled from OCR data on a mail item)."""
+    name = (request.form.get("name") or "").strip()
+    if not name:
+        return jsonify({"error": "name is required"}), 400
+    category = (request.form.get("category") or "biller").strip()
+    friendly_name = (request.form.get("friendly_name") or name).strip()
+    account_number = (request.form.get("account_number") or "").strip() or None
+
+    entities = entity_data.load_entities(_app._data_dir)
+    if not entity_data.validate_friendly_name_unique(entities, friendly_name):
+        return jsonify({"error": "friendly_name_taken",
+                        "message": f"'{friendly_name}' is already used by another entity."}), 409
+
+    entity = entity_data.add_entity(
+        _app._data_dir, name, category,
+        friendly_name=friendly_name, account_number=account_number,
+    )
+    return jsonify({"id": entity["id"], "canonical_name": entity["canonical_name"],
+                    "friendly_name": entity["friendly_name"]})
+
+
 @api_bp.route("/api/entity/<entity_id>/alias", methods=["POST"])
 def api_entity_alias(entity_id: str):
     """Add or remove an alias on an entity."""

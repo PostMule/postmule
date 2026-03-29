@@ -1208,6 +1208,43 @@ nav { display: flex; gap: 4px; flex: 1; }
   display: flex;
   gap: 8px;
 }
+.entity-create-toggle {
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.75rem;
+  color: #2563EB;
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn-link:hover { text-decoration: underline; }
+.entity-create-form {
+  border-top: 1px solid #DDE3EC;
+  padding-top: 10px;
+  margin-top: 4px;
+}
+.entity-create-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.entity-create-input {
+  margin-bottom: 0 !important;
+}
+.entity-create-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.entity-create-error {
+  font-size: 0.75rem;
+  color: #C62828;
+}
 .entity-picker-saved {
   margin-top: 8px;
   font-size: 0.75rem;

@@ -342,7 +342,7 @@
       {% set match = pending_by_sender.get(item.get('sender', '')|lower) %}
       <div class="mail-item"
            x-show="typeFilter === 'all' || typeFilter === '{{ item._type }}'"
-           x-data="mailReassign('{{ item.get('id','') }}', '{{ item._type }}', '{{ item.get('entity_override_id','') }}')"
+           x-data="mailReassign('{{ item.get('id','') }}', '{{ item._type }}', '{{ item.get('entity_override_id','') }}', '{{ item.get('sender','') | replace("'", "\\'") }}', '{{ item.get('account_number','') | replace("'", "\\'") }}')"
            @keydown.escape="editOpen = false; entityMode = false">
         <div class="mail-bar {{ bar_class.get(item._type, 'mail-bar--default') }}"></div>
         <div class="mail-body">
@@ -410,6 +410,27 @@
                 <input type="checkbox" x-model="addAlias">
                 Add &ldquo;{{ item.get('sender','') }}&rdquo; as alias on selected entity
               </label>
+              <div class="entity-create-toggle">
+                <button class="btn-link" @click="createMode = !createMode" x-text="createMode ? 'Cancel' : '+ Create new entity'">+ Create new entity</button>
+              </div>
+              <div x-show="createMode" x-cloak class="entity-create-form">
+                <div class="entity-create-fields">
+                  <input class="entity-picker-search entity-create-input" type="text" placeholder="Entity name (from OCR)" x-model="createName" aria-label="Entity name">
+                  <input class="entity-picker-search entity-create-input" type="text" placeholder="Friendly name" x-model="createFriendly" aria-label="Friendly name">
+                  <select class="entity-picker-search entity-create-input" x-model="createCategory" aria-label="Category">
+                    <option value="biller">Biller</option>
+                    <option value="sender">Sender</option>
+                    <option value="vendor">Vendor</option>
+                    <option value="government">Government</option>
+                    <option value="personal">Personal</option>
+                  </select>
+                  <input class="entity-picker-search entity-create-input" type="text" placeholder="Account # (optional)" x-model="createAccount" aria-label="Account number">
+                </div>
+                <div class="entity-create-actions">
+                  <button class="btn btn-primary btn-sm" :disabled="!createName || creating" @click="createEntity()">Create &amp; Select</button>
+                  <span x-show="createError" x-cloak class="entity-create-error" x-text="createError"></span>
+                </div>
+              </div>
             </div>
             <div class="mail-edit-actions">
               <button class="btn btn-primary btn-sm" @click="save('{{ item.get('sender','') | replace("'", "\\'") }}')" :disabled="saving">Save</button>
@@ -3234,7 +3255,8 @@
     Personal: 'badge--junk', Junk: 'badge--junk', NeedsReview: 'badge--needs-review'
   };
 
-  function mailReassign(mailId, currentType, existingOverride) {
+  function mailReassign(mailId, currentType, existingOverride, senderName, ocrAccount) {
+    var _typeCatMap = { Bill: 'biller', Notice: 'sender', ForwardToMe: 'sender', Personal: 'personal', Junk: 'vendor', NeedsReview: 'biller' };
     return {
       editOpen: false,
       pdfOpen: false,
@@ -3247,6 +3269,13 @@
       addAlias: false,
       saved: false,
       saving: false,
+      createMode: false,
+      createName: senderName || '',
+      createFriendly: senderName || '',
+      createCategory: _typeCatMap[currentType] || 'biller',
+      createAccount: ocrAccount || '',
+      createError: '',
+      creating: false,
       init() {
         this.matchedIds = window._ENTITY_LIST.map(e => e.id);
       },
@@ -3279,6 +3308,30 @@
           this.entityMode = false;
           this.saving = false;
         });
+      },
+      createEntity() {
+        this.creating = true;
+        this.createError = '';
+        const fd = new FormData();
+        fd.append('name', this.createName);
+        fd.append('friendly_name', this.createFriendly || this.createName);
+        fd.append('category', this.createCategory);
+        if (this.createAccount) { fd.append('account_number', this.createAccount); }
+        const self = this;
+        fetch('/api/entity/create', { method: 'POST', body: fd })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data.error) {
+              self.createError = data.message || data.error;
+              self.creating = false;
+              return;
+            }
+            window._ENTITY_LIST.push({ id: data.id, name: data.canonical_name });
+            self.selectEntity(data.id, data.canonical_name);
+            self.createMode = false;
+            self.entityMode = false;
+            self.creating = false;
+          });
       }
     };
   }
