@@ -64,6 +64,7 @@ def mail():
     all_entities = entity_data.load_entities(_app._data_dir)
     from postmule.data import tags as tags_data
     all_tags = tags_data.load_tags(_app._data_dir)
+    all_owners = owners_data.load_owners(_app._data_dir)
     return render_template(
         "page.html",
         page="mail",
@@ -71,6 +72,7 @@ def mail():
         items=items,
         entities=all_entities,
         all_tags=all_tags,
+        owners=all_owners,
         last_run=last_run,
         pending_ftm_count=pending_ftm_count,
         pending_bills_count=pending_bills_count,
@@ -229,6 +231,7 @@ def settings():
     mbox_providers = cfg.get("mailbox", {}).get("providers", [{}])
     from postmule.agents.backup import get_last_backup
     last_backup = get_last_backup(_app._data_dir) if _app._data_dir else None
+    all_owners = owners_data.load_owners(_app._data_dir, include_inactive=True)
     return render_template(
         "page.html",
         page="settings",
@@ -244,6 +247,7 @@ def settings():
         config_missing=(_app._config_path is None),
         today=date.today().isoformat(),
         last_backup=last_backup,
+        owners=all_owners,
     )
 
 

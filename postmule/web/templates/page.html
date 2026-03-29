@@ -268,6 +268,14 @@
         </button>
       </div>
       <div class="mail-filter-right">
+        {% if owners %}
+        <select class="reports-select" style="font-size:0.8125rem;" x-model="ownerFilter" aria-label="Filter by owner">
+          <option value="">All owners</option>
+          {% for o in owners %}
+          <option value="{{ o.id }}">{{ o.name }}</option>
+          {% endfor %}
+        </select>
+        {% endif %}
         <a href="/reports" class="btn btn-secondary btn-sm">Archive &rarr;</a>
       </div>
     </div>
@@ -341,7 +349,7 @@
       {% set is_read = item._type in ('Junk', 'Personal') %}
       {% set match = pending_by_sender.get(item.get('sender', '')|lower) %}
       <div class="mail-item"
-           x-show="typeFilter === 'all' || typeFilter === '{{ item._type }}'"
+           x-show="(typeFilter === 'all' || typeFilter === '{{ item._type }}') && (ownerFilter === '' || {{ item.get('owner_ids', []) | tojson | safe }}.includes(ownerFilter))"
            x-data="mailReassign('{{ item.get('id','') }}', '{{ item._type }}', '{{ item.get('entity_override_id','') }}', '{{ item.get('sender','') | replace("'", "\\'") }}', '{{ item.get('account_number','') | replace("'", "\\'") }}', {{ item.get('tags', []) | tojson | safe }})"
            @keydown.escape="editOpen = false; entityMode = false; tagMode = false">
         <div class="mail-bar {{ bar_class.get(item._type, 'mail-bar--default') }}"></div>
@@ -478,6 +486,7 @@
       var tabKeyMap = { bills: 'Bill', forward: 'ForwardToMe', notices: 'Notice', unassigned: 'unassigned', all: 'all' };
       return {
         typeFilter: tabKeyMap[initialTab] || 'all',
+        ownerFilter: '',
       };
     }
     </script>
@@ -2212,6 +2221,7 @@
     <form method="post" action="/api/settings">
     <div class="s-tabs" role="tablist" aria-label="Settings categories">
       <button id="stab-btn-general" type="button" class="s-tab active" role="tab" aria-selected="true" aria-controls="stab-general" onclick="sTab('general',this)">General</button>
+      <button id="stab-btn-owners" type="button" class="s-tab" role="tab" aria-selected="false" aria-controls="stab-owners" onclick="sTab('owners',this)">Owners</button>
       <button id="stab-btn-notifications" type="button" class="s-tab" role="tab" aria-selected="false" aria-controls="stab-notifications" onclick="sTab('notifications',this)">Notifications</button>
       <button id="stab-btn-mail" type="button" class="s-tab" role="tab" aria-selected="false" aria-controls="stab-mail" onclick="sTab('mail',this)">Mail Intake</button>
       <button id="stab-btn-finance" type="button" class="s-tab" role="tab" aria-selected="false" aria-controls="stab-finance" onclick="sTab('finance',this)">Finance</button>
@@ -2805,6 +2815,203 @@
         </div>
       </div>
     </div>
+
+    <!-- ── TAB: Owners ───────────────────────────────────── -->
+    <div id="stab-owners" class="s-pane" role="tabpanel" aria-labelledby="stab-btn-owners"
+         x-data="ownersTab({{ owners | tojson | safe }})">
+      <div class="s-card">
+        <h3>Owners &amp; Recipients
+          <div class="help-tip" x-data="{ open: false }" @keydown.escape.window="open = false">
+            <button class="help-btn" type="button" @click="open = !open" :aria-expanded="open.toString()" aria-label="Help for Owners">?</button>
+            <div class="help-popover" x-show="open" @click.outside="open = false" x-cloak>
+              <p>Owners are the people or companies whose mail PostMule manages. Each mail item is associated with one or more owners, used for filtering and file naming (Recipients field).</p>
+              <p>Removing an owner deactivates them — their mail history is preserved. Short Name overrides the full name in filenames and badges.</p>
+            </div>
+          </div>
+        </h3>
+
+        <div x-show="owners.length === 0" style="color:#8A9BB0;font-size:0.875rem;padding:8px 0;">No owners yet. Add one below.</div>
+
+        <table class="data-table" x-show="owners.length > 0" style="margin-bottom:16px;">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Short Name</th>
+              <th>Color</th>
+              <th>Active</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="o in owners" :key="o.id">
+              <tr :style="o.active === false ? 'opacity:0.5' : ''">
+                <td>
+                  <template x-if="!o._editing">
+                    <span x-text="o.name"></span>
+                  </template>
+                  <template x-if="o._editing">
+                    <input class="s-input" x-model="o._edit.name" style="width:140px;" placeholder="Name">
+                  </template>
+                </td>
+                <td>
+                  <template x-if="!o._editing">
+                    <span x-text="o.type || 'person'"></span>
+                  </template>
+                  <template x-if="o._editing">
+                    <select class="s-select" x-model="o._edit.type">
+                      <option value="person">person</option>
+                      <option value="company">company</option>
+                    </select>
+                  </template>
+                </td>
+                <td>
+                  <template x-if="!o._editing">
+                    <span x-text="o.short_name || '—'" style="color:#8A9BB0"></span>
+                  </template>
+                  <template x-if="o._editing">
+                    <input class="s-input" x-model="o._edit.short_name" style="width:100px;" placeholder="Optional">
+                  </template>
+                </td>
+                <td>
+                  <template x-if="!o._editing">
+                    <span x-show="o.color" :style="'display:inline-block;width:18px;height:18px;border-radius:3px;background:'+o.color+';vertical-align:middle;'"></span>
+                    <span x-show="!o.color" style="color:#8A9BB0">—</span>
+                  </template>
+                  <template x-if="o._editing">
+                    <input type="color" x-model="o._edit.color" style="width:40px;height:28px;padding:1px;border:1px solid #CBD5E1;border-radius:4px;cursor:pointer;">
+                  </template>
+                </td>
+                <td>
+                  <span x-text="o.active === false ? 'Inactive' : 'Active'" :style="o.active === false ? 'color:#8A9BB0' : 'color:#2E7D32'"></span>
+                </td>
+                <td style="white-space:nowrap;">
+                  <template x-if="!o._editing">
+                    <span>
+                      <button type="button" class="btn btn--sm" @click="startEdit(o)" style="margin-right:4px;">Edit</button>
+                      <button type="button" class="btn btn--sm btn-danger" @click="removeOwner(o)"
+                              x-text="o.active === false ? 'Restore' : 'Remove'"></button>
+                    </span>
+                  </template>
+                  <template x-if="o._editing">
+                    <span>
+                      <button type="button" class="btn btn--sm btn-primary" @click="saveEdit(o)" style="margin-right:4px;">Save</button>
+                      <button type="button" class="btn btn--sm" @click="cancelEdit(o)">Cancel</button>
+                    </span>
+                  </template>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+
+        <div x-show="!addOpen" style="margin-top:8px;">
+          <button type="button" class="btn btn--sm btn-primary" @click="addOpen = true">+ Add Owner</button>
+        </div>
+
+        <div x-show="addOpen" x-cloak style="margin-top:12px;padding:16px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;">
+          <div style="font-weight:600;margin-bottom:10px;font-size:0.875rem;">New Owner</div>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
+            <div>
+              <div class="s-label" style="margin-bottom:4px;">Name <span style="color:#E53E3E">*</span></div>
+              <input class="s-input" x-model="newOwner.name" placeholder="e.g. Alice" style="width:160px;">
+            </div>
+            <div>
+              <div class="s-label" style="margin-bottom:4px;">Type</div>
+              <select class="s-select" x-model="newOwner.type">
+                <option value="person">person</option>
+                <option value="company">company</option>
+              </select>
+            </div>
+            <div>
+              <div class="s-label" style="margin-bottom:4px;">Short Name</div>
+              <input class="s-input" x-model="newOwner.short_name" placeholder="Optional" style="width:120px;">
+            </div>
+            <div>
+              <div class="s-label" style="margin-bottom:4px;">Color</div>
+              <input type="color" x-model="newOwner.color" style="width:40px;height:32px;padding:1px;border:1px solid #CBD5E1;border-radius:4px;cursor:pointer;">
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button type="button" class="btn btn--sm btn-primary" @click="saveNew()">Add</button>
+              <button type="button" class="btn btn--sm" @click="addOpen = false; newOwner = { name: '', type: 'person', short_name: '', color: '#7C3AED' }">Cancel</button>
+            </div>
+          </div>
+          <div x-show="addError" x-text="addError" style="color:#E53E3E;font-size:0.8125rem;margin-top:8px;" aria-live="polite"></div>
+        </div>
+
+        <div x-show="statusMsg" x-text="statusMsg" style="margin-top:10px;font-size:0.8125rem;color:#2E7D32;" aria-live="polite" role="status"></div>
+      </div>
+    </div>
+
+    <script>
+    function ownersTab(initial) {
+      return {
+        owners: initial.map(function(o) { return Object.assign({}, o, { _editing: false, _edit: null }); }),
+        addOpen: false,
+        newOwner: { name: '', type: 'person', short_name: '', color: '#7C3AED' },
+        addError: '',
+        statusMsg: '',
+        _flash: function(msg) {
+          var self = this;
+          self.statusMsg = msg;
+          setTimeout(function() { self.statusMsg = ''; }, 3000);
+        },
+        startEdit: function(o) {
+          o._edit = { name: o.name, type: o.type || 'person', short_name: o.short_name || '', color: o.color || '#7C3AED' };
+          o._editing = true;
+        },
+        cancelEdit: function(o) { o._editing = false; o._edit = null; },
+        saveEdit: async function(o) {
+          if (!o._edit.name.trim()) return;
+          var fd = new FormData();
+          fd.append('name', o._edit.name.trim());
+          fd.append('type', o._edit.type);
+          fd.append('short_name', o._edit.short_name);
+          fd.append('color', o._edit.color);
+          var r = await fetch('/api/owners/' + o.id, { method: 'PATCH', body: fd });
+          if (r.ok) {
+            var updated = await r.json();
+            Object.assign(o, updated);
+            o._editing = false;
+            o._edit = null;
+            this._flash('Saved.');
+          }
+        },
+        removeOwner: async function(o) {
+          if (o.active === false) {
+            var fd = new FormData();
+            fd.append('active', 'true');
+            var r = await fetch('/api/owners/' + o.id, { method: 'PATCH', body: fd });
+            if (r.ok) { var u = await r.json(); Object.assign(o, u); this._flash('Restored.'); }
+          } else {
+            if (!confirm('Remove "' + o.name + '"? Their mail history is preserved.')) return;
+            var r = await fetch('/api/owners/' + o.id, { method: 'DELETE' });
+            if (r.ok) { o.active = false; this._flash('Removed.'); }
+          }
+        },
+        saveNew: async function() {
+          this.addError = '';
+          if (!this.newOwner.name.trim()) { this.addError = 'Name is required.'; return; }
+          var fd = new FormData();
+          fd.append('name', this.newOwner.name.trim());
+          fd.append('type', this.newOwner.type);
+          if (this.newOwner.short_name.trim()) fd.append('short_name', this.newOwner.short_name.trim());
+          if (this.newOwner.color) fd.append('color', this.newOwner.color);
+          var r = await fetch('/api/owners', { method: 'POST', body: fd });
+          if (r.ok) {
+            var created = await r.json();
+            this.owners.push(Object.assign({}, created, { _editing: false, _edit: null }));
+            this.newOwner = { name: '', type: 'person', short_name: '', color: '#7C3AED' };
+            this.addOpen = false;
+            this._flash('Owner added.');
+          } else {
+            var err = await r.json();
+            this.addError = err.error || 'Failed to add owner.';
+          }
+        },
+      };
+    }
+    </script>
 
     <!-- Save button -->
     <div class="s-sticky-save">

@@ -984,6 +984,7 @@
               <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" checked> Forward To Me</label>
               <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox"> Personal</label>
               <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox"> Junk</label>
+              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox"> Needs Review</label>
             </div>
           </div>
         </div>
@@ -1025,8 +1026,13 @@
           <div style="display:flex;gap:4px;padding-bottom:1px;">
             <button class="btn btn-secondary btn-sm">30 days</button>
             <button class="btn btn-secondary btn-sm">60 days</button>
+            <button class="btn btn-secondary btn-sm">90 days</button>
             <button class="btn btn-secondary btn-sm">This year</button>
             <button class="btn btn-secondary btn-sm">Last year</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:0.75rem;font-weight:600;color:#5A7090;text-transform:uppercase;letter-spacing:0.03em;">Tag</label>
+            <input type="text" placeholder="e.g. important" style="height:32px;padding:0 8px;font-size:0.8125rem;border:1px solid #D0D7DE;border-radius:6px;background:#fff;color:#0F2044;min-width:140px;">
           </div>
           <div style="display:flex;gap:6px;padding-bottom:1px;">
             <button class="btn btn-primary">Search</button>
@@ -1036,7 +1042,10 @@
       </div>
 
       <!-- Results -->
-      <div style="margin-bottom:10px;font-size:0.8125rem;color:#5A7090;font-weight:500;">12 results</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span style="font-size:0.8125rem;color:#5A7090;font-weight:500;">12 results</span>
+        <button class="btn btn-secondary btn-sm">&#8615; Export PDFs</button>
+      </div>
       <div class="table-wrap">
         <table class="data-table" aria-label="Mail search results">
           <thead>
