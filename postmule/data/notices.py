@@ -115,6 +115,25 @@ def set_category_override(data_dir: Path, notice_id: str, category: str) -> bool
     return False
 
 
+def update_tags(data_dir: Path, notice_id: str, tag: str, action: str) -> bool:
+    """Add or remove a tag on a notice record. Returns True if found and updated."""
+    tag_lower = tag.strip().lower()
+    if not tag_lower:
+        return False
+    for year in recent_years():
+        notices = load_notices(data_dir, year)
+        for notice in notices:
+            if notice.get("id") == notice_id:
+                tags: list[str] = notice.setdefault("tags", [])
+                if action == "add" and tag_lower not in tags:
+                    tags.append(tag_lower)
+                elif action == "remove" and tag_lower in tags:
+                    tags.remove(tag_lower)
+                save_notices(data_dir, notices, year)
+                return True
+    return False
+
+
 def to_sheet_rows(notices: list[dict[str, Any]]) -> list[list[Any]]:
     rows = [_HEADERS]
     for n in notices:

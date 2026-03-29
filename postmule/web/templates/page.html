@@ -342,8 +342,8 @@
       {% set match = pending_by_sender.get(item.get('sender', '')|lower) %}
       <div class="mail-item"
            x-show="typeFilter === 'all' || typeFilter === '{{ item._type }}'"
-           x-data="mailReassign('{{ item.get('id','') }}', '{{ item._type }}', '{{ item.get('entity_override_id','') }}', '{{ item.get('sender','') | replace("'", "\\'") }}', '{{ item.get('account_number','') | replace("'", "\\'") }}')"
-           @keydown.escape="editOpen = false; entityMode = false">
+           x-data="mailReassign('{{ item.get('id','') }}', '{{ item._type }}', '{{ item.get('entity_override_id','') }}', '{{ item.get('sender','') | replace("'", "\\'") }}', '{{ item.get('account_number','') | replace("'", "\\'") }}', {{ item.get('tags', []) | tojson | safe }})"
+           @keydown.escape="editOpen = false; entityMode = false; tagMode = false">
         <div class="mail-bar {{ bar_class.get(item._type, 'mail-bar--default') }}"></div>
         <div class="mail-body">
           <div class="mail-header">
@@ -365,6 +365,17 @@
             <span class="badge {{ badge_class.get(item._type, 'badge--junk') }}" x-text="catLabel()" x-bind:class="catBadgeClass()">{{ type_display.get(item._type, item._type.upper()) }}</span>
             {% if item.get('drive_file_id') %}<button class="pdf-toggle-btn" @click="pdfOpen = !pdfOpen" :aria-expanded="pdfOpen.toString()"><span x-text="pdfOpen ? 'Hide PDF' : 'View PDF'">View PDF</span></button>{% endif %}
             {% if item.get('entity_override_id') %}<span class="entity-override-badge" title="Entity manually overridden">&#10003; Corrected</span>{% endif %}
+            <template x-for="tag in tags" :key="tag">
+              <span class="mail-tag-chip"><span x-text="tag"></span><button class="mail-tag-remove" @click.stop="removeTag(tag)" title="Remove tag">&times;</button></span>
+            </template>
+            <button class="mail-tag-add-btn" @click="tagMode = !tagMode; if(tagMode){ filterTags(); $nextTick(()=>{ $el.closest('.mail-body').querySelector('.mail-tag-input') && $el.closest('.mail-body').querySelector('.mail-tag-input').focus(); }); }" title="Add tag">+ Tag</button>
+            <div class="mail-tag-row" x-show="tagMode" x-cloak @keydown.escape="tagMode = false">
+              <input class="mail-tag-input" type="text" placeholder="Tag name…" x-model="tagInput" @input="filterTags()" @keydown.enter.prevent="addTag()" list="tag-suggestions-{{ item.get('id','') }}" autocomplete="off">
+              <datalist id="tag-suggestions-{{ item.get('id','') }}">
+                <template x-for="s in tagSuggestions" :key="s"><option :value="s"></option></template>
+              </datalist>
+              <button class="btn btn-sm btn-primary" @click="addTag()">Add</button>
+            </div>
             <button class="mail-edit-btn" @click="editOpen = !editOpen" :aria-expanded="editOpen.toString()">Edit</button>
           </div>
           {% if match %}
@@ -2964,6 +2975,14 @@
             <button type="button" class="btn btn-secondary btn-sm" @click="setPresetYear(-1)">Last year</button>
           </div>
         </div>
+        <div class="reports-form-field">
+          <label class="reports-label" for="rpt-tag">Tag</label>
+          <input id="rpt-tag" class="reports-input" type="text" name="tag" value="{{ f_tag }}" placeholder="Filter by tag…"
+                 list="rpt-tag-list" autocomplete="off">
+          <datalist id="rpt-tag-list">
+            {% for t in all_tags %}<option value="{{ t }}">{% endfor %}
+          </datalist>
+        </div>
         <div class="reports-form-field reports-form-submit">
           <label class="reports-label">&nbsp;</label>
           <button type="submit" class="btn btn-primary">Search</button>
@@ -3018,7 +3037,14 @@
               {% if item.get('entity_override_id') %}<span class="entity-override-badge" title="Entity manually overridden">&#10003;</span>{% endif %}
             </td>
             <td>{{ item.get('recipients', [])|join(', ') }}</td>
-            <td class="td-summary">{{ item.get('summary', '') }}</td>
+            <td class="td-summary">
+              {{ item.get('summary', '') }}
+              {% if item.get('tags') %}
+              <div style="margin-top:3px;">
+                {% for t in item.get('tags', []) %}<span class="reports-tag-chip">{{ t }}</span>{% endfor %}
+              </div>
+              {% endif %}
+            </td>
             <td>
               {% if item._type == 'Bill' and item.get('status') %}<span class="status-badge">{{ item.get('status','').upper() }}</span>{% endif %}
               {% if item._type == 'ForwardToMe' and item.get('forwarding_status') %}<span class="status-badge">{{ item.get('forwarding_status','').upper() }}</span>{% endif %}
@@ -3271,7 +3297,9 @@
     Personal: 'badge--junk', Junk: 'badge--junk', NeedsReview: 'badge--needs-review'
   };
 
-  function mailReassign(mailId, currentType, existingOverride, senderName, ocrAccount) {
+  window._TAG_LIST = window._TAG_LIST || [];
+
+  function mailReassign(mailId, currentType, existingOverride, senderName, ocrAccount, initialTags) {
     var _typeCatMap = { Bill: 'biller', Notice: 'sender', ForwardToMe: 'sender', Personal: 'personal', Junk: 'vendor', NeedsReview: 'biller' };
     return {
       editOpen: false,
@@ -3292,8 +3320,43 @@
       createAccount: ocrAccount || '',
       createError: '',
       creating: false,
+      tags: initialTags || [],
+      tagInput: '',
+      tagMode: false,
+      tagSuggestions: [],
       init() {
         this.matchedIds = window._ENTITY_LIST.map(e => e.id);
+      },
+      filterTags() {
+        const q = this.tagInput.toLowerCase().trim();
+        if (!q) { this.tagSuggestions = window._TAG_LIST.filter(t => !this.tags.includes(t)); return; }
+        this.tagSuggestions = window._TAG_LIST.filter(t => t.includes(q) && !this.tags.includes(t));
+      },
+      addTag(tag) {
+        const t = (tag || this.tagInput).trim().toLowerCase();
+        if (!t || this.tags.includes(t)) { this.tagInput = ''; this.tagMode = false; return; }
+        const fd = new FormData();
+        fd.append('action', 'add');
+        fd.append('value', t);
+        const self = this;
+        fetch('/api/mail/' + mailId + '/tag', { method: 'POST', body: fd })
+          .then(function(r) {
+            if (r.ok) {
+              self.tags.push(t);
+              if (!window._TAG_LIST.includes(t)) { window._TAG_LIST.push(t); }
+            }
+            self.tagInput = '';
+            self.tagMode = false;
+            self.tagSuggestions = [];
+          });
+      },
+      removeTag(tag) {
+        const fd = new FormData();
+        fd.append('action', 'remove');
+        fd.append('value', tag);
+        const self = this;
+        fetch('/api/mail/' + mailId + '/tag', { method: 'POST', body: fd })
+          .then(function(r) { if (r.ok) { self.tags = self.tags.filter(t => t !== tag); } });
       },
       catLabel() { return _CAT_LABELS[this.selectedCat] || this.selectedCat.toUpperCase(); },
       catBadgeClass() { return 'badge ' + (_CAT_BADGE[this.selectedCat] || 'badge--junk'); },
@@ -3425,6 +3488,11 @@
     id,
     name: {{ entities | map(attribute='canonical_name') | list | tojson | safe }}[i]
   }));
+  </script>
+  {% endif %}
+  {% if all_tags is defined %}
+  <script>
+  window._TAG_LIST = {{ all_tags | tojson | safe }};
   </script>
   {% endif %}
 

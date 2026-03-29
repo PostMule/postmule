@@ -1947,3 +1947,72 @@ html[data-theme="high-contrast"] .a11y-size-btn.active {
   padding: 32px 0;
   text-align: center;
 }
+
+/* ── Tag chips ────────────────────────────────────────────────────── */
+.mail-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #E8F0FE;
+  color: #1A5EA8;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 7px 1px 8px;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+}
+.mail-tag-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #1A5EA8;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0;
+  opacity: 0.6;
+  margin-left: 1px;
+}
+.mail-tag-remove:hover { opacity: 1; }
+.mail-tag-add-btn {
+  background: none;
+  border: 1px dashed #B0BEC5;
+  border-radius: 10px;
+  color: #5A7090;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 8px;
+  cursor: pointer;
+  line-height: 1.6;
+  transition: border-color 0.15s, color 0.15s;
+}
+.mail-tag-add-btn:hover { border-color: #1A5EA8; color: #1A5EA8; }
+.mail-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+.mail-tag-input {
+  border: 1px solid #CFD8E3;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.8rem;
+  width: 140px;
+  outline: none;
+}
+.mail-tag-input:focus { border-color: #1A5EA8; }
+.reports-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #E8F0FE;
+  color: #1A5EA8;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 1px 7px;
+  line-height: 1.6;
+  margin: 1px 2px 1px 0;
+  white-space: nowrap;
+}

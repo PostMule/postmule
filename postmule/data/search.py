@@ -35,6 +35,7 @@ def search_mail(
     q: str | None = None,
     date_from: str | None = None,
     date_to: str | None = None,
+    tag: str | None = None,
 ) -> list[dict]:
     """Search all mail across all years.
 
@@ -48,6 +49,7 @@ def search_mail(
         q: Free-text search against sender, summary, and filename.
         date_from: Inclusive lower bound on date_received (YYYY-MM-DD).
         date_to: Inclusive upper bound on date_received (YYYY-MM-DD).
+        tag: Filter to items that have this tag (case-insensitive).
 
     Returns:
         List of mail dicts with an added ``_type`` key, sorted by
@@ -57,6 +59,7 @@ def search_mail(
         return []
 
     q_lower = q.lower().strip() if q else None
+    tag_lower = tag.strip().lower() if tag else None
     results: list[dict] = []
 
     for year in _all_bill_notice_years(data_dir):
@@ -64,20 +67,20 @@ def search_mail(
             item = {"_type": bill.get("category_override", "Bill"), **bill}
             if _matches(item, types=types, entity_id=entity_id, owner_id=owner_id,
                         lifecycle=lifecycle, q_lower=q_lower,
-                        date_from=date_from, date_to=date_to):
+                        date_from=date_from, date_to=date_to, tag_lower=tag_lower):
                 results.append(item)
         for notice in notices_data.load_notices(data_dir, year):
             item = {"_type": notice.get("category_override", "Notice"), **notice}
             if _matches(item, types=types, entity_id=entity_id, owner_id=owner_id,
                         lifecycle=lifecycle, q_lower=q_lower,
-                        date_from=date_from, date_to=date_to):
+                        date_from=date_from, date_to=date_to, tag_lower=tag_lower):
                 results.append(item)
 
     for ftm in ftm_data.load_forward_to_me(data_dir):
         item = {"_type": ftm.get("category_override", "ForwardToMe"), **ftm}
         if _matches(item, types=types, entity_id=entity_id, owner_id=owner_id,
                     lifecycle=lifecycle, q_lower=q_lower,
-                    date_from=date_from, date_to=date_to):
+                    date_from=date_from, date_to=date_to, tag_lower=tag_lower):
             results.append(item)
 
     results.sort(key=lambda x: x.get("date_received", ""), reverse=True)
@@ -94,6 +97,7 @@ def _matches(
     q_lower: str | None,
     date_from: str | None,
     date_to: str | None,
+    tag_lower: str | None = None,
 ) -> bool:
     # lifecycle
     is_filed = bool(item.get("filed"))
@@ -123,6 +127,11 @@ def _matches(
         return False
     if date_to and dr and dr > date_to:
         return False
+
+    # tag
+    if tag_lower:
+        if tag_lower not in [t.lower() for t in item.get("tags", [])]:
+            return False
 
     # free text
     if q_lower:

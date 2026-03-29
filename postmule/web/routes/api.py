@@ -20,6 +20,7 @@ from postmule.data import entities as entity_data
 from postmule.data import forward_to_me as ftm_data
 from postmule.data import notices as notices_data
 from postmule.data import owners as owners_data
+from postmule.data import tags as tags_data
 
 import postmule.web.app as _app
 
@@ -476,6 +477,34 @@ def api_mail_category(mail_id: str):
             return ("", 200)
 
     return jsonify({"error": "Mail item not found"}), 404
+
+
+@api_bp.route("/api/tags", methods=["GET"])
+def api_tags():
+    """Return all known tags from the registry."""
+    return jsonify(tags_data.load_tags(_app._data_dir))
+
+
+@api_bp.route("/api/mail/<mail_id>/tag", methods=["POST"])
+def api_mail_tag(mail_id: str):
+    """Add or remove a tag on a mail item."""
+    action = request.form.get("action", "").strip()
+    tag = request.form.get("value", "").strip()
+    if action not in ("add", "remove") or not tag:
+        return jsonify({"error": "action (add|remove) and value are required"}), 400
+
+    found = (
+        bills_data.update_tags(_app._data_dir, mail_id, tag, action)
+        or notices_data.update_tags(_app._data_dir, mail_id, tag, action)
+        or ftm_data.update_tags(_app._data_dir, mail_id, tag, action)
+    )
+    if not found:
+        return jsonify({"error": "Mail item not found"}), 404
+
+    if action == "add":
+        tags_data.add_to_registry(_app._data_dir, tag)
+
+    return ("", 200)
 
 
 @api_bp.route("/api/entity/<entity_id>/add-account", methods=["POST"])

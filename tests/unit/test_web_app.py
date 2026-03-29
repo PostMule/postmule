@@ -915,6 +915,84 @@ class TestApiEntityAddAccount:
         assert response.status_code == 404
 
 
+class TestApiTags:
+    def test_get_tags_empty(self, client, data_dir):
+        response = client.get("/api/tags")
+        assert response.status_code == 200
+        assert response.get_json() == []
+
+    def test_get_tags_returns_registry(self, client, data_dir):
+        from postmule.data import tags as tags_data
+        tags_data.add_to_registry(data_dir, "urgent")
+        tags_data.add_to_registry(data_dir, "tax")
+        response = client.get("/api/tags")
+        assert response.status_code == 200
+        tags = response.get_json()
+        assert "urgent" in tags
+        assert "tax" in tags
+
+    def test_mail_tag_missing_action_returns_400(self, client, data_dir):
+        bill_id = bills_data.add_bill(data_dir, {
+            "date_received": "2025-01-15", "sender": "AT&T", "summary": "Bill",
+            "filename": "2025-01-15_Alice_ATT_Bill.pdf",
+        })["id"]
+        response = client.post(f"/api/mail/{bill_id}/tag", data={"value": "urgent"})
+        assert response.status_code == 400
+
+    def test_mail_tag_missing_value_returns_400(self, client, data_dir):
+        response = client.post("/api/mail/nonexistent/tag", data={"action": "add"})
+        assert response.status_code == 400
+
+    def test_mail_tag_not_found_returns_404(self, client, data_dir):
+        response = client.post("/api/mail/nonexistent/tag", data={"action": "add", "value": "urgent"})
+        assert response.status_code == 404
+
+    def test_mail_tag_add_bill(self, client, data_dir):
+        from postmule.data import tags as tags_data
+        bill = bills_data.add_bill(data_dir, {
+            "date_received": "2025-01-15", "sender": "AT&T", "summary": "Bill",
+            "filename": "2025-01-15_Alice_ATT_Bill.pdf",
+        })
+        response = client.post(f"/api/mail/{bill['id']}/tag", data={"action": "add", "value": "urgent"})
+        assert response.status_code == 200
+        # Tag persisted on item
+        from postmule.data._io import year_from
+        year = year_from(bill["date_received"])
+        updated = next(b for b in bills_data.load_bills(data_dir, year) if b["id"] == bill["id"])
+        assert "urgent" in updated.get("tags", [])
+        # Added to registry
+        assert "urgent" in tags_data.load_tags(data_dir)
+
+    def test_mail_tag_add_notice(self, client, data_dir):
+        notice = notices_data.add_notice(data_dir, {
+            "date_received": "2025-02-10", "sender": "IRS", "summary": "Notice",
+            "filename": "2025-02-10_Alice_IRS_Notice.pdf",
+        })
+        response = client.post(f"/api/mail/{notice['id']}/tag", data={"action": "add", "value": "tax"})
+        assert response.status_code == 200
+
+    def test_mail_tag_add_ftm(self, client, data_dir):
+        ftm = ftm_data.add_item(data_dir, {
+            "date_received": "2025-03-01", "sender": "DMV", "summary": "License renewal",
+            "filename": "2025-03-01_Alice_DMV_ForwardToMe.pdf",
+        })
+        response = client.post(f"/api/mail/{ftm['id']}/tag", data={"action": "add", "value": "action-needed"})
+        assert response.status_code == 200
+
+    def test_mail_tag_remove(self, client, data_dir):
+        bill = bills_data.add_bill(data_dir, {
+            "date_received": "2025-01-15", "sender": "AT&T", "summary": "Bill",
+            "filename": "2025-01-15_Alice_ATT_Bill.pdf",
+        })
+        client.post(f"/api/mail/{bill['id']}/tag", data={"action": "add", "value": "urgent"})
+        response = client.post(f"/api/mail/{bill['id']}/tag", data={"action": "remove", "value": "urgent"})
+        assert response.status_code == 200
+        from postmule.data._io import year_from
+        year = year_from(bill["date_received"])
+        updated = next(b for b in bills_data.load_bills(data_dir, year) if b["id"] == bill["id"])
+        assert "urgent" not in updated.get("tags", [])
+
+
 class TestApiSettings:
     def test_settings_no_config_returns_500(self, client):
         response = client.post("/api/settings", data={})

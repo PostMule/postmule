@@ -62,12 +62,15 @@ def mail():
     )
     items.sort(key=lambda x: x.get("date_received", ""), reverse=True)
     all_entities = entity_data.load_entities(_app._data_dir)
+    from postmule.data import tags as tags_data
+    all_tags = tags_data.load_tags(_app._data_dir)
     return render_template(
         "page.html",
         page="mail",
         title="Mail",
         items=items,
         entities=all_entities,
+        all_tags=all_tags,
         last_run=last_run,
         pending_ftm_count=pending_ftm_count,
         pending_bills_count=pending_bills_count,
@@ -104,7 +107,9 @@ def reports():
     q = request.args.get("q") or None
     date_from = request.args.get("date_from") or None
     date_to = request.args.get("date_to") or None
+    f_tag = request.args.get("tag") or None
 
+    from postmule.data import tags as tags_data
     results = search_mail(
         _app._data_dir,
         types=types_raw or None,
@@ -114,9 +119,11 @@ def reports():
         q=q,
         date_from=date_from,
         date_to=date_to,
+        tag=f_tag,
     )
     all_entities = entity_data.load_entities(_app._data_dir)
     all_owners = owners_data.load_owners(_app._data_dir)
+    all_tags = tags_data.load_tags(_app._data_dir)
 
     return render_template(
         "page.html",
@@ -125,6 +132,7 @@ def reports():
         items=results,
         entities=all_entities,
         owners=all_owners,
+        all_tags=all_tags,
         f_types=types_raw,
         f_entity_id=entity_id or "",
         f_owner_id=owner_id or "",
@@ -132,6 +140,7 @@ def reports():
         f_q=q or "",
         f_date_from=date_from or "",
         f_date_to=date_to or "",
+        f_tag=f_tag or "",
         today=date.today().isoformat(),
     )
 

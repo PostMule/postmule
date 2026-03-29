@@ -108,6 +108,24 @@ def set_category_override(data_dir: Path, item_id: str, category: str) -> bool:
     return False
 
 
+def update_tags(data_dir: Path, item_id: str, tag: str, action: str) -> bool:
+    """Add or remove a tag on a forward-to-me record. Returns True if found and updated."""
+    tag_lower = tag.strip().lower()
+    if not tag_lower:
+        return False
+    items = load_forward_to_me(data_dir)
+    for item in items:
+        if item.get("id") == item_id:
+            tags: list[str] = item.setdefault("tags", [])
+            if action == "add" and tag_lower not in tags:
+                tags.append(tag_lower)
+            elif action == "remove" and tag_lower in tags:
+                tags.remove(tag_lower)
+            save_forward_to_me(data_dir, items)
+            return True
+    return False
+
+
 def to_sheet_rows(items: list[dict[str, Any]]) -> list[list[Any]]:
     rows = [_HEADERS]
     for i in items:
