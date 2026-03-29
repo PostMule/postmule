@@ -52,5 +52,9 @@ class StorageProvider(Protocol):
         """Permanently delete a file by ID."""
         ...
 
+    def download_file(self, file_id: str) -> bytes:
+        """Download a file by ID and return its raw bytes."""
+        ...
+
     def health_check(self) -> HealthResult:
         ...

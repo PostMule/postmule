@@ -2995,6 +2995,21 @@
     <div class="reports-results">
       <div class="reports-results-header">
         <span class="reports-count">{{ items|length }} result{% if items|length != 1 %}s{% endif %}</span>
+        {% set pdf_count = items | selectattr('drive_file_id') | list | length %}
+        {% if pdf_count > 0 %}
+        {%- set qs_parts = [] %}
+        {%- if f_q %}{% set _ = qs_parts.append('q=' ~ f_q | urlencode) %}{% endif %}
+        {%- if f_lifecycle != 'all' %}{% set _ = qs_parts.append('lifecycle=' ~ f_lifecycle) %}{% endif %}
+        {%- if f_entity_id %}{% set _ = qs_parts.append('entity_id=' ~ f_entity_id) %}{% endif %}
+        {%- if f_owner_id %}{% set _ = qs_parts.append('owner_id=' ~ f_owner_id) %}{% endif %}
+        {%- if f_date_from %}{% set _ = qs_parts.append('date_from=' ~ f_date_from) %}{% endif %}
+        {%- if f_date_to %}{% set _ = qs_parts.append('date_to=' ~ f_date_to) %}{% endif %}
+        {%- if f_tag %}{% set _ = qs_parts.append('tag=' ~ f_tag | urlencode) %}{% endif %}
+        {%- for t in f_types %}{% set _ = qs_parts.append('type=' ~ t) %}{% endfor %}
+        <a href="/api/reports/export?{{ qs_parts | join('&') }}" class="btn btn-secondary btn-sm reports-export-btn" download>
+          Export {{ pdf_count }} PDF{% if pdf_count != 1 %}s{% endif %}
+        </a>
+        {% endif %}
       </div>
       {% if items %}
       <div class="table-wrap">

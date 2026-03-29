@@ -7,6 +7,8 @@ import io
 import json
 import logging
 import threading
+import zipfile
+from datetime import date
 from typing import Any
 
 import yaml
@@ -15,6 +17,7 @@ from flask import Blueprint, Response, jsonify, redirect, request, url_for
 
 from postmule.core.config import load_config
 from postmule.data import bills as bills_data
+from postmule.data import search as search_data
 from postmule.data import entity_corrections as corrections_data
 from postmule.data import entities as entity_data
 from postmule.data import forward_to_me as ftm_data
@@ -505,6 +508,102 @@ def api_mail_tag(mail_id: str):
         tags_data.add_to_registry(_app._data_dir, tag)
 
     return ("", 200)
+
+
+def _get_storage_provider():
+    """Instantiate the configured storage provider for download use."""
+    cfg = _app._config or {}
+    svc = (cfg.get("storage", {}).get("providers") or [{}])[0].get("service", "google_drive")
+    if svc == "google_drive":
+        from postmule.core.credentials import build_google_credentials, google_credentials_available
+        if not google_credentials_available():
+            raise RuntimeError("Google credentials not configured")
+        creds = build_google_credentials()
+        root = (cfg.get("storage", {}).get("providers") or [{}])[0].get("root_folder", "PostMule")
+        from postmule.providers.storage.google_drive import DriveProvider
+        return DriveProvider(creds, root_folder=root)
+    if svc == "dropbox":
+        from postmule.core.credentials import load_credentials
+        creds = load_credentials(_app._enc_path)
+        token = creds.get("dropbox", {}).get("access_token", "")
+        from postmule.providers.storage.dropbox import DropboxProvider
+        return DropboxProvider(token)
+    if svc == "onedrive":
+        from postmule.core.credentials import load_credentials
+        creds = load_credentials(_app._enc_path)
+        token = creds.get("onedrive", {}).get("access_token", "")
+        from postmule.providers.storage.onedrive import OneDriveProvider
+        return OneDriveProvider(token)
+    if svc == "s3":
+        from postmule.core.credentials import load_credentials
+        creds = load_credentials(_app._enc_path)
+        s3_cfg = (cfg.get("storage", {}).get("providers") or [{}])[0]
+        from postmule.providers.storage.s3 import S3Provider
+        return S3Provider(
+            aws_access_key_id=creds.get("s3", {}).get("access_key_id", ""),
+            aws_secret_access_key=creds.get("s3", {}).get("secret_access_key", ""),
+            bucket=s3_cfg.get("bucket", ""),
+            region=s3_cfg.get("region", "us-east-1"),
+        )
+    raise RuntimeError(f"Export not supported for storage provider: {svc}")
+
+
+@api_bp.route("/api/reports/export", methods=["GET"])
+def api_reports_export():
+    """Stream a ZIP of all PDFs matching the current Reports filter.
+
+    Accepts the same query params as the Reports page (q, type, lifecycle,
+    entity_id, owner_id, date_from, date_to, tag).  Returns a ZIP archive
+    named PostMule_<label>_<today>.zip.
+    """
+    try:
+        storage = _get_storage_provider()
+    except Exception as exc:
+        return jsonify({"error": f"Storage unavailable: {exc}"}), 503
+
+    types = request.args.getlist("type") or None
+    items = search_data.search_mail(
+        _app._data_dir,
+        types=types,
+        entity_id=request.args.get("entity_id") or None,
+        owner_id=request.args.get("owner_id") or None,
+        lifecycle=request.args.get("lifecycle", "all"),
+        q=request.args.get("q") or None,
+        date_from=request.args.get("date_from") or None,
+        date_to=request.args.get("date_to") or None,
+        tag=request.args.get("tag") or None,
+    )
+    exportable = [it for it in items if it.get("drive_file_id")]
+    if not exportable:
+        return jsonify({"error": "No PDFs to export for the current filter"}), 404
+
+    label = request.args.get("tag") or request.args.get("q") or "Export"
+    label = "".join(c if c.isalnum() or c in "-_" else "_" for c in label).strip("_")
+    zip_name = f"PostMule_{label}_{date.today().isoformat()}.zip"
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+        seen_names: dict[str, int] = {}
+        for item in exportable:
+            fname = item.get("filename") or f"{item['id']}.pdf"
+            if fname in seen_names:
+                seen_names[fname] += 1
+                base, ext = fname.rsplit(".", 1) if "." in fname else (fname, "")
+                fname = f"{base}_{seen_names[fname]}.{ext}" if ext else f"{base}_{seen_names[fname]}"
+            else:
+                seen_names[fname] = 0
+            try:
+                pdf_bytes = storage.download_file(item["drive_file_id"])
+                zf.writestr(fname, pdf_bytes)
+            except Exception as exc:
+                log.warning("Export: failed to download %s: %s", item.get("drive_file_id"), exc)
+
+    buf.seek(0)
+    return Response(
+        buf.read(),
+        mimetype="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{zip_name}"'},
+    )
 
 
 @api_bp.route("/api/entity/<entity_id>/add-account", methods=["POST"])

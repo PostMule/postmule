@@ -108,6 +108,9 @@ class TestStorageProviderProtocol:
             def delete_file(self, file_id):
                 pass
 
+            def download_file(self, file_id):
+                return b""
+
             def health_check(self):
                 pass
 

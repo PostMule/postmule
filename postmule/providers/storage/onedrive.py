@@ -287,6 +287,20 @@ class OneDriveProvider:
         self._delete(f"/me/drive/items/{file_id}")
         log.info(f"Deleted OneDrive item: {file_id}")
 
+    def download_file(self, file_id: str) -> bytes:
+        """Download a OneDrive file by item ID and return raw bytes."""
+        try:
+            import requests  # type: ignore[import]
+        except ImportError:
+            raise RuntimeError("requests is not installed. Run: pip install requests")
+        meta = self._get(f"/me/drive/items/{file_id}")
+        url = meta.get("@microsoft.graph.downloadUrl")
+        if not url:
+            raise RuntimeError(f"No download URL for OneDrive item {file_id}")
+        resp = requests.get(url, timeout=60)
+        resp.raise_for_status()
+        return resp.content
+
     # ------------------------------------------------------------------
     # Verification
     # ------------------------------------------------------------------

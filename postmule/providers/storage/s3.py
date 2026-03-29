@@ -227,6 +227,11 @@ class S3Provider:
         self._get_client().delete_object(Bucket=self.bucket, Key=file_id)
         log.info(f"Deleted S3 object: {file_id}")
 
+    def download_file(self, file_id: str) -> bytes:
+        """Download an S3 object by key and return raw bytes."""
+        resp = self._get_client().get_object(Bucket=self.bucket, Key=file_id)
+        return resp["Body"].read()
+
     # ------------------------------------------------------------------
     # Verification
     # ------------------------------------------------------------------

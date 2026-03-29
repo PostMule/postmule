@@ -209,6 +209,11 @@ class DropboxProvider:
         self._get_client().files_permanently_delete(file_id)
         log.info(f"Deleted Dropbox file: {file_id}")
 
+    def download_file(self, file_id: str) -> bytes:
+        """Download a Dropbox file by path/ID and return raw bytes."""
+        _, res = self._get_client().files_download(file_id)
+        return res.content
+
 
 # ------------------------------------------------------------------
 # Dropbox content_hash helpers

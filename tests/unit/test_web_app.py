@@ -1,5 +1,6 @@
 """Unit tests for postmule.web.app."""
 
+import io
 import json
 import time
 from pathlib import Path
@@ -991,6 +992,69 @@ class TestApiTags:
         year = year_from(bill["date_received"])
         updated = next(b for b in bills_data.load_bills(data_dir, year) if b["id"] == bill["id"])
         assert "urgent" not in updated.get("tags", [])
+
+
+class TestApiReportsExport:
+    def test_export_no_storage_returns_503(self, client, data_dir):
+        response = client.get("/api/reports/export")
+        assert response.status_code == 503
+
+    def test_export_no_results_returns_404(self, data_dir, tmp_path):
+        """When storage is configured but no items have drive_file_id, return 404."""
+        import postmule.web.routes.api as api_module
+        import postmule.web.app as app_module
+        original = getattr(api_module, "_get_storage_provider", None)
+
+        class FakeStorage:
+            def download_file(self, file_id):
+                return b"%PDF fake"
+
+        def fake_get_storage():
+            return FakeStorage()
+
+        api_module._get_storage_provider = fake_get_storage
+        try:
+            test_app = create_app(data_dir=data_dir)
+            test_app.config["TESTING"] = True
+            with test_app.test_client() as c:
+                response = c.get("/api/reports/export")
+            assert response.status_code == 404
+        finally:
+            api_module._get_storage_provider = original
+
+    def test_export_returns_zip(self, data_dir):
+        """When items with drive_file_ids exist and storage works, return a zip."""
+        import zipfile as _zipfile
+        import postmule.web.routes.api as api_module
+
+        bills_data.add_bill(data_dir, {
+            "date_received": "2025-06-01", "sender": "AT&T", "summary": "Bill",
+            "filename": "2025-06-01_Alice_ATT_Bill.pdf", "drive_file_id": "fake-file-id",
+        })
+
+        class FakeStorage:
+            def download_file(self, file_id):
+                return b"%PDF-1.4 fake pdf content"
+
+        def fake_get_storage():
+            return FakeStorage()
+
+        original = api_module._get_storage_provider
+        api_module._get_storage_provider = fake_get_storage
+        try:
+            test_app = create_app(data_dir=data_dir)
+            test_app.config["TESTING"] = True
+            with test_app.test_client() as c:
+                response = c.get("/api/reports/export")
+            assert response.status_code == 200
+            assert response.content_type == "application/zip"
+            buf = io.BytesIO(response.data)
+            with _zipfile.ZipFile(buf) as zf:
+                names = zf.namelist()
+            assert len(names) == 1
+            assert names[0].endswith(".pdf")
+        finally:
+            api_module._get_storage_provider = original
 
 
 class TestApiSettings:

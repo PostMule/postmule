@@ -1947,6 +1947,9 @@ html[data-theme="high-contrast"] .a11y-size-btn.active {
   padding: 32px 0;
   text-align: center;
 }
+.reports-export-btn {
+  margin-left: auto;
+}
 
 /* ── Tag chips ────────────────────────────────────────────────────── */
 .mail-tag-chip {
