@@ -7,7 +7,7 @@
 ## Last Completed
 > Maintenance: before adding a new entry, delete the previous one. One issue max. Full history is in `git log`.
 
-Session 2026-03-29: Closed #83, #84, #85. Full history in `git log`.
+Session 2026-03-29 (2): Mockup↔template sync — owner badges/chips, File button, tags, entity create form. No issues opened/closed (all gaps were undiscovered, not tracked). Full history in `git log`.
 
 ---
 
