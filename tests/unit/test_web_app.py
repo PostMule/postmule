@@ -547,3 +547,393 @@ class TestMailFileRoutes:
     def test_unfile_not_found_returns_404(self, client):
         response = client.post("/api/mail/ghost-id/unfile")
         assert response.status_code == 404
+
+
+class TestApiRunStatus:
+    def test_run_status_returns_200(self, client):
+        response = client.get("/api/run/status")
+        assert response.status_code == 200
+
+    def test_run_status_not_running(self, client):
+        import postmule.web.app as web_app
+        web_app._pipeline_running = False
+        response = client.get("/api/run/status")
+        data = json.loads(response.data)
+        assert data["running"] is False
+
+    def test_run_status_running(self, client):
+        import postmule.web.app as web_app
+        web_app._pipeline_running = True
+        try:
+            response = client.get("/api/run/status")
+            data = json.loads(response.data)
+            assert data["running"] is True
+        finally:
+            web_app._pipeline_running = False
+
+
+class TestApiEntityCreate:
+    def test_create_entity_success(self, client):
+        response = client.post("/api/entity/create", data={
+            "name": "Pacific Gas",
+            "category": "biller",
+            "friendly_name": "PG&E",
+        })
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert "id" in data
+        assert data["friendly_name"] == "PG&E"
+
+    def test_create_entity_missing_name(self, client):
+        response = client.post("/api/entity/create", data={"category": "biller"})
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert "error" in data
+
+    def test_create_entity_defaults_friendly_name_to_name(self, client):
+        response = client.post("/api/entity/create", data={"name": "Comcast"})
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data["friendly_name"] == "Comcast"
+
+    def test_create_entity_duplicate_friendly_name_returns_409(self, client, data_dir):
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "PGE", "friendly_name": "PG&E",
+             "aliases": [], "category": "biller"},
+        ])
+        response = client.post("/api/entity/create", data={
+            "name": "PGE Corp", "friendly_name": "PG&E",
+        })
+        assert response.status_code == 409
+        data = json.loads(response.data)
+        assert data["error"] == "friendly_name_taken"
+
+    def test_create_entity_with_account_number(self, client):
+        response = client.post("/api/entity/create", data={
+            "name": "Verizon", "account_number": "123456",
+        })
+        assert response.status_code == 200
+
+
+class TestApiApproveWithEntityOverride:
+    def test_approve_with_entity_override(self, client, data_dir):
+        entities = [
+            {"id": "e1", "canonical_name": "AT&T", "friendly_name": "AT&T", "aliases": [], "category": "biller"},
+            {"id": "e2", "canonical_name": "Verizon", "friendly_name": "Verizon", "aliases": [], "category": "biller"},
+        ]
+        entity_data.save_entities(data_dir, entities)
+        matches = [{
+            "id": "match-override",
+            "proposed_name": "AT T Inc",
+            "match_entity_id": "e1",
+            "similarity": 0.9,
+            "status": "pending",
+            "auto_approve_after": "2026-12-01",
+        }]
+        entity_data.save_pending_matches(data_dir, matches)
+
+        # Override to e2 instead of the proposed e1
+        response = client.post("/api/approve", data={"match_id": "match-override", "entity_id": "e2"})
+        assert response.status_code == 200
+
+        # Alias should have been added to e2, not e1
+        updated = entity_data.load_entities(data_dir)
+        e2 = next(e for e in updated if e["id"] == "e2")
+        e1 = next(e for e in updated if e["id"] == "e1")
+        assert "AT T Inc" in e2["aliases"]
+        assert "AT T Inc" not in e1["aliases"]
+
+
+class TestApiEntityUpdate:
+    def test_update_friendly_name(self, client, data_dir):
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "Pacific Gas", "friendly_name": "PGE",
+             "aliases": [], "category": "biller"},
+        ])
+        response = client.post("/api/entity/e1", data={"field": "friendly_name", "value": "PG&E"})
+        assert response.status_code == 200
+        updated = entity_data.load_entities(data_dir)
+        assert updated[0]["friendly_name"] == "PG&E"
+
+    def test_update_friendly_name_empty_returns_400(self, client, data_dir):
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "PGE", "friendly_name": "PGE",
+             "aliases": [], "category": "biller"},
+        ])
+        response = client.post("/api/entity/e1", data={"field": "friendly_name", "value": ""})
+        assert response.status_code == 400
+
+    def test_update_friendly_name_duplicate_returns_409(self, client, data_dir):
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "PGE", "friendly_name": "PGE",
+             "aliases": [], "category": "biller"},
+            {"id": "e2", "canonical_name": "ATT", "friendly_name": "AT&T",
+             "aliases": [], "category": "biller"},
+        ])
+        response = client.post("/api/entity/e1", data={"field": "friendly_name", "value": "AT&T"})
+        assert response.status_code == 409
+
+    def test_update_missing_field_returns_400(self, client, data_dir):
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "PGE", "friendly_name": "PGE", "aliases": [], "category": "biller"},
+        ])
+        response = client.post("/api/entity/e1", data={"value": "something"})
+        assert response.status_code == 400
+
+    def test_update_entity_not_found_returns_404(self, client, data_dir):
+        entity_data.save_entities(data_dir, [])
+        response = client.post("/api/entity/ghost-id", data={"field": "friendly_name", "value": "X"})
+        assert response.status_code == 404
+
+    def test_update_generic_field(self, client, data_dir):
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "PGE", "friendly_name": "PGE",
+             "aliases": [], "category": "biller"},
+        ])
+        response = client.post("/api/entity/e1", data={"field": "phone", "value": "555-1234"})
+        assert response.status_code == 200
+
+
+class TestApiMailEntityOverride:
+    def test_override_entity_on_bill(self, client, data_dir):
+        from datetime import date
+        bill = bills_data.add_bill(data_dir, {
+            "date_received": date.today().isoformat(),
+            "sender": "AT T",
+            "status": "pending",
+        })
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "AT&T", "friendly_name": "AT&T",
+             "aliases": [], "category": "biller"},
+        ])
+        response = client.post(f"/api/mail/{bill['id']}/entity", data={"entity_id": "e1"})
+        assert response.status_code == 200
+
+    def test_override_entity_on_notice(self, client, data_dir):
+        from datetime import date
+        notice = notices_data.add_notice(data_dir, {
+            "date_received": date.today().isoformat(),
+            "sender": "IRS",
+        })
+        entity_data.save_entities(data_dir, [
+            {"id": "e2", "canonical_name": "IRS", "friendly_name": "IRS",
+             "aliases": [], "category": "government"},
+        ])
+        response = client.post(f"/api/mail/{notice['id']}/entity", data={"entity_id": "e2"})
+        assert response.status_code == 200
+
+    def test_override_entity_on_forward_to_me(self, client, data_dir):
+        item = ftm_data.add_item(data_dir, {"sender": "Visa"})
+        entity_data.save_entities(data_dir, [
+            {"id": "e3", "canonical_name": "Visa", "friendly_name": "Visa",
+             "aliases": [], "category": "biller"},
+        ])
+        response = client.post(f"/api/mail/{item['id']}/entity", data={"entity_id": "e3"})
+        assert response.status_code == 200
+
+    def test_override_adds_alias_when_flag_set(self, client, data_dir):
+        from datetime import date
+        bill = bills_data.add_bill(data_dir, {
+            "date_received": date.today().isoformat(),
+            "sender": "AT T",
+            "status": "pending",
+        })
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "AT&T", "friendly_name": "AT&T",
+             "aliases": [], "category": "biller"},
+        ])
+        response = client.post(f"/api/mail/{bill['id']}/entity",
+                               data={"entity_id": "e1", "add_alias": "true"})
+        assert response.status_code == 200
+        updated = entity_data.load_entities(data_dir)
+        assert "AT T" in updated[0]["aliases"]
+
+    def test_override_missing_entity_id_returns_400(self, client, data_dir):
+        from datetime import date
+        bill = bills_data.add_bill(data_dir, {
+            "date_received": date.today().isoformat(),
+            "sender": "ATT",
+            "status": "pending",
+        })
+        response = client.post(f"/api/mail/{bill['id']}/entity", data={})
+        assert response.status_code == 400
+
+    def test_override_mail_not_found_returns_404(self, client, data_dir):
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "X", "friendly_name": "X", "aliases": [], "category": "biller"},
+        ])
+        response = client.post("/api/mail/ghost-mail/entity", data={"entity_id": "e1"})
+        assert response.status_code == 404
+
+    def test_override_entity_not_found_returns_404(self, client, data_dir):
+        from datetime import date
+        bill = bills_data.add_bill(data_dir, {
+            "date_received": date.today().isoformat(),
+            "sender": "ATT",
+            "status": "pending",
+        })
+        entity_data.save_entities(data_dir, [])
+        response = client.post(f"/api/mail/{bill['id']}/entity", data={"entity_id": "ghost-entity"})
+        assert response.status_code == 404
+
+
+class TestApiMailCategory:
+    def test_set_category_on_bill(self, client, data_dir):
+        from datetime import date
+        bill = bills_data.add_bill(data_dir, {
+            "date_received": date.today().isoformat(),
+            "sender": "ATT",
+            "status": "pending",
+        })
+        response = client.post(f"/api/mail/{bill['id']}/category", data={"category": "Notice"})
+        assert response.status_code == 200
+
+    def test_set_category_on_notice(self, client, data_dir):
+        from datetime import date
+        notice = notices_data.add_notice(data_dir, {
+            "date_received": date.today().isoformat(),
+            "sender": "IRS",
+        })
+        response = client.post(f"/api/mail/{notice['id']}/category", data={"category": "Bill"})
+        assert response.status_code == 200
+
+    def test_set_category_on_forward_to_me(self, client, data_dir):
+        item = ftm_data.add_item(data_dir, {"sender": "Visa"})
+        response = client.post(f"/api/mail/{item['id']}/category", data={"category": "Junk"})
+        assert response.status_code == 200
+
+    def test_invalid_category_returns_400(self, client, data_dir):
+        from datetime import date
+        bill = bills_data.add_bill(data_dir, {
+            "date_received": date.today().isoformat(),
+            "sender": "ATT",
+            "status": "pending",
+        })
+        response = client.post(f"/api/mail/{bill['id']}/category", data={"category": "Bogus"})
+        assert response.status_code == 400
+
+    def test_mail_not_found_returns_404(self, client):
+        response = client.post("/api/mail/ghost-id/category", data={"category": "Bill"})
+        assert response.status_code == 404
+
+
+class TestApiEntitySave:
+    def test_save_entity_success(self, client, data_dir):
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "PGE", "friendly_name": "PGE",
+             "aliases": [], "category": "biller"},
+        ])
+        response = client.post("/api/entity/e1/save", data={
+            "friendly_name": "PG&E",
+            "phone": "800-555-1234",
+            "category": "biller",
+        })
+        assert response.status_code == 200
+        updated = entity_data.load_entities(data_dir)
+        assert updated[0]["friendly_name"] == "PG&E"
+        assert updated[0]["phone"] == "800-555-1234"
+
+    def test_save_entity_empty_friendly_name_returns_400(self, client, data_dir):
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "PGE", "friendly_name": "PGE",
+             "aliases": [], "category": "biller"},
+        ])
+        response = client.post("/api/entity/e1/save", data={"friendly_name": ""})
+        assert response.status_code == 400
+
+    def test_save_entity_duplicate_friendly_name_returns_409(self, client, data_dir):
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "PGE", "friendly_name": "PGE",
+             "aliases": [], "category": "biller"},
+            {"id": "e2", "canonical_name": "ATT", "friendly_name": "AT&T",
+             "aliases": [], "category": "biller"},
+        ])
+        response = client.post("/api/entity/e1/save", data={"friendly_name": "AT&T"})
+        assert response.status_code == 409
+
+    def test_save_entity_not_found_returns_404(self, client, data_dir):
+        entity_data.save_entities(data_dir, [])
+        response = client.post("/api/entity/ghost-id/save", data={"friendly_name": "X"})
+        assert response.status_code == 404
+
+
+class TestApiEntityAlias:
+    def test_add_alias(self, client, data_dir):
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "PGE", "friendly_name": "PGE",
+             "aliases": [], "category": "biller"},
+        ])
+        response = client.post("/api/entity/e1/alias", data={"action": "add", "value": "Pacific Gas"})
+        assert response.status_code == 200
+        updated = entity_data.load_entities(data_dir)
+        assert "Pacific Gas" in updated[0]["aliases"]
+
+    def test_remove_alias(self, client, data_dir):
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "PGE", "friendly_name": "PGE",
+             "aliases": ["Pacific Gas"], "category": "biller"},
+        ])
+        response = client.post("/api/entity/e1/alias", data={"action": "remove", "value": "Pacific Gas"})
+        assert response.status_code == 200
+        updated = entity_data.load_entities(data_dir)
+        assert "Pacific Gas" not in updated[0]["aliases"]
+
+    def test_invalid_action_returns_400(self, client, data_dir):
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "PGE", "friendly_name": "PGE",
+             "aliases": [], "category": "biller"},
+        ])
+        response = client.post("/api/entity/e1/alias", data={"action": "bogus", "value": "X"})
+        assert response.status_code == 400
+
+    def test_entity_not_found_returns_404(self, client, data_dir):
+        entity_data.save_entities(data_dir, [])
+        response = client.post("/api/entity/ghost-id/alias", data={"action": "add", "value": "X"})
+        assert response.status_code == 404
+
+
+class TestApiEntityAddAccount:
+    def test_add_account(self, client, data_dir):
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "PGE", "friendly_name": "PGE",
+             "aliases": [], "category": "biller"},
+        ])
+        response = client.post("/api/entity/e1/add-account", data={"account": "987654"})
+        assert response.status_code == 200
+
+    def test_missing_account_returns_400(self, client, data_dir):
+        entity_data.save_entities(data_dir, [
+            {"id": "e1", "canonical_name": "PGE", "friendly_name": "PGE",
+             "aliases": [], "category": "biller"},
+        ])
+        response = client.post("/api/entity/e1/add-account", data={})
+        assert response.status_code == 400
+
+    def test_entity_not_found_returns_404(self, client, data_dir):
+        entity_data.save_entities(data_dir, [])
+        response = client.post("/api/entity/ghost-id/add-account", data={"account": "123"})
+        assert response.status_code == 404
+
+
+class TestApiSettings:
+    def test_settings_no_config_returns_500(self, client):
+        response = client.post("/api/settings", data={})
+        assert response.status_code == 500
+
+    def test_settings_saves_and_redirects(self, tmp_path):
+        import yaml
+        config_path = tmp_path / "config.yaml"
+        config_path.write_text(yaml.dump({"app": {}, "notifications": {}}), encoding="utf-8")
+
+        test_app = create_app(data_dir=tmp_path, config_path=config_path)
+        test_app.config["TESTING"] = True
+        with test_app.test_client() as c:
+            response = c.post("/api/settings", data={
+                "notifications_alert_email": "test@example.com",
+                "schedule_run_time": "03:00",
+                "logging_level": "DEBUG",
+                "logging_verbose_days": "14",
+                "logging_processing_years": "5",
+            })
+        assert response.status_code == 302
+        assert "settings" in response.headers["Location"]
