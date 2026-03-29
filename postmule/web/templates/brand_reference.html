@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PostMule — Brand Reference</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #E2E6ED;
+      padding: 48px 24px;
+      color: #0F2044;
+      line-height: 1.5;
+    }
+
+    .page { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+    /* ── Section shell ── */
+    .section { background: #fff; border-radius: 12px; border: 1px solid #DDE3EC; overflow: hidden; }
+    .section-hdr { padding: 12px 24px; border-bottom: 1px solid #DDE3EC; background: #F5F6F8; }
+    .section-title { font-size: 10px; font-weight: 600; letter-spacing: 2px; color: #7A90A8; text-transform: uppercase; }
+    .section-body { padding: 24px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .rule { height: 1px; background: #DDE3EC; margin: 20px 0; }
+    .meta-card { background: #F5F6F8; border-radius: 8px; padding: 14px 16px; }
+    .meta-title { font-size: 11px; font-weight: 600; color: #0F2044; margin-bottom: 8px; }
+    .meta-item { font-size: 11px; color: #5A7090; padding: 2px 0; line-height: 1.6; }
+    code { font-family: 'Courier New', monospace; }
+
+    /* ── Brand hero ── */
+    .brand-hero { background: #0F2044; border-radius: 12px; padding: 40px 48px; display: flex; align-items: center; gap: 28px; }
+    .brand-wordmark { font-size: 38px; font-weight: 700; letter-spacing: -0.5px; color: #fff; line-height: 1; }
+    .brand-wordmark span { color: #E8A020; }
+    .brand-tagline { font-size: 11px; font-weight: 500; letter-spacing: 2.5px; color: #5A7CA4; text-transform: uppercase; margin-top: 7px; }
+
+    /* ── Color swatches ── */
+    .swatch-row { display: flex; gap: 8px; }
+    .swatch { flex: 1; border-radius: 8px; overflow: hidden; border: 1px solid rgba(0,0,0,0.06); }
+    .swatch-color { height: 56px; }
+    .swatch-info { padding: 8px 10px; background: #fff; }
+    .swatch-name { font-size: 11px; font-weight: 600; color: #0F2044; }
+    .swatch-hex { font-size: 10px; color: #8A9BB0; display: block; margin-top: 2px; font-family: 'Courier New', monospace; }
+    .swatch-role { font-size: 10px; color: #A0B4C8; margin-top: 1px; }
+
+    .sem-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .text-swatch { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #F5F6F8; border-radius: 6px; margin-bottom: 6px; }
+    .text-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+    .text-info { flex: 1; }
+    .text-name { font-size: 11px; font-weight: 600; color: #0F2044; }
+    .text-hex { font-size: 10px; color: #8A9BB0; font-family: 'Courier New', monospace; }
+    .text-role { font-size: 10px; color: #A0B4C8; }
+
+    /* ── Typography ── */
+    .font-callout { background: #0F2044; border-radius: 8px; padding: 16px 20px; display: flex; align-items: baseline; gap: 16px; margin-bottom: 20px; }
+    .font-name { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+    .font-meta { font-size: 12px; color: #5A7CA4; }
+    .font-weights { display: flex; gap: 6px; margin-top: 6px; }
+    .font-w { background: rgba(255,255,255,0.08); border-radius: 4px; padding: 3px 9px; font-size: 11px; color: #7A9CC4; }
+
+    .type-row { display: flex; align-items: baseline; gap: 16px; padding: 10px 14px; border-radius: 6px; border: 1px solid #F0F3F7; margin-bottom: 6px; }
+    .type-meta { min-width: 150px; flex-shrink: 0; }
+    .type-label { font-size: 10px; font-weight: 600; color: #7A90A8; letter-spacing: 1px; text-transform: uppercase; }
+    .type-spec { font-size: 10px; color: #B0C0D4; margin-top: 2px; font-family: 'Courier New', monospace; }
+
+    /* ── Spacing ── */
+    .space-row { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+    .space-bar-wrap { flex: 1; }
+    .space-bar { background: linear-gradient(90deg, #7A9CC4, #5A7CA4); border-radius: 3px; height: 10px; }
+    .space-info { min-width: 100px; }
+    .space-token { font-size: 11px; font-weight: 600; color: #0F2044; font-family: 'Courier New', monospace; }
+    .space-px { font-size: 10px; color: #8A9BB0; }
+
+    /* ── Border radius ── */
+    .radius-row { display: flex; gap: 16px; }
+    .radius-item { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; }
+    .radius-box { width: 52px; height: 52px; background: #7A9CC4; }
+    .radius-token { font-size: 11px; font-weight: 600; color: #0F2044; font-family: 'Courier New', monospace; }
+    .radius-use { font-size: 10px; color: #8A9BB0; text-align: center; }
+
+    /* ── Elevation ── */
+    .elev-row { display: flex; gap: 16px; }
+    .elev-item { flex: 1; }
+    .elev-box { background: #fff; height: 64px; border-radius: 8px; margin-bottom: 10px; }
+    .elev-token { font-size: 11px; font-weight: 600; color: #0F2044; font-family: 'Courier New', monospace; }
+    .elev-use { font-size: 10px; color: #8A9BB0; margin-top: 2px; }
+    .elev-value { font-size: 10px; color: #B0C0D4; font-family: 'Courier New', monospace; margin-top: 4px; line-height: 1.6; }
+
+    /* ── Buttons ── */
+    .btn-section { margin-bottom: 20px; }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+    .variant-label { font-size: 10px; font-weight: 600; color: #7A90A8; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      font-family: 'Inter', sans-serif; font-weight: 600; border-radius: 6px;
+      cursor: pointer; border: none; outline: none; text-decoration: none;
+      transition: background 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+    }
+    .btn-sm  { font-size: 12px; padding: 5px 12px; }
+    .btn-md  { font-size: 13px; padding: 8px 16px; }
+    .btn-lg  { font-size: 14px; padding: 11px 24px; }
+
+    .btn-primary  { background: #0F2044; color: #fff; }
+    .btn-primary:hover  { background: #1A3060; }
+    .btn-primary:active { background: #0A1830; }
+
+    .btn-secondary { background: #fff; color: #0F2044; border: 1.5px solid #DDE3EC; }
+    .btn-secondary:hover  { border-color: #7A9CC4; }
+    .btn-secondary:active { background: #F5F6F8; }
+
+    .btn-danger  { background: #C62828; color: #fff; }
+    .btn-danger:hover  { background: #A81E1E; }
+    .btn-danger:active { background: #8C1818; }
+
+    .btn-ghost { background: transparent; color: #5A7090; padding-left: 8px; padding-right: 8px; font-size: 13px; }
+    .btn-ghost:hover { background: #F5F6F8; color: #0F2044; }
+
+    .btn:disabled { opacity: 0.38; cursor: not-allowed; pointer-events: none; }
+    .btn:focus-visible { box-shadow: 0 0 0 3px rgba(122,156,196,0.45); }
+
+    .state-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 12px; }
+    .state-table th { text-align: left; font-size: 10px; font-weight: 600; color: #7A90A8; letter-spacing: 1px; text-transform: uppercase; padding: 6px 10px; border-bottom: 1px solid #DDE3EC; }
+    .state-table td { padding: 7px 10px; border-bottom: 1px solid #F0F3F7; color: #5A7090; font-family: 'Courier New', monospace; font-size: 11px; }
+    .state-table tr:last-child td { border-bottom: none; }
+
+    /* ── Forms ── */
+    .input-group { margin-bottom: 14px; }
+    .input-label { font-size: 11px; font-weight: 600; color: #0F2044; margin-bottom: 5px; display: block; }
+    .input {
+      width: 100%; font-family: 'Inter', sans-serif; font-size: 13px; color: #0F2044;
+      background: #fff; border: 1.5px solid #DDE3EC; border-radius: 6px;
+      padding: 8px 12px; outline: none;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+    .input:hover { border-color: #B0C4D8; }
+    .input:focus { border-color: #7A9CC4; box-shadow: 0 0 0 3px rgba(122,156,196,0.2); }
+    .input::placeholder { color: #B8C8D8; }
+    .input-error { border-color: #C62828 !important; }
+    .input-error:focus { box-shadow: 0 0 0 3px rgba(198,40,40,0.15) !important; }
+    .helper { font-size: 11px; color: #8A9BB0; margin-top: 4px; }
+    .helper-error { color: #C62828; }
+
+    /* ── Mail cards ── */
+    .card { background: #fff; border-radius: 8px; border: 1px solid #DDE3EC; overflow: hidden; margin-bottom: 8px; display: flex; }
+    .card-bar { width: 3px; flex-shrink: 0; }
+    .card-body { padding: 12px 14px; flex: 1; }
+    .card-row { display: flex; justify-content: space-between; align-items: flex-start; }
+    .card-sender { font-size: 13px; font-weight: 600; color: #0F2044; }
+    .card-sender-read { font-size: 13px; font-weight: 400; color: #8A9BB0; }
+    .card-date { font-size: 11px; color: #B8C8D8; }
+    .card-subject { font-size: 12px; color: #5A7090; margin-top: 3px; }
+
+    /* ── Badges ── */
+    .badge { display: inline-flex; align-items: center; font-size: 10px; font-weight: 600; letter-spacing: 0.8px; padding: 3px 9px; border-radius: 4px; border: 1px solid; }
+    .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+
+    /* ── Toast ── */
+    .toast { background: #0F2044; color: #fff; border-radius: 8px; padding: 12px 16px; font-size: 13px; display: flex; align-items: center; gap: 10px; }
+    .toast-dot { width: 7px; height: 7px; border-radius: 50%; background: #E8A020; flex-shrink: 0; }
+
+    /* ── Logo spec ── */
+    .logo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .logo-demo { border-radius: 8px; padding: 24px; display: flex; align-items: center; justify-content: center; gap: 16px; }
+    .logo-caption { font-size: 11px; color: #8A9BB0; text-align: center; margin-top: 8px; }
+    .dont-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+    .dont-item { text-align: center; }
+    .dont-box { background: #F5F6F8; border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: center; height: 80px; position: relative; border: 1px dashed #DDE3EC; }
+    .dont-box::after { content: '✕'; position: absolute; top: 6px; right: 8px; color: #C62828; font-size: 10px; font-weight: 700; }
+    .dont-label { font-size: 10px; color: #C62828; font-weight: 600; letter-spacing: 0.3px; margin-top: 6px; }
+
+    /* ── Motion ── */
+    .motion-row { display: flex; align-items: center; gap: 16px; padding: 10px 14px; border-radius: 6px; border: 1px solid #F0F3F7; margin-bottom: 6px; }
+    .motion-meta { min-width: 150px; }
+    .motion-label { font-size: 10px; font-weight: 600; color: #7A90A8; letter-spacing: 1px; text-transform: uppercase; }
+    .motion-value { font-size: 10px; color: #B0C0D4; font-family: 'Courier New', monospace; margin-top: 2px; }
+    .motion-desc { font-size: 12px; color: #5A7090; }
+
+    /* ── Voice ── */
+    .voice-pair { padding: 10px 0; border-bottom: 1px solid #F0F3F7; }
+    .voice-pair:last-child { border-bottom: none; }
+    .voice-bad { font-size: 12px; color: #B8C8D8; text-decoration: line-through; }
+    .voice-good { font-size: 13px; font-weight: 500; color: #0F2044; margin-top: 4px; }
+    .voice-good::before { content: '→ '; color: #E8A020; font-weight: 700; }
+    .personality-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pers-tag { background: #0F2044; color: #fff; font-size: 11px; font-weight: 500; padding: 4px 12px; border-radius: 4px; }
+
+    /* ── Icons note ── */
+    .icon-note { background: #F5F6F8; border-radius: 8px; padding: 14px 16px; font-size: 12px; color: #5A7090; line-height: 1.6; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ═══════════════════════════════════════════
+       BRAND HERO
+  ════════════════════════════════════════════ -->
+  <div class="brand-hero">
+    <img src="../../../docs/logo2.png" alt="PostMule mascot" style="height:72px;width:auto;object-fit:contain;border-radius:8px;">
+    <div>
+      <div class="brand-wordmark">Post<span>Mule</span></div>
+      <div class="brand-tagline">Smart mail management</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       COLOR SYSTEM
+  ════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-hdr"><span class="section-title">Color system</span></div>
+    <div class="section-body">
+
+      <div class="meta-title" style="margin-bottom:12px;">Primary palette</div>
+      <div class="swatch-row">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#0F2044;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Navy Seal</div>
+            <code class="swatch-hex">#0F2044</code>
+            <div class="swatch-role">Brand primary</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#E8A020;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Brass</div>
+            <code class="swatch-hex">#E8A020</code>
+            <div class="swatch-role">Accent / highlight</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#7A9CC4;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Steel Blue</div>
+            <code class="swatch-hex">#7A9CC4</code>
+            <div class="swatch-role">Secondary / muted UI</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#F5F6F8;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Linen</div>
+            <code class="swatch-hex">#F5F6F8</code>
+            <div class="swatch-role">Page background</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#DDE3EC;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Smoke</div>
+            <code class="swatch-hex">#DDE3EC</code>
+            <div class="swatch-role">Borders / dividers</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rule"></div>
+
+      <div class="meta-title" style="margin-bottom:12px;">Semantic colors</div>
+      <div class="sem-grid">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#E8A020;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Bill</div>
+            <code class="swatch-hex">fg #7A4C08</code>
+            <code class="swatch-hex">bg #FDF3E0</code>
+            <code class="swatch-hex">bd #E8A020</code>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#C62828;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Overdue / Urgent</div>
+            <code class="swatch-hex">fg #8A1010</code>
+            <code class="swatch-hex">bg #FEECEC</code>
+            <code class="swatch-hex">bd #FFCDD2</code>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#2E7D32;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">OK / Delivered</div>
+            <code class="swatch-hex">fg #1B5E20</code>
+            <code class="swatch-hex">bg #E8F5E9</code>
+            <code class="swatch-hex">bd #A5D6A7</code>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#2C4A6E;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Notice</div>
+            <code class="swatch-hex">fg #2C4A6E</code>
+            <code class="swatch-hex">bg #EEF3F9</code>
+            <code class="swatch-hex">bd #C0D0E4</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="rule"></div>
+
+      <div class="meta-title" style="margin-bottom:12px;">Text colors</div>
+      <div class="two-col">
+        <div>
+          <div class="text-swatch"><div class="text-dot" style="background:#0F2044;"></div><div class="text-info"><div class="text-name">Primary</div><code class="text-hex">#0F2044</code><div class="text-role">Headings, sender names, labels</div></div></div>
+          <div class="text-swatch"><div class="text-dot" style="background:#5A7090;"></div><div class="text-info"><div class="text-name">Secondary</div><code class="text-hex">#5A7090</code><div class="text-role">Body text, descriptions</div></div></div>
+          <div class="text-swatch"><div class="text-dot" style="background:#8A9BB0;"></div><div class="text-info"><div class="text-name">Muted</div><code class="text-hex">#8A9BB0</code><div class="text-role">Read/inactive items</div></div></div>
+        </div>
+        <div>
+          <div class="text-swatch"><div class="text-dot" style="background:#B8C8D8;"></div><div class="text-info"><div class="text-name">Placeholder</div><code class="text-hex">#B8C8D8</code><div class="text-role">Dates, metadata, input placeholders</div></div></div>
+          <div class="text-swatch"><div class="text-dot" style="background:#7A90A8;"></div><div class="text-info"><div class="text-name">Section label</div><code class="text-hex">#7A90A8</code><div class="text-role">All-caps section headers</div></div></div>
+          <div class="text-swatch"><div class="text-dot" style="background:#5A7CA4;"></div><div class="text-info"><div class="text-name">On-dark muted</div><code class="text-hex">#5A7CA4</code><div class="text-role">Secondary text on navy background</div></div></div>
+        </div>
+      </div>
+
+      <div class="rule"></div>
+
+      <div class="two-col">
+        <div class="meta-card">
+          <div class="meta-title">Surface system</div>
+          <div class="meta-item">Page background — <code>#F5F6F8</code> Linen</div>
+          <div class="meta-item">Cards — <code>#FFFFFF</code> white</div>
+          <div class="meta-item">Subsection panels — <code>#F5F6F8</code> Linen</div>
+          <div class="meta-item">Nav / header — <code>#0F2044</code> Navy Seal</div>
+          <div class="meta-item">CTA buttons — <code>#0F2044</code> Navy Seal</div>
+          <div class="meta-item">Accent / badges — <code>#E8A020</code> Brass</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-title">Do not invent colors</div>
+          <div class="meta-item">Never use default Tailwind palette (indigo, blue, etc.).</div>
+          <div class="meta-item">All colors must derive from this system.</div>
+          <div class="meta-item">Tints/shades allowed at 10–20% opacity over white or navy.</div>
+          <div class="meta-item">No gradients on text — flat fills only.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TYPOGRAPHY
+  ════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-hdr"><span class="section-title">Typography</span></div>
+    <div class="section-body">
+
+      <div class="font-callout">
+        <div>
+          <div class="font-name">Inter</div>
+          <div class="font-weights">
+            <span class="font-w">400 Regular</span>
+            <span class="font-w">500 Medium</span>
+            <span class="font-w">600 SemiBold</span>
+            <span class="font-w">700 Bold</span>
+          </div>
+        </div>
+        <div style="color:#4A6A8A;font-size:12px;line-height:1.7;max-width:400px;">
+          Google Fonts: <code style="color:#7A9CC4;">Inter:wght@400;500;600;700</code><br>
+          Fallback: <code style="color:#7A9CC4;">system-ui, -apple-system, sans-serif</code><br>
+          Use 400 for body, 500 for medium emphasis, 600 for headings and labels, 700 for page titles only.
+        </div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-label">Page title</div>
+          <code class="type-spec">28px / 700 / -0.5px / lh 1.2</code>
+        </div>
+        <span style="font-size:28px;font-weight:700;color:#0F2044;letter-spacing:-0.5px;line-height:1.2;">Your mail, handled.</span>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-label">Section heading</div>
+          <code class="type-spec">20px / 600 / -0.3px / lh 1.3</code>
+        </div>
+        <span style="font-size:20px;font-weight:600;color:#0F2044;letter-spacing:-0.3px;line-height:1.3;">Mail inbox</span>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-label">Card title</div>
+          <code class="type-spec">13px / 600 / 0 / lh 1.4</code>
+        </div>
+        <span style="font-size:13px;font-weight:600;color:#0F2044;">Verizon Wireless</span>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-label">Body</div>
+          <code class="type-spec">13px / 400 / 0 / lh 1.6</code>
+        </div>
+        <span style="font-size:13px;color:#5A7090;line-height:1.6;">Account statement — balance due $94.00</span>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-label">Small / metadata</div>
+          <code class="type-spec">12px / 400 / 0 / lh 1.5</code>
+        </div>
+        <span style="font-size:12px;color:#5A7090;">Subject line, secondary descriptions</span>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-label">Label / date</div>
+          <code class="type-spec">11px / 500 / 0 / lh 1.4</code>
+        </div>
+        <span style="font-size:11px;font-weight:500;color:#8A9BB0;">Mar 20</span>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-label">Section caption</div>
+          <code class="type-spec">10px / 600 / 2px / lh 1.4 / UPPERCASE</code>
+        </div>
+        <span style="font-size:10px;font-weight:600;letter-spacing:2px;color:#7A90A8;text-transform:uppercase;">Color palette</span>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-label">Badge / chip</div>
+          <code class="type-spec">10px / 600 / 0.8px / UPPERCASE</code>
+        </div>
+        <span style="font-size:10px;font-weight:600;letter-spacing:0.8px;background:#FDF3E0;color:#7A4C08;padding:3px 9px;border-radius:4px;border:1px solid #E8A020;">BILL · APR 5</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SPACING
+  ════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-hdr"><span class="section-title">Spacing system</span></div>
+    <div class="section-body">
+
+      <p style="font-size:12px;color:#5A7090;margin-bottom:16px;line-height:1.6;">Base unit is 4px. All spacing values are multiples of 4. Use these tokens — do not use arbitrary values.</p>
+
+      <div class="space-row"><div class="space-info"><code class="space-token">space-1</code><div class="space-px">4px</div></div><div class="space-bar-wrap"><div class="space-bar" style="width:4px;"></div></div><div style="font-size:11px;color:#8A9BB0;">Icon padding, tight gaps</div></div>
+      <div class="space-row"><div class="space-info"><code class="space-token">space-2</code><div class="space-px">8px</div></div><div class="space-bar-wrap"><div class="space-bar" style="width:8px;"></div></div><div style="font-size:11px;color:#8A9BB0;">Badge padding, chip spacing</div></div>
+      <div class="space-row"><div class="space-info"><code class="space-token">space-3</code><div class="space-px">12px</div></div><div class="space-bar-wrap"><div class="space-bar" style="width:12px;"></div></div><div style="font-size:11px;color:#8A9BB0;">Card inner padding (sm)</div></div>
+      <div class="space-row"><div class="space-info"><code class="space-token">space-4</code><div class="space-px">16px</div></div><div class="space-bar-wrap"><div class="space-bar" style="width:16px;"></div></div><div style="font-size:11px;color:#8A9BB0;">Button padding, toast padding</div></div>
+      <div class="space-row"><div class="space-info"><code class="space-token">space-5</code><div class="space-px">20px</div></div><div class="space-bar-wrap"><div class="space-bar" style="width:20px;"></div></div><div style="font-size:11px;color:#8A9BB0;">Section sub-gaps</div></div>
+      <div class="space-row"><div class="space-info"><code class="space-token">space-6</code><div class="space-px">24px</div></div><div class="space-bar-wrap"><div class="space-bar" style="width:24px;"></div></div><div style="font-size:11px;color:#8A9BB0;">Section body padding</div></div>
+      <div class="space-row"><div class="space-info"><code class="space-token">space-7</code><div class="space-px">28px</div></div><div class="space-bar-wrap"><div class="space-bar" style="width:28px;"></div></div><div style="font-size:11px;color:#8A9BB0;">Header vertical padding</div></div>
+      <div class="space-row"><div class="space-info"><code class="space-token">space-8</code><div class="space-px">32px</div></div><div class="space-bar-wrap"><div class="space-bar" style="width:32px;"></div></div><div style="font-size:11px;color:#8A9BB0;">Header horizontal padding</div></div>
+      <div class="space-row"><div class="space-info"><code class="space-token">space-10</code><div class="space-px">40px</div></div><div class="space-bar-wrap"><div class="space-bar" style="width:40px;"></div></div><div style="font-size:11px;color:#8A9BB0;">Page hero padding</div></div>
+      <div class="space-row"><div class="space-info"><code class="space-token">space-12</code><div class="space-px">48px</div></div><div class="space-bar-wrap"><div class="space-bar" style="width:48px;"></div></div><div style="font-size:11px;color:#8A9BB0;">Page outer padding</div></div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       BORDER RADIUS + ELEVATION
+  ════════════════════════════════════════════ -->
+  <div class="two-col" style="gap:20px;">
+
+    <div class="section">
+      <div class="section-hdr"><span class="section-title">Border radius</span></div>
+      <div class="section-body">
+        <div class="radius-row">
+          <div class="radius-item"><div class="radius-box" style="border-radius:4px;"></div><code class="radius-token">r-sm · 4px</code><div class="radius-use">Badges, chips</div></div>
+          <div class="radius-item"><div class="radius-box" style="border-radius:6px;"></div><code class="radius-token">r-md · 6px</code><div class="radius-use">Inputs, buttons</div></div>
+          <div class="radius-item"><div class="radius-box" style="border-radius:8px;"></div><code class="radius-token">r-lg · 8px</code><div class="radius-use">Cards, toasts</div></div>
+          <div class="radius-item"><div class="radius-box" style="border-radius:12px;"></div><code class="radius-token">r-xl · 12px</code><div class="radius-use">Sections, panels</div></div>
+          <div class="radius-item"><div class="radius-box" style="border-radius:16px;"></div><code class="radius-token">r-2xl · 16px</code><div class="radius-use">Page wrapper</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-hdr"><span class="section-title">Elevation</span></div>
+      <div class="section-body">
+        <div class="elev-row">
+          <div class="elev-item">
+            <div class="elev-box" style="border:1px solid #DDE3EC;"></div>
+            <div class="elev-token">flat</div>
+            <div class="elev-use">Default cards</div>
+            <code class="elev-value">border: 1px solid #DDE3EC</code>
+          </div>
+          <div class="elev-item">
+            <div class="elev-box" style="box-shadow:0 1px 4px rgba(15,32,68,0.08),0 1px 2px rgba(15,32,68,0.05);"></div>
+            <div class="elev-token">raised</div>
+            <div class="elev-use">Hover / active card</div>
+            <code class="elev-value">0 1px 4px rgba(15,32,68,.08)<br>0 1px 2px rgba(15,32,68,.05)</code>
+          </div>
+          <div class="elev-item">
+            <div class="elev-box" style="box-shadow:0 4px 16px rgba(15,32,68,0.13),0 2px 6px rgba(15,32,68,0.08);"></div>
+            <div class="elev-token">floating</div>
+            <div class="elev-use">Dropdowns, modals</div>
+            <code class="elev-value">0 4px 16px rgba(15,32,68,.13)<br>0 2px 6px rgba(15,32,68,.08)</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       BUTTONS
+  ════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-hdr"><span class="section-title">Buttons</span></div>
+    <div class="section-body">
+
+      <div class="btn-section">
+        <div class="variant-label">Variants</div>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-md">Primary</button>
+          <button class="btn btn-secondary btn-md">Secondary</button>
+          <button class="btn btn-danger btn-md">Danger</button>
+          <button class="btn btn-ghost btn-md">Ghost</button>
+        </div>
+      </div>
+
+      <div class="btn-section">
+        <div class="variant-label">Sizes</div>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-sm">Small</button>
+          <button class="btn btn-primary btn-md">Medium</button>
+          <button class="btn btn-primary btn-lg">Large</button>
+        </div>
+      </div>
+
+      <div class="btn-section">
+        <div class="variant-label">Disabled state</div>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-md" disabled>Primary</button>
+          <button class="btn btn-secondary btn-md" disabled>Secondary</button>
+          <button class="btn btn-danger btn-md" disabled>Danger</button>
+        </div>
+      </div>
+
+      <table class="state-table">
+        <thead>
+          <tr>
+            <th>Variant</th>
+            <th>Default</th>
+            <th>Hover</th>
+            <th>Active</th>
+            <th>Disabled</th>
+            <th>Focus ring</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Primary</td>
+            <td>bg #0F2044</td>
+            <td>bg #1A3060</td>
+            <td>bg #0A1830</td>
+            <td>opacity 0.38</td>
+            <td>rgba(122,156,196,.45) 3px</td>
+          </tr>
+          <tr>
+            <td>Secondary</td>
+            <td>bg #fff, bd #DDE3EC</td>
+            <td>bd #7A9CC4</td>
+            <td>bg #F5F6F8</td>
+            <td>opacity 0.38</td>
+            <td>rgba(122,156,196,.45) 3px</td>
+          </tr>
+          <tr>
+            <td>Danger</td>
+            <td>bg #C62828</td>
+            <td>bg #A81E1E</td>
+            <td>bg #8C1818</td>
+            <td>opacity 0.38</td>
+            <td>rgba(198,40,40,.25) 3px</td>
+          </tr>
+          <tr>
+            <td>Ghost</td>
+            <td>transparent</td>
+            <td>bg #F5F6F8</td>
+            <td>bg #EEF3F9</td>
+            <td>opacity 0.38</td>
+            <td>rgba(122,156,196,.45) 3px</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size:11px;color:#8A9BB0;margin-top:12px;">Transition: <code>background 150ms ease, border-color 150ms ease, box-shadow 150ms ease</code>. Never use <code>transition: all</code>.</p>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       FORM ELEMENTS
+  ════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-hdr"><span class="section-title">Form elements</span></div>
+    <div class="section-body">
+      <div class="two-col">
+        <div>
+          <div class="input-group">
+            <label class="input-label">Default</label>
+            <input class="input" type="text" placeholder="e.g. Verizon Wireless">
+          </div>
+          <div class="input-group">
+            <label class="input-label">Focused <span style="font-size:10px;font-weight:400;color:#8A9BB0;">(click to see)</span></label>
+            <input class="input" type="text" value="AT&amp;T" autofocus>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Error state</label>
+            <input class="input input-error" type="text" value="invalid@">
+            <div class="helper helper-error">Enter a valid email address.</div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Disabled</label>
+            <input class="input" type="text" value="Read only value" disabled style="opacity:0.5;cursor:not-allowed;">
+          </div>
+        </div>
+        <div class="meta-card" style="align-self:start;">
+          <div class="meta-title">Input spec</div>
+          <div class="meta-item">Font: Inter 13px / 400</div>
+          <div class="meta-item">Padding: 8px 12px</div>
+          <div class="meta-item">Border: 1.5px solid #DDE3EC</div>
+          <div class="meta-item">Radius: r-md (6px)</div>
+          <div class="meta-item">Focus border: #7A9CC4</div>
+          <div class="meta-item">Focus ring: 3px rgba(122,156,196,.2)</div>
+          <div class="meta-item">Error border: #C62828</div>
+          <div class="meta-item">Placeholder: #B8C8D8</div>
+          <div class="meta-item">Label: 11px / 600 / #0F2044</div>
+          <div class="meta-item">Helper: 11px / 400 / #8A9BB0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       COMPONENTS
+  ════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-hdr"><span class="section-title">Components</span></div>
+    <div class="section-body">
+
+      <div class="meta-title" style="margin-bottom:12px;">Mail item cards</div>
+
+      <div class="card">
+        <div class="card-bar" style="background:#E8A020;"></div>
+        <div class="card-body">
+          <div class="card-row">
+            <div class="card-sender">Verizon Wireless</div>
+            <div class="card-date">Mar 20</div>
+          </div>
+          <div class="card-subject">Account statement — balance due $94.00</div>
+          <div class="badge-row">
+            <span class="badge" style="background:#FDF3E0;color:#7A4C08;border-color:#E8A020;">BILL · APR 5</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-bar" style="background:#C62828;"></div>
+        <div class="card-body">
+          <div class="card-row">
+            <div class="card-sender">County Property Tax</div>
+            <div class="card-date">Mar 8</div>
+          </div>
+          <div class="card-subject">Final notice — $2,840.00 overdue</div>
+          <div class="badge-row">
+            <span class="badge" style="background:#FEECEC;color:#8A1010;border-color:#FFCDD2;">OVERDUE</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-bar" style="background:#DDE3EC;"></div>
+        <div class="card-body">
+          <div class="card-row">
+            <div class="card-sender card3-sender-read" style="font-size:13px;font-weight:400;color:#8A9BB0;">IRS</div>
+            <div class="card-date">Mar 12</div>
+          </div>
+          <div class="card-subject">Tax refund status update notice</div>
+          <div class="badge-row">
+            <span class="badge" style="background:#EEF3F9;color:#2C4A6E;border-color:#C0D0E4;">NOTICE</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="rule"></div>
+
+      <div class="meta-title" style="margin-bottom:12px;">All badge variants</div>
+      <div class="badge-row">
+        <span class="badge" style="background:#FDF3E0;color:#7A4C08;border-color:#E8A020;">BILL</span>
+        <span class="badge" style="background:#FEECEC;color:#8A1010;border-color:#FFCDD2;">OVERDUE</span>
+        <span class="badge" style="background:#E8F5E9;color:#1B5E20;border-color:#A5D6A7;">PAID</span>
+        <span class="badge" style="background:#EEF3F9;color:#2C4A6E;border-color:#C0D0E4;">NOTICE</span>
+        <span class="badge" style="background:#F5F6F8;color:#5A7090;border-color:#DDE3EC;">PERSONAL</span>
+        <span class="badge" style="background:#0F2044;color:#fff;border-color:#0F2044;">FORWARD TO ME</span>
+      </div>
+
+      <div class="rule"></div>
+
+      <div class="meta-title" style="margin-bottom:12px;">Notification toast</div>
+      <div class="toast">
+        <div class="toast-dot"></div>
+        Verizon bill arrived. $94.00 due Apr 5 — 16 days remaining.
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       LOGO SPECIFICATION
+  ════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-hdr"><span class="section-title">Logo specification</span></div>
+    <div class="section-body">
+
+      <div class="logo-grid">
+        <div>
+          <div class="logo-demo" style="background:#0F2044;">
+            <img src="../../../docs/logo2.png" alt="PostMule logo on dark" style="height:80px;width:auto;object-fit:contain;border-radius:6px;">
+            <div>
+              <div style="font-size:24px;font-weight:700;letter-spacing:-0.4px;color:#fff;line-height:1;">Post<span style="color:#E8A020;">Mule</span></div>
+              <div style="font-size:10px;font-weight:500;letter-spacing:2.5px;color:#5A7CA4;text-transform:uppercase;margin-top:5px;">Smart mail management</div>
+            </div>
+          </div>
+          <div class="logo-caption">Dark background (navy)</div>
+        </div>
+        <div>
+          <div class="logo-demo" style="background:#F5F6F8;border:1px solid #DDE3EC;">
+            <img src="../../../docs/logo2.png" alt="PostMule logo on light" style="height:80px;width:auto;object-fit:contain;border-radius:6px;">
+            <div>
+              <div style="font-size:24px;font-weight:700;letter-spacing:-0.4px;color:#0F2044;line-height:1;">Post<span style="color:#E8A020;">Mule</span></div>
+              <div style="font-size:10px;font-weight:500;letter-spacing:2.5px;color:#7A90A8;text-transform:uppercase;margin-top:5px;">Smart mail management</div>
+            </div>
+          </div>
+          <div class="logo-caption">Light background (linen)</div>
+        </div>
+      </div>
+
+      <div class="rule"></div>
+
+      <div class="two-col">
+        <div class="meta-card">
+          <div class="meta-title">Usage rules</div>
+          <div class="meta-item">Minimum mark height: <strong>32px</strong></div>
+          <div class="meta-item">Clear space: ½× mark height on all sides</div>
+          <div class="meta-item">Dark bg — Steel Blue mark, white wordmark, Brass accent</div>
+          <div class="meta-item">Light bg — Steel Blue mark, Navy wordmark, Brass accent</div>
+          <div class="meta-item">Single color — Navy Seal only (print, emboss)</div>
+          <div class="meta-item">Favicon — crop to face/head at 32×32 and 64×64px</div>
+          <div class="meta-item">Source file — <code>docs/logo2.png</code> (AI-generated, vectorize before print)</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-title">Don'ts</div>
+          <div class="meta-item">✕ Do not rotate or skew</div>
+          <div class="meta-item">✕ Do not recolor outside the approved palette</div>
+          <div class="meta-item">✕ Do not stretch or distort proportions</div>
+          <div class="meta-item">✕ Do not place on busy or low-contrast backgrounds</div>
+          <div class="meta-item">✕ Do not use the wordmark without the mark below min size</div>
+          <div class="meta-item">✕ Do not add drop shadows or effects to the mark</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MOTION
+  ════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-hdr"><span class="section-title">Motion & animation</span></div>
+    <div class="section-body">
+
+      <div class="motion-row">
+        <div class="motion-meta"><div class="motion-label">Micro</div><code class="motion-value">120ms ease</code></div>
+        <div class="motion-desc">Button hover/active, badge color changes, border highlight</div>
+      </div>
+      <div class="motion-row">
+        <div class="motion-meta"><div class="motion-label">Standard</div><code class="motion-value">200ms ease</code></div>
+        <div class="motion-desc">Dropdown open, card expand, tab switch, input focus</div>
+      </div>
+      <div class="motion-row">
+        <div class="motion-meta"><div class="motion-label">Enter / exit</div><code class="motion-value">250ms ease-out</code></div>
+        <div class="motion-desc">Toast slide-in, modal appear, panel slide</div>
+      </div>
+      <div class="motion-row">
+        <div class="motion-meta"><div class="motion-label">Easing</div><code class="motion-value">cubic-bezier(.2,0,0,1)</code></div>
+        <div class="motion-desc">Default for all standard transitions (slight decelerate)</div>
+      </div>
+
+      <div class="meta-card" style="margin-top:16px;">
+        <div class="meta-title">Rules</div>
+        <div class="meta-item">Only animate <code>transform</code> and <code>opacity</code>. Never animate <code>height</code>, <code>width</code>, or layout properties.</div>
+        <div class="meta-item">Never use <code>transition: all</code> — enumerate only the properties being changed.</div>
+        <div class="meta-item">Respect <code>prefers-reduced-motion</code> — skip or shorten all transitions when set.</div>
+        <div class="meta-item">No purely decorative animations. Every motion must serve a purpose (indicate state, guide attention, confirm action).</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ICONS
+  ════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-hdr"><span class="section-title">Icons</span></div>
+    <div class="section-body">
+      <div class="icon-note">
+        <strong style="color:#0F2044;">Icon set: Lucide</strong> — MIT licensed, consistent 24×24 viewport, 2px stroke, rounded caps.<br><br>
+        CDN: <code>&lt;script src="https://unpkg.com/lucide@latest"&gt;&lt;/script&gt;</code><br><br>
+        Always render icons at the same stroke weight. Do not mix icon sets. Size icons at 16px for inline/badge use, 20px for toolbar/action use. Color icons using the text color token of the surface they sit on — never use a one-off color for an icon alone.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       VOICE & PERSONALITY
+  ════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-hdr"><span class="section-title">Voice & personality</span></div>
+    <div class="section-body">
+
+      <div style="background:#0F2044;border-radius:8px;padding:16px 20px;margin-bottom:20px;">
+        <div class="personality-row">
+          <span class="pers-tag">Authoritative</span>
+          <span class="pers-tag">Trustworthy</span>
+          <span class="pers-tag">Financial-grade</span>
+          <span class="pers-tag">Precise</span>
+          <span class="pers-tag">Calm</span>
+        </div>
+        <div style="font-size:12px;color:#4A6A8A;margin-top:12px;line-height:1.7;">
+          Navy + brass + steel. Looks like it handles your finances carefully — because it does. The app your accountant would actually recommend. Never panics. Never hedges. States facts and next steps.
+        </div>
+      </div>
+
+      <div class="meta-title" style="margin-bottom:12px;">Copy examples — before &amp; after</div>
+
+      <div class="voice-pair">
+        <div class="voice-bad">We noticed a new bill may have arrived for you!</div>
+        <div class="voice-good">Verizon bill arrived. $94.00 due Apr 5.</div>
+      </div>
+      <div class="voice-pair">
+        <div class="voice-bad">Heads up — this item might be overdue, please review.</div>
+        <div class="voice-good">Overdue. County Property Tax. $2,840.00. Act now.</div>
+      </div>
+      <div class="voice-pair">
+        <div class="voice-bad">Great news! Your bill was successfully matched!</div>
+        <div class="voice-good">Matched. Verizon · $94.00 · Apr 1 transaction.</div>
+      </div>
+      <div class="voice-pair">
+        <div class="voice-bad">Hmm, we couldn't figure out what this document is.</div>
+        <div class="voice-good">Unclassified. Needs review.</div>
+      </div>
+
+      <div class="meta-card" style="margin-top:16px;">
+        <div class="meta-title">Rules</div>
+        <div class="meta-item">Lead with the fact, not the framing. State the amount and due date first.</div>
+        <div class="meta-item">Use sentence fragments when they're clearer than full sentences.</div>
+        <div class="meta-item">No exclamation marks. No hedging language ("might", "seems like").</div>
+        <div class="meta-item">Precise numbers — always include cents when non-zero ($94.00, not $94).</div>
+        <div class="meta-item">Time references: "16 days remaining", not "soon" or "upcoming".</div>
+        <div class="meta-item">Errors are facts, not apologies: "Failed to fetch. Check credentials." not "Sorry, something went wrong."</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

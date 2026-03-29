@@ -47,7 +47,7 @@ All writes go to JSON files in `_System/data/`. The Sheets view is rebuilt from 
 ## Dashboard & Email Templates
 
 **`mockup_dashboard.html` is the living mockup for the web dashboard.**
-It is the design source of truth for the dashboard UI. `postmule_brand_03_final.html` is the brand reference it was derived from. Any visual change to the dashboard must be reflected in `mockup_dashboard.html`.
+It is the design source of truth for the dashboard UI. `brand_reference.html` is the brand reference it was derived from. Any visual change to the dashboard must be reflected in `mockup_dashboard.html`.
 
 **`mockup_email_daily.html` is the design reference for the daily summary email.**
 The production Jinja2 template at `postmule/web/templates/email_daily.html` is derived from it. Any change to the email design should update both files together. See #52.
