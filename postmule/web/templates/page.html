@@ -108,7 +108,7 @@
   </header>
 
   <!-- Content -->
-  <main class="content" id="main-content">
+  <main class="content{% if page == 'entities' %} content--wide{% endif %}" id="main-content">
 
     {% if page == 'home' %}
     <div class="page-title-row">
@@ -347,7 +347,7 @@
           {% endif %}
           <div class="mail-footer">
             <span class="badge {{ badge_class.get(item._type, 'badge--junk') }}" x-text="catLabel()" x-bind:class="catBadgeClass()">{{ type_display.get(item._type, item._type.upper()) }}</span>
-            {% if item.get('drive_file_id') %}<a href="/pdf/{{ item.get('id') }}" target="_blank" class="pdf-link">View PDF</a>{% endif %}
+            {% if item.get('drive_file_id') %}<button class="pdf-toggle-btn" @click="pdfOpen = !pdfOpen" :aria-expanded="pdfOpen.toString()"><span x-text="pdfOpen ? 'Hide PDF' : 'View PDF'">View PDF</span></button>{% endif %}
             {% if item.get('entity_override_id') %}<span class="entity-override-badge" title="Entity manually overridden">&#10003; Corrected</span>{% endif %}
             <button class="mail-edit-btn" @click="editOpen = !editOpen" :aria-expanded="editOpen.toString()">Edit</button>
           </div>
@@ -402,6 +402,14 @@
             </div>
           </div>
         </div>
+        {% if item.get('drive_file_id') %}
+        <div class="mail-pdf-viewer" x-show="pdfOpen" x-cloak>
+          <iframe :src="pdfOpen ? 'https://drive.google.com/file/d/{{ item.get('drive_file_id') }}/preview' : ''"
+                  class="mail-pdf-frame"
+                  title="PDF preview"
+                  allow="autoplay"></iframe>
+        </div>
+        {% endif %}
       </div>
       {% else %}
       <div class="text-muted">No mail items found.</div>
@@ -2931,7 +2939,6 @@
               <th></th>
             </tr>
           </thead>
-          <tbody>
           {% set badge_class = {
             'Bill':        'badge--bill',
             'ForwardToMe': 'badge--forward',
@@ -2949,7 +2956,8 @@
             'NeedsReview': 'NEEDS REVIEW'
           } %}
           {% for item in items %}
-          <tr x-data="{ filing: false, filed: {{ 'true' if item.get('filed') else 'false' }} }">
+          <tbody x-data="{ filing: false, filed: {{ 'true' if item.get('filed') else 'false' }}, pdfOpen: false }">
+          <tr>
             <td class="td-date">{{ item.get('date_received', '') }}</td>
             <td><span class="badge {{ badge_class.get(item._type, 'badge--junk') }}">{{ type_display.get(item._type, item._type.upper()) }}</span></td>
             <td class="td-sender">
@@ -2966,7 +2974,7 @@
               <span x-text="filed ? 'Filed' : 'Open'" :class="filed ? 'reports-filed-yes' : 'reports-filed-no'"></span>
             </td>
             <td class="td-actions">
-              {% if item.get('drive_file_id') %}<a href="/pdf/{{ item.get('id') }}" target="_blank" class="pdf-link">PDF</a>{% endif %}
+              {% if item.get('drive_file_id') %}<button class="pdf-toggle-btn" @click="pdfOpen = !pdfOpen" :aria-expanded="pdfOpen.toString()"><span x-text="pdfOpen ? 'Hide' : 'PDF'">PDF</span></button>{% endif %}
               <button class="btn btn-secondary btn-sm reports-file-btn"
                       x-text="filed ? 'Unfile' : 'File'"
                       :disabled="filing"
@@ -2978,8 +2986,18 @@
                       "></button>
             </td>
           </tr>
-          {% endfor %}
+          {% if item.get('drive_file_id') %}
+          <tr class="reports-pdf-row" x-show="pdfOpen" x-cloak>
+            <td colspan="8">
+              <iframe :src="pdfOpen ? 'https://drive.google.com/file/d/{{ item.get('drive_file_id') }}/preview' : ''"
+                      class="reports-pdf-frame"
+                      title="PDF preview"
+                      allow="autoplay"></iframe>
+            </td>
+          </tr>
+          {% endif %}
           </tbody>
+          {% endfor %}
         </table>
       </div>
       {% else %}
@@ -3203,6 +3221,7 @@
   function mailReassign(mailId, currentType, existingOverride) {
     return {
       editOpen: false,
+      pdfOpen: false,
       entityMode: false,
       selectedCat: currentType,
       query: '',
