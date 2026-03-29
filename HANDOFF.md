@@ -7,7 +7,7 @@
 ## Last Completed
 > Maintenance: before adding a new entry, delete the previous one. One issue max. Full history is in `git log`.
 
-All planned issues complete as of 2026-03-28. Most recent: #68 (multi-account email provider support). Full history in `git log`.
+Session 2026-03-28: Closed #74, #75, #76, #77, #78, #79, #80, #81, #82. All planned issues complete. Full history in `git log`.
 
 ---
 
@@ -18,7 +18,7 @@ All planned issues complete as of 2026-03-28. Most recent: #68 (multi-account em
 **Blocked/Deferred (do not action):**
 - #30 — End-to-end validation (BLOCKED — requires live credentials for Gmail, VPM, Gemini, Drive)
 
-**Backlog is empty.** Ask the user what to build next.
+**Backlog empty** — all planned issues closed. Check `gh issue list --repo PostMule/app` for any new issues before starting.
 
 ---
 
