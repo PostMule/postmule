@@ -2,7 +2,9 @@
 
 > PostMule automatically sorts your physical mail and bills, tracks due dates, and matches payments to your bank — running privately on your own computer, with no subscription fee.
 
-It fills the role that services like the original Paytrust and PayMyBills once played — automated bill management that handles your mail, tracks due dates, and matches payments. PostMule runs on your own computer with no platform fee and no third party accessing your documents.
+If you want a fully managed, concierge-style bill management experience, **[Paytrust](https://www.paytrust.com)** (which absorbed the former Silverbills service) is excellent — it handles everything on your behalf with dedicated human support. We recommend it for anyone who wants that level of service.
+
+PostMule is for a different audience: people who want hands-on control over their own data, the ability to self-host, and lower ongoing cost — and who are comfortable accepting that they won't have concierge support in return. It automates the mechanical work (sorting mail, tracking due dates, matching payments) while keeping you in the decision seat.
 
 **[View the interactive mockup →](https://postmule.github.io/app/mockup_dashboard.html)**
 
@@ -10,9 +12,9 @@ It fills the role that services like the original Paytrust and PayMyBills once p
 
 ## Get Started
 
-### Option A — Windows Installer *(recommended)*
+### Option A — Windows Installer *(coming soon)*
 
-Download the latest installer from the [Releases page](https://github.com/PostMule/app/releases). Double-click and follow the setup wizard. No technical knowledge required.
+A graphical installer (`PostMuleSetup.exe`) is built automatically by CI but has not yet been published to GitHub Releases. Check back soon, or use Option B in the meantime.
 
 ### Option B — Command Line
 
@@ -31,7 +33,7 @@ Clone the repo and run the setup script:
 ```powershell
 git clone https://github.com/PostMule/app.git PostMule
 cd PostMule
-.\setup.ps1
+.\installer\install.ps1
 ```
 
 The script checks prerequisites, creates a virtual environment, prompts for your email and API key, encrypts credentials, and registers the daily scheduled task. See the [CLI Install Guide](docs/install-cli.md) for the manual steps or silent-install flags.
