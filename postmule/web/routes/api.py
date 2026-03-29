@@ -34,14 +34,18 @@ def api_approve():
     if not match_id:
         return jsonify({"error": "match_id required"}), 400
 
+    # Optional override: assign alias to a different entity than the proposed one
+    override_entity_id = request.form.get("entity_id", "").strip() or None
+
     pending = entity_data.load_pending_matches(_app._data_dir)
     entities = entity_data.load_entities(_app._data_dir)
 
     for match in pending:
         if match["id"] == match_id and match["status"] == "pending":
             match["status"] = "approved"
+            target_entity_id = override_entity_id or match["match_entity_id"]
             for entity in entities:
-                if entity["id"] == match["match_entity_id"]:
+                if entity["id"] == target_entity_id:
                     if match["proposed_name"] not in entity["aliases"]:
                         entity["aliases"].append(match["proposed_name"])
                     break

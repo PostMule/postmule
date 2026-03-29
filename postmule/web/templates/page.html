@@ -275,23 +275,39 @@
     {# ── Unassigned: entity match proposals ─────────────────────── #}
     <div id="panel-unassigned" role="tabpanel" aria-labelledby="tab-mail-unassigned" x-show="typeFilter === 'unassigned'" x-cloak>
       {% for match in pending_matches %}
-      <div data-match-row class="match-row">
+      <div data-match-row class="match-row" x-data="matchPicker('{{ match.id }}')">
         <div class="match-row__body">
           <div class="match-name">&ldquo;{{ match.proposed_name }}&rdquo;</div>
           <div class="match-detail">Looks like: {{ match.match_entity_id }} &mdash; {{ '%.0f'|format(match.similarity * 100) }}% similar</div>
           <div class="match-auto">Auto-approves: {{ match.auto_approve_after }}</div>
           {% if match.get('source_mail_id') %}<a href="/pdf/{{ match.source_mail_id }}" target="_blank" class="pdf-link">View source PDF</a>{% endif %}
         </div>
-        <button class="btn btn-primary btn-sm"
-                hx-post="/api/approve"
-                hx-vals='{"match_id": "{{ match.id }}"}'
-                hx-target="closest [data-match-row]"
-                hx-swap="outerHTML">Approve</button>
-        <button class="btn btn-danger btn-sm"
-                hx-post="/api/deny"
-                hx-vals='{"match_id": "{{ match.id }}"}'
-                hx-target="closest [data-match-row]"
-                hx-swap="outerHTML">Deny</button>
+        <div class="match-row__actions">
+          <button class="btn btn-primary btn-sm"
+                  hx-post="/api/approve"
+                  hx-vals='{"match_id": "{{ match.id }}"}'
+                  hx-target="closest [data-match-row]"
+                  hx-swap="outerHTML">Approve</button>
+          <button class="btn btn-secondary btn-sm" @click="pickerOpen = !pickerOpen" :aria-expanded="pickerOpen.toString()">Different entity&hellip;</button>
+        </div>
+        <div x-show="pickerOpen" x-cloak class="match-picker">
+          <input class="entity-picker-search" type="text" placeholder="Search entities&#x2026;" x-model="query" @input="filter()" aria-label="Search entities to assign alias">
+          <div class="entity-picker-list">
+            {% for entity in entities %}
+            <div class="entity-picker-option"
+                 x-show="matchedIds.includes('{{ entity.id }}')"
+                 :class="{ 'entity-picker-option--selected': selectedId === '{{ entity.id }}' }"
+                 @click="select('{{ entity.id }}', '{{ entity.canonical_name|replace("'","\\'")|replace('"','\\"') }}')">
+              {{ entity.canonical_name }}
+            </div>
+            {% endfor %}
+          </div>
+          <div class="match-picker-footer">
+            <span x-show="selectedName" x-cloak class="match-picker-selected" x-text="'Assign to: ' + selectedName"></span>
+            <button class="btn btn-primary btn-sm" :disabled="!selectedId" @click="assign($el.closest('[data-match-row]'))">Assign</button>
+            <button class="btn btn-secondary btn-sm" @click="pickerOpen = false; query = ''; selectedId = ''; selectedName = ''">Cancel</button>
+          </div>
+        </div>
       </div>
       {% else %}
       <div class="text-muted">No unassigned entity proposals.</div>
@@ -3263,6 +3279,32 @@
           this.entityMode = false;
           this.saving = false;
         });
+      }
+    };
+  }
+
+  function matchPicker(matchId) {
+    return {
+      pickerOpen: false,
+      query: '',
+      matchedIds: [],
+      selectedId: '',
+      selectedName: '',
+      init() {
+        this.matchedIds = window._ENTITY_LIST ? window._ENTITY_LIST.map(e => e.id) : [];
+      },
+      filter() {
+        const q = this.query.toLowerCase().trim();
+        if (!q) { this.matchedIds = window._ENTITY_LIST.map(e => e.id); return; }
+        this.matchedIds = window._ENTITY_LIST.filter(e => e.name.toLowerCase().includes(q)).map(e => e.id);
+      },
+      select(id, name) { this.selectedId = id; this.selectedName = name; },
+      assign(row) {
+        const fd = new FormData();
+        fd.append('match_id', matchId);
+        fd.append('entity_id', this.selectedId);
+        fetch('/api/approve', { method: 'POST', body: fd })
+          .then(function(r) { if (r.ok) { row.remove(); } });
       }
     };
   }

@@ -471,13 +471,36 @@ nav { display: flex; gap: 4px; flex: 1; }
   padding: 14px 16px;
   margin-bottom: 8px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 16px;
 }
 .match-row__body { flex: 1; }
+.match-row__actions { display: flex; gap: 8px; flex-shrink: 0; }
 .match-name   { font-weight: 600; color: #0F2044; }
 .match-detail { font-size: 0.75rem; color: #5A7090; }
 .match-auto   { font-size: 0.6875rem; color: #B8C8D8; }
+.match-picker {
+  width: 100%;
+  border-top: 1px solid #DDE3EC;
+  padding-top: 12px;
+  margin-top: 4px;
+}
+.match-picker-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.match-picker-selected {
+  font-size: 0.75rem;
+  color: #5A7090;
+  flex: 1;
+}
+.entity-picker-option--selected {
+  background: #EEF3FA;
+  font-weight: 600;
+}
 
 /* ── Entities ──────────────────────────────────────────────────── */
 .entity-search-input {
