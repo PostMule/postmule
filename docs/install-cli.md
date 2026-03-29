@@ -75,7 +75,7 @@ Your master password is stored in the Windows system keyring (DPAPI). After encr
 # Test with a dry run (no writes, no emails)
 postmule --dry-run
 
-# Schedule the daily 2am run
+# Schedule the daily run (time set in config.yaml → schedule.run_time)
 postmule install-task
 
 # Run immediately

@@ -1,12 +1,12 @@
 # PostMule — Daily Workflow
 
-The daily pipeline runs automatically at 2am Pacific (configurable). Here is everything that happens in one run.
+The daily pipeline runs automatically on a configurable schedule (default: 2:00 AM local time, set via `config.yaml` → `schedule.run_time`). Here is everything that happens in one run.
 
 ## Pipeline Flowchart
 
 ```mermaid
 flowchart TD
-    START([2am — pipeline starts]) --> INGEST
+    START([Pipeline starts]) --> INGEST
 
     subgraph INGEST["Step 1 — Mail Ingestion"]
         direction TB

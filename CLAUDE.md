@@ -30,7 +30,7 @@ Open source, self-hosted automated bill management (fills the role the original 
 | Concern | Choice |
 |---|---|
 | Language | Python 3.12+ |
-| Scheduling | Windows Task Scheduler (daily 2am Pacific) |
+| Scheduling | Windows Task Scheduler (configurable schedule, default 2am local) |
 | OCR | pdfplumber → pytesseract (image fallback) |
 | AI | Configurable LLM (default: Gemini 1.5 Flash, free tier) |
 | Storage | JSON files + spreadsheet view (default: Google Sheets) |
@@ -43,7 +43,7 @@ Every external service abstracted behind an interface (`postmule/providers/*/bas
 Defaults: Gmail, Google Drive, Google Sheets, Gemini 1.5 Flash, VPM, YNAB.
 Categories: mailbox, email (`mailbox_notifications`, `bill_intake`), storage, llm, finance, notifications, spreadsheet.
 
-## Daily Workflow (2am Pacific)
+## Daily Workflow (configurable schedule, default 2am local)
 1a. mailbox_notifications email → VPM notification PDFs → /Inbox
 1b. bill_intake email → biller PDF attachments → /Inbox
 2. Per PDF: OCR → LLM classify → rename → move → update JSON/Sheets

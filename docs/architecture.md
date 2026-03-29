@@ -13,7 +13,7 @@ graph TB
         INTAKE["Bill Intake Email\n(direct biller PDFs)"]
     end
 
-    subgraph Pipeline["Daily Pipeline (2am Pacific)"]
+    subgraph Pipeline["Daily Pipeline (configurable schedule)"]
         direction TB
         OCR["OCR\n(pdfplumber → pytesseract)"]
         LLM["LLM Classify\n(Gemini / OpenAI / Ollama)"]
