@@ -385,8 +385,16 @@
           <div x-show="editOpen" x-cloak class="mail-edit-row">
             <div class="mail-edit-row-label">Category</div>
             <div class="cat-chip-list">
+              {% set cat_chip_tooltips = {
+                'Bill': 'Invoices with an amount and due date',
+                'Notice': 'Non-bill correspondence — statements, alerts, policy updates',
+                'ForwardToMe': 'Physical mail to be forwarded to you',
+                'Personal': 'Personal correspondence — letters and documents that are not bills or notices',
+                'Junk': 'Ads and marketing mail',
+                'NeedsReview': 'Item needs manual review'
+              } %}
               {% for cat, label in [('Bill','BILL'),('Notice','NOTICE'),('ForwardToMe','FORWARD'),('Personal','PERSONAL'),('Junk','JUNK'),('NeedsReview','NEEDS REVIEW')] %}
-              <button class="cat-chip" :class="{'cat-chip--active': selectedCat === '{{ cat }}'}" @click="selectedCat = '{{ cat }}'">{{ label }}</button>
+              <button class="cat-chip" :class="{'cat-chip--active': selectedCat === '{{ cat }}'}" @click="selectedCat = '{{ cat }}'" title="{{ cat_chip_tooltips.get(cat, '') }}">{{ label }}</button>
               {% endfor %}
             </div>
             <div class="mail-edit-row-label">Entity</div>
@@ -2893,8 +2901,16 @@
         <div class="reports-form-field">
           <label class="reports-label">Type</label>
           <div class="reports-type-checks">
+            {% set cat_tooltips = {
+              'Bill': 'Invoices with an amount and due date',
+              'Notice': 'Non-bill correspondence — statements, alerts, policy updates',
+              'ForwardToMe': 'Physical mail to be forwarded to you',
+              'Personal': 'Personal correspondence — letters and documents that are not bills or notices',
+              'Junk': 'Ads and marketing mail',
+              'NeedsReview': 'Items the AI was not confident about'
+            } %}
             {% for cat, label in [('Bill','Bill'),('Notice','Notice'),('ForwardToMe','Forward To Me'),('Personal','Personal'),('Junk','Junk'),('NeedsReview','Needs Review')] %}
-            <label class="reports-check-label">
+            <label class="reports-check-label" title="{{ cat_tooltips.get(cat, '') }}">
               <input type="checkbox" name="type" value="{{ cat }}" {% if cat in f_types %}checked{% endif %}> {{ label }}
             </label>
             {% endfor %}
@@ -3093,7 +3109,7 @@
               <tr><td><strong>Bills</strong></td><td style="color:#5A7090;">Invoices with an amount and due date</td></tr>
               <tr><td><strong>Notices</strong></td><td style="color:#5A7090;">Important non-bill mail — statements, alerts, policy updates</td></tr>
               <tr><td><strong>Forward To Me</strong></td><td style="color:#5A7090;">Physical items that need to be mailed to you (checks, gift cards, etc.) — PostMule sends an immediate alert</td></tr>
-              <tr><td><strong>Personal</strong></td><td style="color:#5A7090;">Personal letters and non-financial mail</td></tr>
+              <tr><td><strong>Personal</strong></td><td style="color:#5A7090;">Personal correspondence &mdash; letters, greeting cards, personal legal documents, or anything addressed to a person rather than an account. Not bills, not notices.</td></tr>
               <tr><td><strong>Junk</strong></td><td style="color:#5A7090;">Ads and marketing mail</td></tr>
               <tr><td><strong>Needs Review</strong></td><td style="color:#5A7090;">Items the AI wasn't confident about — check these manually on the Mail page</td></tr>
             </tbody>

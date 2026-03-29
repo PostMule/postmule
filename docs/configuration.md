@@ -195,3 +195,18 @@ Hard limits to prevent runaway LLM costs. Applied to the active provider.
 | `dashboard_port` | `5000` | Port for the local web dashboard |
 | `tailscale_enabled` | `false` | `true` = dashboard accessible via Tailscale on your network |
 | `task_scheduler_task_name` | `PostMule Daily Run` | Name of the Windows Task Scheduler task |
+
+---
+
+## Mail Categories
+
+PostMule assigns every piece of mail to one of the following categories. The AI classifier chooses the category automatically; you can override it in the dashboard.
+
+| Category | Display label | Meaning |
+|---|---|---|
+| `Bill` | BILL | An actionable financial document — invoice, statement, or payment notice from a biller. Tracked for due-date alerting and bank reconciliation. |
+| `Notice` | NOTICE | Non-bill correspondence from a company or institution — confirmation letters, policy updates, account statements, marketing documents, or anything informational that requires no payment action. |
+| `ForwardToMe` | FORWARD | Physical mail that you want forwarded from your virtual mailbox. PostMule sends an immediate alert and prompts you to contact your mailbox provider to ship the item. |
+| `Personal` | PERSONAL | Personal, non-financial correspondence — letters, greeting cards, personal legal documents, or anything clearly addressed to a person rather than an account. Not bills, not notices. |
+| `Junk` | JUNK | Unsolicited advertising, marketing mailers, and catalogues. No further action taken. |
+| `NeedsReview` | NEEDS REVIEW | The AI could not confidently classify the item. Requires a human to assign the correct category before further processing. |
