@@ -350,7 +350,7 @@
       {% set match = pending_by_sender.get(item.get('sender', '')|lower) %}
       <div class="mail-item"
            x-show="(typeFilter === 'all' || typeFilter === '{{ item._type }}') && (ownerFilter === '' || {{ item.get('owner_ids', []) | tojson | safe }}.includes(ownerFilter))"
-           x-data="mailReassign('{{ item.get('id','') }}', '{{ item._type }}', '{{ item.get('entity_override_id','') }}', '{{ item.get('sender','') | replace("'", "\\'") }}', '{{ item.get('account_number','') | replace("'", "\\'") }}', {{ item.get('tags', []) | tojson | safe }})"
+           x-data="mailReassign('{{ item.get('id','') }}', '{{ item._type }}', '{{ item.get('entity_override_id','') }}', '{{ item.get('sender','') | replace("'", "\\'") }}', '{{ item.get('account_number','') | replace("'", "\\'") }}', {{ item.get('tags', []) | tojson | safe }}, {{ item.get('owner_ids', []) | tojson | safe }})"
            @keydown.escape="editOpen = false; entityMode = false; tagMode = false">
         <div class="mail-bar {{ bar_class.get(item._type, 'mail-bar--default') }}"></div>
         <div class="mail-body">
@@ -369,6 +369,11 @@
           {% if item._type == 'ForwardToMe' and item.get('forwarding_status') == 'pending' %}
           <div class="mail-forward-alert">ACTION REQUIRED &mdash; contact your mailbox to ship this item</div>
           {% endif %}
+          <div class="owner-badge-list" x-show="ownerIds.length > 0" x-cloak>
+            <template x-for="oid in ownerIds" :key="oid">
+              <span class="owner-badge" :class="(_OWNER_MAP[oid] && _OWNER_MAP[oid].type === 'company') ? 'owner-badge--company' : 'owner-badge--person'" x-text="_OWNER_MAP[oid] ? (_OWNER_MAP[oid].short_name || _OWNER_MAP[oid].name) : oid"></span>
+            </template>
+          </div>
           <div class="mail-footer">
             <span class="badge {{ badge_class.get(item._type, 'badge--junk') }}" x-text="catLabel()" x-bind:class="catBadgeClass()">{{ type_display.get(item._type, item._type.upper()) }}</span>
             {% if item.get('drive_file_id') %}<button class="pdf-toggle-btn" @click="pdfOpen = !pdfOpen" :aria-expanded="pdfOpen.toString()"><span x-text="pdfOpen ? 'Hide PDF' : 'View PDF'">View PDF</span></button>{% endif %}
@@ -459,10 +464,22 @@
                 </div>
               </div>
             </div>
+            {% if owners %}
+            <div class="mail-edit-row-label">Owners</div>
+            <div class="cat-chip-list">
+              {% for o in owners %}
+              <button type="button" class="owner-chip {% if o.get('type') == 'company' %}owner-chip--company{% endif %}"
+                      :class="{'owner-chip--active': ownerIds.includes('{{ o.id }}')}"
+                      @click="toggleOwner('{{ o.id }}')">{{ o.get('short_name') or o.name }}</button>
+              {% endfor %}
+            </div>
+            {% endif %}
             <div class="mail-edit-actions">
               <button class="btn btn-primary btn-sm" @click="save('{{ item.get('sender','') | replace("'", "\\'") }}')" :disabled="saving">Save</button>
               <button class="btn btn-secondary btn-sm" @click="editOpen = false; entityMode = false">Cancel</button>
               <span x-show="saved" x-cloak class="mail-edit-saved" role="status">Saved.</span>
+              <button type="button" class="btn btn-sm" style="margin-left:auto;background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb;"
+                      @click="fileItem('{{ item.get('id','') }}')" title="Hide from main view">File</button>
             </div>
           </div>
         </div>
@@ -3520,8 +3537,9 @@
   };
 
   window._TAG_LIST = window._TAG_LIST || [];
+  window._OWNER_MAP = window._OWNER_MAP || {};
 
-  function mailReassign(mailId, currentType, existingOverride, senderName, ocrAccount, initialTags) {
+  function mailReassign(mailId, currentType, existingOverride, senderName, ocrAccount, initialTags, initialOwnerIds) {
     var _typeCatMap = { Bill: 'biller', Notice: 'sender', ForwardToMe: 'sender', Personal: 'personal', Junk: 'vendor', NeedsReview: 'biller' };
     return {
       editOpen: false,
@@ -3546,6 +3564,7 @@
       tagInput: '',
       tagMode: false,
       tagSuggestions: [],
+      ownerIds: initialOwnerIds || [],
       init() {
         this.matchedIds = window._ENTITY_LIST.map(e => e.id);
       },
@@ -3592,6 +3611,13 @@
         this.selectedEntityName = name;
         this.entityMode = false;
       },
+      toggleOwner(id) {
+        const idx = this.ownerIds.indexOf(id);
+        if (idx === -1) { this.ownerIds.push(id); } else { this.ownerIds.splice(idx, 1); }
+      },
+      fileItem(id) {
+        fetch('/api/mail/' + id + '/file', { method: 'POST' }).then(() => { window.location.reload(); });
+      },
       save(sender) {
         this.saving = true;
         const catFd = new FormData();
@@ -3599,7 +3625,12 @@
         const entityFd = new FormData();
         entityFd.append('entity_id', this.selectedEntityId);
         entityFd.append('add_alias', this.addAlias ? 'true' : 'false');
-        const calls = [fetch('/api/mail/' + mailId + '/category', { method: 'POST', body: catFd })];
+        const ownerFd = new FormData();
+        ownerFd.append('owner_ids', JSON.stringify(this.ownerIds));
+        const calls = [
+          fetch('/api/mail/' + mailId + '/category', { method: 'POST', body: catFd }),
+          fetch('/api/mail/' + mailId + '/owners', { method: 'PUT', body: ownerFd })
+        ];
         if (this.selectedEntityId) {
           calls.push(fetch('/api/mail/' + mailId + '/entity', { method: 'POST', body: entityFd }));
         }
@@ -3715,6 +3746,13 @@
   {% if all_tags is defined %}
   <script>
   window._TAG_LIST = {{ all_tags | tojson | safe }};
+  </script>
+  {% endif %}
+  {% if owners is defined %}
+  <script>
+  window._OWNER_MAP = {};
+  {% for o in owners %}window._OWNER_MAP['{{ o.id }}'] = {{ o | tojson | safe }};
+  {% endfor %}
   </script>
   {% endif %}
 

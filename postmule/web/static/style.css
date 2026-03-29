@@ -2019,3 +2019,15 @@ html[data-theme="high-contrast"] .a11y-size-btn.active {
   margin: 1px 2px 1px 0;
   white-space: nowrap;
 }
+/* Owner badges (displayed on mail items) */
+.owner-badge-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.owner-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.4px; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
+.owner-badge--person { background: #EEF4FF; color: #1A5EA8; border: 1px solid #BFCFEF; }
+.owner-badge--company { background: #F3F0FF; color: #5B21B6; border: 1px solid #C4B5FD; }
+.owner-badge--unassigned { background: #F5F6F8; color: #8A9BB0; border: 1px solid #DDE3EC; font-style: italic; }
+/* Owner chips (in mail edit row) */
+.owner-chip { font-size: 0.6875rem; font-weight: 600; padding: 3px 10px; border-radius: 10px; border: 1px solid #BFCFEF; background: #F4F7FA; color: #4A6080; cursor: pointer; }
+.owner-chip:hover { background: #EEF4FF; color: #1A5EA8; border-color: #1A5EA8; }
+.owner-chip--active { background: #1A5EA8; color: #fff; border-color: #1A5EA8; }
+.owner-chip--company { border-color: #C4B5FD; }
+.owner-chip--company.owner-chip--active { background: #5B21B6; border-color: #5B21B6; }

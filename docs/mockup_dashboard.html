@@ -407,6 +407,15 @@
     .conn-icon-google { background: #E8F0FE; color: #1A73E8; }
     .conn-icon-ms     { background: #E3F2FD; color: #0078D4; }
     .conn-icon-aws    { background: #FFF3E0; color: #FF9900; }
+    /* Mail item tag chips */
+    .mail-tag-chip { display: inline-flex; align-items: center; gap: 3px; background: #E8F0FE; color: #1A5EA8; border-radius: 10px; font-size: 0.68rem; font-weight: 600; padding: 1px 7px; line-height: 1.6; white-space: nowrap; }
+    .mail-tag-remove { background: none; border: none; cursor: pointer; color: #1A5EA8; opacity: 0.6; font-size: 0.75rem; padding: 0 0 0 2px; }
+    .mail-tag-add-btn { font-size: 0.6875rem; font-weight: 600; padding: 2px 8px; border-radius: 10px; border: 1px dashed #BFCFEF; background: transparent; color: #7A90A8; cursor: pointer; }
+    /* Entity picker inline create form */
+    .entity-create-section { margin-top: 8px; border-top: 1px solid #EEF2F7; padding-top: 8px; }
+    .entity-create-toggle-link { font-size: 0.75rem; color: #1A5EA8; cursor: pointer; background: none; border: none; padding: 0; }
+    .entity-create-fields { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+    .entity-create-input { height: 28px; padding: 0 8px; font-size: 0.75rem; border: 1px solid #D0D7DE; border-radius: 4px; background: #fff; color: #0F2044; width: 100%; box-sizing: border-box; }
   </style>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
@@ -640,6 +649,8 @@
             </div>
             <div class="mail-footer" style="margin-top:6px;">
               <span class="badge badge--bill">BILL</span>
+              <span class="mail-tag-chip">urgent<button class="mail-tag-remove">&times;</button></span>
+              <button class="mail-tag-add-btn">+ Tag</button>
               <button class="mail-edit-btn" onclick="toggleMailEdit(this)">Edit</button>
             </div>
             <div class="mail-edit-row" style="display:none;">
@@ -662,6 +673,16 @@
                   <div class="entity-picker-item" onclick="selectEntity(this)">PG&amp;E</div>
                   <div class="entity-picker-item" onclick="selectEntity(this)">Comcast</div>
                   <div class="entity-picker-item" onclick="selectEntity(this)">&#8212; (unassigned)</div>
+                </div>
+                <div class="entity-create-section">
+                  <button class="entity-create-toggle-link">+ Create new entity</button>
+                  <div class="entity-create-fields" style="display:none;">
+                    <input class="entity-create-input" type="text" placeholder="Entity name (from OCR)" value="Verizon Wireless">
+                    <input class="entity-create-input" type="text" placeholder="Friendly name" value="Verizon Wireless">
+                    <select class="entity-create-input"><option>Biller</option><option>Sender</option><option>Vendor</option><option>Government</option><option>Personal</option></select>
+                    <input class="entity-create-input" type="text" placeholder="Account # (optional)">
+                    <button class="btn btn-primary btn-sm" style="align-self:flex-start;">Create &amp; Select</button>
+                  </div>
                 </div>
               </div>
               <div class="mail-edit-row-label">Owners</div>
@@ -751,6 +772,8 @@
             </div>
             <div class="mail-footer" style="margin-top:6px;">
               <span class="badge badge--bill">BILL</span>
+              <span class="mail-tag-chip">overdue<button class="mail-tag-remove">&times;</button></span>
+              <button class="mail-tag-add-btn">+ Tag</button>
               <button class="mail-edit-btn" onclick="toggleMailEdit(this)">Edit</button>
             </div>
             <div class="mail-edit-row" style="display:none;">
