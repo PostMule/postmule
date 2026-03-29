@@ -7,7 +7,7 @@
 ## Last Completed
 > Maintenance: before adding a new entry, delete the previous one. One issue max. Full history is in `git log`.
 
-Session 2026-03-29 (3): Issue #86 — Added `.github/workflows/release.yml` (publishes PostMuleSetup.exe to GitHub Releases on v* tags). Updated README.md: Paytrust description, Option A "coming soon", Option B script path. #86 closed.
+Session 2026-03-29 (4): Branding work — renamed `postmule_brand_03_final.html` → `brand_reference.html`, rewrote it as a full design system doc (Inter font, color tokens, type scale, spacing, elevation, component specs, voice guide). Added `docs/logo_concepts.html` (10 SVG concepts) and `docs/logo2.png` (AI-generated mascot via Microsoft Designer / DALL-E 3). Updated brand_reference.html logo section to use logo2.png.
 
 ---
 
