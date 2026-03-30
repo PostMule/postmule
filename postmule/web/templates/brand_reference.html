@@ -201,7 +201,7 @@
        BRAND HERO
   ════════════════════════════════════════════ -->
   <div class="brand-hero">
-    <img src="../../../docs/logo2.png" alt="PostMule mascot" style="height:72px;width:auto;object-fit:contain;border-radius:8px;">
+    <img src="../../../docs/logo_face.png" alt="PostMule mascot" style="height:72px;width:auto;object-fit:contain;border-radius:8px;">
     <div>
       <div class="brand-wordmark">Post<span>Mule</span></div>
       <div class="brand-tagline">Smart mail management</div>
@@ -705,26 +705,40 @@
     <div class="section-hdr"><span class="section-title">Logo specification</span></div>
     <div class="section-body">
 
-      <div class="logo-grid">
+      <p style="font-size:13px;color:#556070;margin:0 0 20px;">Two variants: <strong>face crop</strong> for website nav, app header, and favicon; <strong>full body</strong> for letterhead, marketing, social media, and splash screens.</p>
+
+      <div class="logo-grid" style="grid-template-columns:repeat(4,1fr);gap:16px;">
         <div>
           <div class="logo-demo" style="background:#0F2044;">
-            <img src="../../../docs/logo2.png" alt="PostMule logo on dark" style="height:80px;width:auto;object-fit:contain;border-radius:6px;">
+            <img src="../../../docs/logo_face.png" alt="PostMule face logo on dark" style="height:80px;width:auto;object-fit:contain;">
             <div>
-              <div style="font-size:24px;font-weight:700;letter-spacing:-0.4px;color:#fff;line-height:1;">Post<span style="color:#E8A020;">Mule</span></div>
+              <div style="font-size:22px;font-weight:700;letter-spacing:-0.4px;color:#fff;line-height:1;">Post<span style="color:#E8A020;">Mule</span></div>
               <div style="font-size:10px;font-weight:500;letter-spacing:2.5px;color:#5A7CA4;text-transform:uppercase;margin-top:5px;">Smart mail management</div>
             </div>
           </div>
-          <div class="logo-caption">Dark background (navy)</div>
+          <div class="logo-caption">Face — dark (nav/header)</div>
         </div>
         <div>
           <div class="logo-demo" style="background:#F5F6F8;border:1px solid #DDE3EC;">
-            <img src="../../../docs/logo2.png" alt="PostMule logo on light" style="height:80px;width:auto;object-fit:contain;border-radius:6px;">
+            <img src="../../../docs/logo_face.png" alt="PostMule face logo on light" style="height:80px;width:auto;object-fit:contain;">
             <div>
-              <div style="font-size:24px;font-weight:700;letter-spacing:-0.4px;color:#0F2044;line-height:1;">Post<span style="color:#E8A020;">Mule</span></div>
+              <div style="font-size:22px;font-weight:700;letter-spacing:-0.4px;color:#0F2044;line-height:1;">Post<span style="color:#E8A020;">Mule</span></div>
               <div style="font-size:10px;font-weight:500;letter-spacing:2.5px;color:#7A90A8;text-transform:uppercase;margin-top:5px;">Smart mail management</div>
             </div>
           </div>
-          <div class="logo-caption">Light background (linen)</div>
+          <div class="logo-caption">Face — light (nav/header)</div>
+        </div>
+        <div>
+          <div class="logo-demo" style="background:#0F2044;">
+            <img src="../../../docs/logo2.png" alt="PostMule full body logo on dark" style="height:120px;width:auto;object-fit:contain;">
+          </div>
+          <div class="logo-caption">Full body — dark (letterhead/social)</div>
+        </div>
+        <div>
+          <div class="logo-demo" style="background:#F5F6F8;border:1px solid #DDE3EC;">
+            <img src="../../../docs/logo2.png" alt="PostMule full body logo on light" style="height:120px;width:auto;object-fit:contain;">
+          </div>
+          <div class="logo-caption">Full body — light (letterhead/social)</div>
         </div>
       </div>
 
@@ -738,8 +752,10 @@
           <div class="meta-item">Dark bg — Steel Blue mark, white wordmark, Brass accent</div>
           <div class="meta-item">Light bg — Steel Blue mark, Navy wordmark, Brass accent</div>
           <div class="meta-item">Single color — Navy Seal only (print, emboss)</div>
-          <div class="meta-item">Favicon — crop to face/head at 32×32 and 64×64px</div>
-          <div class="meta-item">Source file — <code>docs/logo2.png</code> (AI-generated, vectorize before print)</div>
+          <div class="meta-item">Website/app nav — use <code>logo_face.png</code> (face crop)</div>
+          <div class="meta-item">Favicon — use <code>logo_face.png</code>, export at 32×32 and 64×64px</div>
+          <div class="meta-item">Letterhead/social/splash — use <code>logo2.png</code> (full body)</div>
+          <div class="meta-item">Source files — <code>docs/logo_face.png</code> · <code>docs/logo2.png</code> (AI-generated, vectorize before print)</div>
         </div>
         <div class="meta-card">
           <div class="meta-title">Don'ts</div>
