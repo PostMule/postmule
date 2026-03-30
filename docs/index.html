@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PostMule — Self-hosted automated bill management</title>
+  <meta name="description" content="Open-source, self-hosted bill management. Processes physical mail and email bills, AI-classifies them, and reconciles with your bank — automatically.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="../postmule/web/static/favicon.ico">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:      #0F2044;
+      --navy-mid:  #1A3060;
+      --navy-dark: #0A1830;
+      --brass:     #E8A020;
+      --brass-dim: #C88010;
+      --sky:       #7A9CC4;
+      --sky-dim:   #5A7CA4;
+      --text:      #0F2044;
+      --muted:     #5A7090;
+      --faint:     #8A9BB0;
+      --surface:   #F5F6F8;
+      --border:    #DDE3EC;
+      --white:     #FFFFFF;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      background: var(--white);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Nav ───────────────────────────────────────────── */
+    .nav {
+      background: var(--navy);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo img { display: block; border-radius: 4px; }
+    .nav-wordmark {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.3px;
+      line-height: 1;
+    }
+    .nav-wordmark span { color: var(--brass); }
+    .nav-links { display: flex; align-items: center; gap: 4px; }
+    .nav-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--sky);
+      padding: 6px 12px;
+      border-radius: 5px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .nav-link:hover { color: var(--white); background: var(--navy-mid); }
+    .nav-cta {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--navy);
+      background: var(--brass);
+      padding: 7px 16px;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .nav-cta:hover { background: var(--brass-dim); }
+
+    /* ── Hero ─────────────────────────────────────────── */
+    .hero {
+      background: var(--navy);
+      padding: 88px 32px 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 60%, rgba(122,156,196,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 80% 30%, rgba(232,160,32,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-inner { position: relative; max-width: 760px; margin: 0 auto; }
+    .hero-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+    .hero-logo img { width: 64px; height: 57px; border-radius: 8px; display: block; }
+    .hero-wordmark {
+      font-size: 44px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -1px;
+      line-height: 1;
+      text-align: left;
+    }
+    .hero-wordmark span { color: var(--brass); }
+    .hero-tagline-sub {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 3px;
+      color: var(--sky-dim);
+      text-transform: uppercase;
+      margin-top: 5px;
+    }
+    .hero-headline {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--white);
+      letter-spacing: -0.4px;
+      line-height: 1.3;
+      margin-bottom: 16px;
+    }
+    .hero-sub {
+      font-size: 16px;
+      color: var(--sky);
+      line-height: 1.7;
+      max-width: 580px;
+      margin: 0 auto 36px;
+    }
+    .hero-actions { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--brass);
+      color: var(--navy-dark);
+      font-size: 14px;
+      font-weight: 700;
+      padding: 12px 24px;
+      border-radius: 7px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-primary:hover { background: var(--brass-dim); transform: translateY(-1px); }
+    .btn-primary:active { transform: none; }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.08);
+      color: var(--white);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 12px 24px;
+      border-radius: 7px;
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: background 0.15s;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.13); }
+    .hero-note {
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--sky-dim);
+    }
+
+    /* ── Section shell ────────────────────────────────── */
+    .section { padding: 72px 32px; max-width: 960px; margin: 0 auto; }
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--brass);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: -0.4px;
+      line-height: 1.25;
+      margin-bottom: 16px;
+    }
+    .section-body {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.75;
+      max-width: 640px;
+    }
+
+    /* ── What it does ─────────────────────────────────── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-top: 40px;
+    }
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+    }
+    .step-num {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--brass);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .step-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .step-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── Features ─────────────────────────────────────── */
+    .features-wrap { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .features { max-width: 960px; margin: 0 auto; padding: 72px 32px; }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 32px;
+      margin-top: 40px;
+    }
+    .feature { display: flex; gap: 16px; }
+    .feature-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--navy);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .feature-icon svg { display: block; }
+    .feature-title { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+    .feature-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── Install ──────────────────────────────────────── */
+    .install-steps { display: flex; flex-direction: column; gap: 12px; margin-top: 32px; }
+    .install-step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .install-badge {
+      min-width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: var(--white);
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .install-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
+    .install-text strong { color: var(--navy); font-weight: 600; }
+    .install-text code {
+      background: var(--border);
+      color: var(--navy);
+      font-size: 12px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+    }
+    .install-note {
+      margin-top: 24px;
+      padding: 14px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .install-note a { color: var(--sky-dim); text-decoration: underline; }
+
+    /* ── Preview CTA ──────────────────────────────────── */
+    .preview-wrap {
+      background: var(--navy);
+      padding: 72px 32px;
+      text-align: center;
+    }
+    .preview-inner { max-width: 640px; margin: 0 auto; }
+    .preview-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.3px;
+      margin-bottom: 12px;
+    }
+    .preview-sub { font-size: 15px; color: var(--sky); line-height: 1.7; margin-bottom: 28px; }
+
+    /* ── Footer ───────────────────────────────────────── */
+    footer {
+      background: var(--navy-dark);
+      padding: 32px;
+      text-align: center;
+    }
+    .footer-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 12px;
+    }
+    .footer-logo img { width: 28px; height: 25px; border-radius: 3px; display: block; }
+    .footer-wordmark { font-size: 15px; font-weight: 700; color: var(--white); }
+    .footer-wordmark span { color: var(--brass); }
+    .footer-links { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 16px; flex-wrap: wrap; }
+    .footer-link { font-size: 12px; color: var(--sky-dim); transition: color 0.15s; }
+    .footer-link:hover { color: var(--sky); }
+    .footer-copy { font-size: 11px; color: #3A5070; }
+
+    /* ── Responsive ───────────────────────────────────── */
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .hero { padding: 56px 20px 48px; }
+      .hero-wordmark { font-size: 32px; }
+      .hero-headline { font-size: 22px; }
+      .hero-logo img { width: 48px; height: 43px; }
+      .section { padding: 48px 20px; }
+      .features { padding: 48px 20px; }
+      .preview-wrap { padding: 48px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <a href="#" class="nav-logo">
+    <img src="logo_face.png" width="32" height="29" alt="PostMule logo">
+    <div class="nav-wordmark">Post<span>Mule</span></div>
+  </a>
+  <div class="nav-links">
+    <a href="#how-it-works" class="nav-link">How it works</a>
+    <a href="#features" class="nav-link">Features</a>
+    <a href="#install" class="nav-link">Install</a>
+    <a href="mockup_dashboard.html" class="nav-link">Preview</a>
+    <a href="https://github.com/PostMule/app" class="nav-cta">GitHub &rarr;</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-logo">
+      <img src="logo_face.png" alt="PostMule mascot">
+      <div>
+        <div class="hero-wordmark">Post<span>Mule</span></div>
+        <div class="hero-tagline-sub">Smart mail management</div>
+      </div>
+    </div>
+    <h1 class="hero-headline">Your bills, handled automatically.</h1>
+    <p class="hero-sub">
+      PostMule is an open-source, self-hosted bill manager. It processes your
+      physical mail and email bills, AI-classifies them, extracts the data, and
+      reconciles with your bank — every night while you sleep.
+    </p>
+    <div class="hero-actions">
+      <a href="https://github.com/PostMule/app" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+      <a href="mockup_dashboard.html" class="btn-secondary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Live Preview
+      </a>
+    </div>
+    <p class="hero-note">Free &amp; open source &nbsp;&middot;&nbsp; Self-hosted &nbsp;&middot;&nbsp; Windows 11</p>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="section" id="how-it-works">
+  <div class="section-label">How it works</div>
+  <h2 class="section-title">Set it up once. It runs every night.</h2>
+  <p class="section-body">PostMule wakes up on a schedule (default 2 AM), pulls your mail, processes every PDF, and updates your records — no manual steps required.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">Step 1</div>
+      <div class="step-title">Collect mail</div>
+      <div class="step-desc">Fetches physical mail scans from your Virtual Post Mail account and PDF attachments from your email inbox.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">Step 2</div>
+      <div class="step-title">AI classification</div>
+      <div class="step-desc">OCR extracts text, then a configurable LLM (default: Gemini 1.5 Flash, free tier) classifies each document and extracts key fields.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">Step 3</div>
+      <div class="step-title">File &amp; record</div>
+      <div class="step-desc">Documents are renamed with a standard scheme, moved to cloud storage, and recorded in JSON files with a Google Sheets view generated automatically.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">Step 4</div>
+      <div class="step-title">Reconcile &amp; alert</div>
+      <div class="step-desc">Bills are matched against bank transactions (YNAB, etc.), upcoming due dates trigger proactive alerts, and a daily summary email lands in your inbox.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<div class="features-wrap" id="features">
+  <div class="features">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Everything a paper-based bill manager needs.</h2>
+    <div class="feature-grid">
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E8A020" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div>
+          <div class="feature-title">OCR + AI classification</div>
+          <div class="feature-desc">pdfplumber extracts text; pytesseract handles image-only PDFs. Any LLM provider you configure classifies the document type and extracts fields.</div>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E8A020" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div>
+          <div class="feature-title">Scheduled automation</div>
+          <div class="feature-desc">Runs on Windows Task Scheduler at a configurable time. No server, no Docker — just Python running on your own machine.</div>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E8A020" stroke-width="2" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </div>
+        <div>
+          <div class="feature-title">Bank reconciliation</div>
+          <div class="feature-desc">Pulls transactions from your finance provider (YNAB, etc.) and matches them to processed bills by amount and date.</div>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E8A020" stroke-width="2" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        <div>
+          <div class="feature-title">Smart alerts</div>
+          <div class="feature-desc">Immediate email when a "Forward To Me" item arrives. Proactive bill-due alerts. Daily summary delivered every morning.</div>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E8A020" stroke-width="2" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        </div>
+        <div>
+          <div class="feature-title">Provider/adapter pattern</div>
+          <div class="feature-desc">Every external service — mail, email, storage, LLM, finance — sits behind a swappable interface. Change providers with one config line.</div>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E8A020" stroke-width="2" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div>
+          <div class="feature-title">Local web dashboard</div>
+          <div class="feature-desc">Flask + HTMX + Alpine.js dashboard at localhost:5000. Review mail, manage entities, configure providers, and browse logs.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Install -->
+<section class="section" id="install">
+  <div class="section-label">Get started</div>
+  <h2 class="section-title">Install in minutes.</h2>
+  <p class="section-body">PostMule runs on Windows 11 with Python 3.12+. You'll need a Google account for cloud storage and a VPM or Gmail account to feed it mail.</p>
+  <div class="install-steps">
+    <div class="install-step">
+      <div class="install-badge">1</div>
+      <div class="install-text"><strong>Download the installer</strong> — grab <code>PostMuleSetup.exe</code> from the <a href="https://github.com/PostMule/app/releases" style="color:var(--sky-dim);text-decoration:underline;">Releases page</a> and run it. Python and dependencies are bundled.</div>
+    </div>
+    <div class="install-step">
+      <div class="install-badge">2</div>
+      <div class="install-text"><strong>Configure</strong> — edit <code>config.yaml</code> (created on first run) with your mail provider, storage, LLM key, and notification email.</div>
+    </div>
+    <div class="install-step">
+      <div class="install-badge">3</div>
+      <div class="install-text"><strong>Run the dashboard</strong> — open a terminal and run <code>postmule dashboard</code>. Visit <code>http://localhost:5000</code> to review and approve the initial setup.</div>
+    </div>
+    <div class="install-step">
+      <div class="install-badge">4</div>
+      <div class="install-text"><strong>Schedule</strong> — run <code>postmule schedule</code> to register the nightly Task Scheduler job. PostMule wakes up automatically from then on.</div>
+    </div>
+  </div>
+  <div class="install-note">
+    Prefer to install from source? See the
+    <a href="https://github.com/PostMule/app/blob/main/docs/installation.md">full installation guide</a>
+    in the repo. Detailed provider setup (Gmail OAuth, Google Drive, YNAB) is covered there.
+  </div>
+</section>
+
+<!-- Preview CTA -->
+<div class="preview-wrap">
+  <div class="preview-inner">
+    <h2 class="preview-title">See it before you install.</h2>
+    <p class="preview-sub">Browse the interactive mockup to see exactly what the dashboard looks like — all pages, all states, no login required.</p>
+    <a href="mockup_dashboard.html" class="btn-primary">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      Open live mockup &rarr;
+    </a>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-logo">
+    <img src="logo_face.png" alt="PostMule logo">
+    <div class="footer-wordmark">Post<span>Mule</span></div>
+  </div>
+  <div class="footer-links">
+    <a href="https://github.com/PostMule/app" class="footer-link">GitHub</a>
+    <a href="https://github.com/PostMule/app/releases" class="footer-link">Releases</a>
+    <a href="mockup_dashboard.html" class="footer-link">Dashboard preview</a>
+    <a href="https://github.com/PostMule/app/blob/main/docs/installation.md" class="footer-link">Install guide</a>
+    <a href="https://github.com/PostMule/app/issues" class="footer-link">Issues</a>
+  </div>
+  <p class="footer-copy">Open source, self-hosted. MIT License.</p>
+</footer>
+
+</body>
+</html>
