@@ -6,7 +6,7 @@ If you want a fully managed, concierge-style bill management experience, **[Payt
 
 PostMule is for a different audience: people who want hands-on control over their own data, the ability to self-host, and lower ongoing cost — and who are comfortable accepting that they won't have concierge support in return. It automates the mechanical work (sorting mail, tracking due dates, matching payments) while keeping you in the decision seat.
 
-**[View the interactive mockup →](https://postmule.github.io/app/mockup_dashboard.html)**
+**[postmule.com](https://postmule.com)** &nbsp;·&nbsp; **[Interactive mockup →](https://postmule.github.io/app/mockup_dashboard.html)**
 
 ---
 
