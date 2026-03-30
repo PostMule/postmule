@@ -67,7 +67,7 @@ PostMule/
 - Nav: Mail (`/`), Entities, Settings, Logs, Providers
 - Mail: status widget + filter tabs (All, Bills, Notices, Forward To Me, Unassigned); entity match proposals inline per item
 - Providers page: category tabs + "All / Configured only" toggle
-- Brand reference: `postmule/web/templates/brand_reference.html` | Living mockup: `docs/mockup_dashboard.html` (keep in sync; published at https://postmule.com/mockup_dashboard.html)
+- Brand reference: `postmule/web/templates/brand_reference.html` | Living mockup: `docs/mockup_dashboard.html` (keep in sync; published at https://postmule.github.io/app/mockup_dashboard.html)
 
 ## File Naming
 `{date}_{recipients}_{sender}_{category}.pdf` — e.g., `2025-11-15_Alice_ATT_Bill.pdf`

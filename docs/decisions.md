@@ -70,4 +70,4 @@ The docs/ source file is the canonical copy. The static/ copy is what the runnin
 ## Public Website
 
 **`docs/index.html` is the public landing page, served at postmule.com via GitHub Pages.**
-GitHub Pages serves from `docs/` on the `main` branch. `docs/CNAME` contains `postmule.com`. The landing page uses relative paths to `logo_face.png` and `mockup_dashboard.html` — keep all three files in `docs/` together. DNS configuration is tracked in issue #91.
+GitHub Pages serves from `docs/` on the `main` branch. The landing page uses relative paths to `logo_face.png` and `mockup_dashboard.html` — keep all three files in `docs/` together. DNS configuration and CNAME setup are tracked in issue #91: once DNS A records point to GitHub Pages, add `docs/CNAME` containing `postmule.com` to enable the custom domain.
