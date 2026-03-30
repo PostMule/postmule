@@ -4,10 +4,16 @@
   <meta charset="UTF-8">
   <title>PostMule — Login</title>
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+  <link rel="icon" type="image/png" sizes="64x64" href="/static/favicon-64.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
 </head>
 <body class="login-body">
   <div class="login-card">
-    <h1>Post<span style="color:#E8A020;">Mule</span></h1>
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px;">
+      <img src="/static/logo_face.png" width="40" height="36" alt="PostMule logo" style="display:block;border-radius:4px;">
+      <h1 style="margin:0;">Post<span style="color:#E8A020;">Mule</span></h1>
+    </div>
     <form method="post">
       {% if error %}<div class="login-error">{{ error }}</div>{% endif %}
       <input class="login-input" type="password" name="password" placeholder="Dashboard password" autofocus>
