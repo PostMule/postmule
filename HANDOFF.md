@@ -7,7 +7,7 @@
 ## Last Completed
 > Maintenance: before adding a new entry, delete the previous one. One issue max. Full history is in `git log`.
 
-Session 2026-03-29 (5): Logo integration — #89: generated favicon.ico (32×32), favicon-64.png, apple-touch-icon.png from logo_face.png via Pillow; copied logo_face.png to static/; wired <link rel="icon"> tags in page.html. #88: replaced SVG placeholder in nav (page.html, mockup_dashboard.html) with logo_face.png img tag; added logo alongside wordmark in email header (email_daily.html, mockup_email_daily.html) using dashboard_url for absolute src.
+Session 2026-03-29 (6): Branding consistency audit — #90: added logo_face.png + favicon tags to login.html; created docs/index.html as the public GitHub Pages landing page (hero, how it works, features, install, preview CTA, footer) using brand colors and logo. All web-facing components now show the mascot logo consistently.
 
 ---
 
