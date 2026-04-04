@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PostMule Council Report</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1C1A1D;
+    --lime: #E2F075;
+    --white: #FFFFFF;
+    --card-bg: rgba(255,255,255,0.05);
+    --border: rgba(255,255,255,0.1);
+    --muted: rgba(255,255,255,0.45);
+    --danger-bg: rgba(255,80,80,0.12);
+    --danger-border: rgba(255,80,80,0.4);
+    --danger-text: #ff9090;
+  }
+
+  body {
+    background: var(--ink);
+    color: var(--white);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    padding: 0;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    padding: 72px 24px 56px;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(226,240,117,0.07) 0%, transparent 70%);
+  }
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--lime);
+    margin-bottom: 20px;
+    opacity: 0.8;
+  }
+  .header h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    max-width: 780px;
+    margin: 0 auto 20px;
+  }
+  .header-underline {
+    width: 64px;
+    height: 3px;
+    background: var(--lime);
+    margin: 0 auto 28px;
+    border-radius: 2px;
+  }
+  .header-subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .header-meta {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+  .header-meta-item {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  .header-meta-item strong {
+    color: var(--white);
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  /* LAYOUT */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  section {
+    padding: 64px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  section:last-of-type { border-bottom: none; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--lime);
+    margin-bottom: 36px;
+    opacity: 0.8;
+  }
+
+  /* COUNCIL CARDS */
+  .council-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  .council-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .council-card:hover {
+    border-color: rgba(226,240,117,0.3);
+    background: rgba(255,255,255,0.07);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    gap: 12px;
+  }
+  .persona-name {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .role-badge {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: rgba(226,240,117,0.12);
+    color: var(--lime);
+    border: 1px solid rgba(226,240,117,0.25);
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .card-verdict {
+    font-size: 14px;
+    color: var(--lime);
+    font-weight: 500;
+    line-height: 1.5;
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-points {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .card-points li {
+    font-size: 13px;
+    color: rgba(255,255,255,0.8);
+    padding-left: 18px;
+    position: relative;
+    line-height: 1.55;
+  }
+  .card-points li::before {
+    content: '\2192';
+    position: absolute;
+    left: 0;
+    color: var(--lime);
+    opacity: 0.6;
+    font-size: 12px;
+  }
+
+  .card-bias {
+    font-size: 11.5px;
+    color: var(--muted);
+    font-style: italic;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+
+  /* PEER REVIEW */
+  .peer-review-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .peer-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .peer-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 22px;
+    cursor: pointer;
+    user-select: none;
+    gap: 12px;
+  }
+  .peer-card-header:hover { background: rgba(255,255,255,0.03); }
+
+  .peer-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .peer-label-badge {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: var(--muted);
+  }
+  .peer-toggle {
+    color: var(--muted);
+    font-size: 18px;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .peer-card.open .peer-toggle { transform: rotate(180deg); }
+
+  .peer-card-body {
+    display: none;
+    padding: 0 22px 22px;
+  }
+  .peer-card.open .peer-card-body { display: block; }
+
+  .peer-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  @media (max-width: 640px) { .peer-row { grid-template-columns: 1fr; } }
+
+  .peer-agree, .peer-challenge {
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .peer-agree {
+    background: rgba(226,240,117,0.06);
+    border: 1px solid rgba(226,240,117,0.15);
+  }
+  .peer-challenge {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+  }
+  .peer-agree-label, .peer-challenge-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .peer-agree-label { color: var(--lime); opacity: 0.8; }
+  .peer-challenge-label { color: var(--muted); }
+
+  /* CHAIRMAN */
+  .chairman-box {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--lime);
+    border-radius: 12px;
+    padding: 40px;
+  }
+
+  .chairman-section { margin-bottom: 36px; }
+  .chairman-section:last-child { margin-bottom: 0; }
+
+  .chairman-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .tension-list, .option-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .tension-list li {
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.6;
+  }
+  .tension-list li strong { color: var(--white); }
+
+  .option-item {
+    padding: 20px 22px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .option-number {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--lime);
+    opacity: 0.7;
+    margin-bottom: 6px;
+  }
+  .option-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .option-body {
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.65;
+  }
+
+  .recommendation-block {
+    background: rgba(226,240,117,0.08);
+    border: 1px solid rgba(226,240,117,0.2);
+    border-radius: 10px;
+    padding: 24px;
+  }
+  .recommendation-block p {
+    font-size: 14.5px;
+    color: var(--white);
+    line-height: 1.7;
+    margin-bottom: 14px;
+  }
+  .recommendation-block p:last-child { margin-bottom: 0; }
+  .recommendation-block strong { color: var(--lime); }
+
+  .dealbreaker-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .dealbreaker-item {
+    background: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    font-size: 13.5px;
+    color: var(--white);
+    line-height: 1.65;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .dealbreaker-icon {
+    color: var(--danger-text);
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .dealbreaker-item strong { color: var(--danger-text); }
+
+  /* FOOTER */
+  .footer {
+    text-align: center;
+    padding: 40px 24px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  .footer a { color: var(--lime); text-decoration: none; opacity: 0.7; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-eyebrow">Multi-Persona Decision Council</div>
+  <h1>PostMule Architecture &amp; Direction Review</h1>
+  <div class="header-underline"></div>
+  <p class="header-subtitle">A stress-test of PostMule's architecture, design decisions, and readiness for non-technical self-hosters — before more features are built on the current foundation.</p>
+  <div class="header-meta">
+    <div class="header-meta-item"><strong>5</strong>Council Members</div>
+    <div class="header-meta-item"><strong>2</strong>Review Rounds</div>
+    <div class="header-meta-item"><strong>3</strong>Deal-Breakers</div>
+    <div class="header-meta-item"><strong>2026-04-04</strong>Session Date</div>
+  </div>
+</div>
+
+<!-- SECTION 1: COUNCIL CARDS -->
+<section>
+  <div class="container">
+    <div class="section-label">§1 — Council Verdicts</div>
+    <div class="council-grid">
+
+      <div class="council-card">
+        <div class="card-header">
+          <span class="persona-name">The Researcher</span>
+          <span class="role-badge">Evidence-First</span>
+        </div>
+        <div class="card-verdict">The pipeline is architecturally sound, but the Google Cloud OAuth prerequisite chain is a hard stop for the target audience — and the VPM API response shape has never been confirmed against a live account.</div>
+        <ul class="card-points">
+          <li>The Google Cloud setup (project creation, API enablement, OAuth consent flow, credentials.json) is the first gate every non-technical user hits — and it precedes every value the app delivers.</li>
+          <li>Finance integration is either unvalidated DOM scraping (Simplifi, Monarch Money) or requires a separate paid subscription (YNAB at $14.99/mo). Bill matching is effectively non-functional for new users without significant additional setup.</li>
+          <li>VPM API fields are handled with multiple fallback keys in production code — a pattern that signals the actual response shape was never confirmed during development. Issue #30 has been open since 2026-03-25 with no activity.</li>
+        </ul>
+        <div class="card-bias">Declared bias: Stays close to observable evidence in the codebase. Elevated confidence where code can be read directly; flags speculation explicitly.</div>
+      </div>
+
+      <div class="council-card">
+        <div class="card-header">
+          <span class="persona-name">The Skeptic</span>
+          <span class="role-badge">Stress-Test</span>
+        </div>
+        <div class="card-verdict">The target user — a non-technical former Paytrust customer — cannot realistically self-host this application as currently designed. The gap between what PostMule requires and what this audience can do is product-ending wide.</div>
+        <ul class="card-points">
+          <li>The installation surface is a reliability cliff: Python, venv, Google Cloud OAuth, YNAB API, VPM credentials, config.yaml — each step has its own failure mode. Packaging all of this including a native Tesseract binary into a reliable Windows installer has derailed many projects.</li>
+          <li>The never-run-in-production pipeline has at least seven deviation points where real data will differ from test assumptions. Soft deletes and audit logs are good safeguards — but they assume the user can read and act on an audit log, which non-technical users cannot.</li>
+          <li>Bill matching on exact amount + exact date is principled but brittle. Banks smear ACH settlement dates, add rounding cents, and post on holidays. Unmatched bills surface as pending review items, but non-technical users won't understand the approval queue or why it exists.</li>
+        </ul>
+        <div class="card-bias">Declared bias: Seeks the strongest case against the leading option. Assumes failure until proven otherwise.</div>
+      </div>
+
+      <div class="council-card">
+        <div class="card-header">
+          <span class="persona-name">The Strategist</span>
+          <span class="role-badge">Long-Term View</span>
+        </div>
+        <div class="card-verdict">PostMule solves a real problem with serious ambition, but the architecture is optimized for a developer persona that doesn't exist in the target user base. The 12-month risk isn't that the software fails — it's that the software works and nobody can run it.</div>
+        <ul class="card-points">
+          <li>The installation gap widens with every feature added. Every new dependency, config key, or external service added before closing the setup gap is another silent failure waiting at 2am on a machine the developer has never touched.</li>
+          <li>The never-run-in-production liability accumulates. Bill management is high-consequence. Every design decision made without production feedback is a hypothesis. The first external users become unwitting beta testers for foundational assumptions.</li>
+          <li>The self-hosted model creates a structural support trap. Windows updates break Python environments, OAuth tokens expire, VPM API changes its shape, Task Scheduler misfires after DST. Non-technical users don't file GitHub issues — they quietly stop using the software.</li>
+        </ul>
+        <div class="card-bias">Declared bias: Optimizes for compounding effects over 12-36 months. Discounts short-term friction in favor of long-term structural leverage.</div>
+      </div>
+
+      <div class="council-card">
+        <div class="card-header">
+          <span class="persona-name">The Operator</span>
+          <span class="role-badge">Execution Reality</span>
+        </div>
+        <div class="card-verdict">PostMule is architecturally coherent, but the fastest path to any meaningful result — for users or for the developer — is one complete production run against the developer's own real mail before any user-facing work continues.</div>
+        <ul class="card-points">
+          <li>The setup experience will eliminate the target audience before they see the product. The installer skeleton exists (postmule.iss, build.ps1) but has never been built against a real Python environment with Tesseract bundled. Getting this to "just works" on a fresh Windows 11 machine is the product for this audience.</li>
+          <li>ACH date smearing, holiday posting, and rounding differences will surface matching failures at volume. LLM classification on real PDFs (AT&amp;T, Cigna, local water utility) will produce unexpected categories. Budget 40-80 hours of debugging after the first live run.</li>
+          <li>Google dependency concentration is a single point of failure. The provider/adapter pattern is the right architecture — but the default configuration requires Google Cloud Console setup that defeats the target user before first run.</li>
+        </ul>
+        <div class="card-bias">Declared bias: Values immediate executability. Skeptical of plans that don't have a clear next action.</div>
+      </div>
+
+      <div class="council-card">
+        <div class="card-header">
+          <span class="persona-name">The Creative</span>
+          <span class="role-badge">Lateral Thinking</span>
+        </div>
+        <div class="card-verdict">PostMule is solving a distribution problem disguised as a software problem. "Self-hosted for non-technical users" may be an oxymoron — and the question worth asking is whether the self-hosting constraint is a design principle or just an inherited assumption.</div>
+        <ul class="card-points">
+          <li>Alternative: Abandon self-hosting entirely; become a thin config layer over cloud functions. PostMule becomes a Google Apps Script or Cloud Run job deployed with one click — no local server, no Python, no scheduler. (Note from peer review: this trades setup complexity for credential custody — may conflict with the core value proposition.)</li>
+          <li>Alternative: Treat the first production run as the product. Run PostMule publicly against real mail, document every failure, narrate it on GitHub Discussions. Generate community and proof-of-life simultaneously at zero extra cost.</li>
+          <li>Alternative: Ship a pre-configured VirtualBox OVA instead of PostMuleSetup.exe. The user answers five questions and it runs. Treats PostMule as an appliance, not an application.</li>
+        </ul>
+        <div class="card-bias">Declared bias: Seeks third paths and reframes. Frequently overstates feasibility of alternatives — use as provocation, not prescription.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 2: PEER REVIEW -->
+<section>
+  <div class="container">
+    <div class="section-label">§2 — Peer Review &nbsp;(A = Operator &nbsp;·&nbsp; B = Creative &nbsp;·&nbsp; C = Researcher &nbsp;·&nbsp; D = Skeptic &nbsp;·&nbsp; E = Strategist)</div>
+    <div class="peer-review-grid">
+
+      <div class="peer-card open">
+        <div class="peer-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <div class="peer-card-title">
+            <span class="peer-label-badge">Reviewer: C</span>
+            The Researcher — Evidence-First Response
+          </div>
+          <span class="peer-toggle">&#9662;</span>
+        </div>
+        <div class="peer-card-body">
+          <div class="peer-row">
+            <div class="peer-agree">
+              <div class="peer-agree-label">Agrees Strongly With</div>
+              <p><strong>C (self) on VPM API:</strong> The fallback key pattern is directly observable in the production code — multiple fallbacks per field, handling both old and new response shapes simultaneously. This is not defensive coding against a documented API; it is hedging against a response shape never confirmed in production. Most evidenced claim in the set.</p>
+              <br>
+              <p><strong>D on OAuth expiry:</strong> No token-refresh alert path is visible in the notification code. Recovery requires a browser OAuth flow a scheduled task cannot initiate. Not speculation — follows directly from how Google OAuth works and the observable absence of self-healing logic.</p>
+            </div>
+            <div class="peer-challenge">
+              <div class="peer-challenge-label">Challenges</div>
+              <p><strong>A's 3-6 week installer estimate:</strong> Unsupported. The installer scaffolding already exists: installer/postmule.iss, installer/build.ps1, GitHub Actions release workflow. The unknown is whether PyInstaller correctly bundles Tesseract — not whether the installer needs to be built from scratch. The estimate implicitly assumes nothing exists.</p>
+              <br>
+              <p><strong>E on "never-run-in-production" scope:</strong> Applied too broadly. YNAB uses the official documented REST API — low risk. Gemini uses a documented API. The genuinely unvalidated surfaces are VPM and OCR pipeline diversity. The framing is correct directionally but overstates the unvalidated area.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="peer-card">
+        <div class="peer-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <div class="peer-card-title">
+            <span class="peer-label-badge">Reviewer: D</span>
+            The Skeptic — Stress-Test Response
+          </div>
+          <span class="peer-toggle">&#9662;</span>
+        </div>
+        <div class="peer-card-body">
+          <div class="peer-row">
+            <div class="peer-agree">
+              <div class="peer-agree-label">Agrees Strongly With</div>
+              <p><strong>D (self) on OAuth expiry:</strong> The sharpest concrete failure mode. Silent failure after successful setup — when the user believes the system is working — is categorically worse than a hard installation failure. Post-deployment, invisible, high-consequence. The most important observation in the entire set.</p>
+              <br>
+              <p><strong>C on VPM API:</strong> Underweighted by everyone else. The fallback key pattern is a code smell screaming "we don't control this surface." If VPM changes their API response shape, intake breaks silently. This deserves its own risk category, not a footnote.</p>
+            </div>
+            <div class="peer-challenge">
+              <div class="peer-challenge-label">Challenges</div>
+              <p><strong>B's "abandon self-hosting":</strong> Intellectually attractive, practically hollow. Google Apps Script has 6-minute execution limits, no persistent filesystem, no path to running pdfplumber or pytesseract. Cloud Run eliminates the cost-free premise. The bootable USB trades one installation cliff for another (BIOS boot order, VirtualBox networking for non-technical users). The reframing question is good; the proposed answers are not.</p>
+              <br>
+              <p><strong>A's "ship the installer and you're done":</strong> A successful installer still leaves OAuth expiry, VPM fragility, and bill matching brittleness intact. It is a necessary condition, not a sufficient one. Treating the installer as the finish line sets a milestone that will feel like completion but isn't.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="peer-card">
+        <div class="peer-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <div class="peer-card-title">
+            <span class="peer-label-badge">Reviewer: E</span>
+            The Strategist — Long-Term Response
+          </div>
+          <span class="peer-toggle">&#9662;</span>
+        </div>
+        <div class="peer-card-body">
+          <div class="peer-row">
+            <div class="peer-agree">
+              <div class="peer-agree-label">Agrees Strongly With</div>
+              <p><strong>B:</strong> The reframing question — "would the target user want 'install this Python app' or 'here's your login'?" — is the sharpest single sentence in the set. B is the only perspective that challenges the self-hosting assumption at the root rather than trying to sand down its rough edges. That is the correct level at which to apply strategic pressure, even if the proposed alternatives need more work.</p>
+              <br>
+              <p><strong>D on OAuth expiry:</strong> Silent failure after successful setup is a class of failure that makes the product untrustworthy in practice regardless of matching logic quality. D is asking "what happens after it's been running for 90 days?" — which is a more important question than "can the user get it running?"</p>
+            </div>
+            <div class="peer-challenge">
+              <div class="peer-challenge-label">Challenges</div>
+              <p><strong>A's "developer production run solves it":</strong> A developer production run solves the developer's validation problem, not the user's installation problem. The developer can re-auth tokens; the developer isn't confused by Task Scheduler. Dogfooding validates pipeline logic only — it does not validate the user experience at all.</p>
+              <br>
+              <p><strong>E (self):</strong> "Design for operational transparency first" accepts self-hosting as the delivery model. The more honest conclusion from my own analysis is the same as B's: if the architecture is optimized for a developer persona that doesn't exist in the target base, better error messages won't fix it. The self-hosting question needs to be explicitly decided, not assumed.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="peer-card">
+        <div class="peer-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <div class="peer-card-title">
+            <span class="peer-label-badge">Reviewer: A</span>
+            The Operator — Execution Response
+          </div>
+          <span class="peer-toggle">&#9662;</span>
+        </div>
+        <div class="peer-card-body">
+          <div class="peer-row">
+            <div class="peer-agree">
+              <div class="peer-agree-label">Agrees Strongly With</div>
+              <p><strong>D on OAuth expiry:</strong> Silent, post-deployment, high-consequence, no recovery path a scheduled task can execute. Every other analyst gestures at "non-technical users can't do this" — D names the specific mechanism that kills it even after successful setup. That's the most actionable observation.</p>
+              <br>
+              <p><strong>C on issue #30:</strong> "End-to-end validation never closed" is the most immediately actionable finding. If the response shape was never confirmed against a live account, the fallback logic is untested fiction. This is a concrete gap with a concrete fix.</p>
+            </div>
+            <div class="peer-challenge">
+              <div class="peer-challenge-label">Challenges</div>
+              <p><strong>B's alternatives:</strong> The least actionable output. Cloud Run and Google Apps Script change the storage model, scheduling model, credential model, and privacy posture simultaneously. The bootable USB ignores that the app has persistent state (JSON files, Drive layout, credentials) that doesn't survive a stateless boot. These are thought experiments, not options.</p>
+              <br>
+              <p><strong>E's guiding principle:</strong> Correct in principle, nearly meaningless in practice. What does "operational transparency" mean for a scheduled Python script at 2am? E doesn't say. D's OAuth expiry and C's issue #30 tell you exactly what to do next; E's framing disappears by the time someone opens a terminal.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="peer-card">
+        <div class="peer-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <div class="peer-card-title">
+            <span class="peer-label-badge">Reviewer: B</span>
+            The Creative — Lateral Response
+          </div>
+          <span class="peer-toggle">&#9662;</span>
+        </div>
+        <div class="peer-card-body">
+          <div class="peer-row">
+            <div class="peer-agree">
+              <div class="peer-agree-label">Agrees Strongly With</div>
+              <p><strong>D on OAuth expiry:</strong> Everyone else asks "can the user get it running?" D asks "what happens after it's been running for 90 days?" That is the harder and more important question. The answer — silent OAuth expiry with no recovery path — means the system as designed cannot be left unattended by a non-technical user. That is the entire premise of the product.</p>
+              <br>
+              <p><strong>E on accumulating risk:</strong> "The architecture actively accumulates risk the longer it runs unattended" is precise and damning. It's not just that the target user can't run it — the system gets progressively less trustworthy the longer it operates without developer oversight.</p>
+            </div>
+            <div class="peer-challenge">
+              <div class="peer-challenge-label">Challenges</div>
+              <p><strong>B (self) on "abandon self-hosting":</strong> Too fast. Never asked why the constraint exists. If PostMule fills the Paytrust gap, the reason Paytrust failed is relevant — it was a centralized service users had to trust with financial credentials. Self-hosting may not be an accident; it may be the entire point. My framing traded one trust problem (setup complexity) for a potentially larger one (credential custody).</p>
+              <br>
+              <p><strong>C on VPM "critical unknown":</strong> Flagging it as an open question keeps it in limbo. The correct response is a design decision: build a scraping fallback the system can fail over to automatically, or treat VPM as explicitly unsupported until the API is confirmed. It needs to become a GitHub issue with a decision attached.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 3: CHAIRMAN -->
+<section>
+  <div class="container">
+    <div class="section-label">§3 — Chairman's Synthesis</div>
+    <div class="chairman-box">
+
+      <div class="chairman-section">
+        <div class="chairman-section-title">Key Tensions</div>
+        <ul class="tension-list">
+          <li><strong>Self-hosted vs. target audience capability.</strong> The most unanimous finding across all five council members. Paytrust users never operated infrastructure — they used a hosted service. Every architectural decision that adds setup complexity widens this gap. Whether self-hosting is a core design principle (user data ownership, privacy, no subscription) or an inherited default was never explicitly resolved — and the answer should drive the entire roadmap. Note: the Skeptic correctly challenged the Creative's "abandon self-hosting" alternatives in peer review — the alternatives don't survive contact with the technical constraints. But the question must be answered explicitly.</li>
+          <li><strong>"Build more features" vs. "run it once first."</strong> Every member, in different language, reached the same conclusion: the developer has never run PostMule against live data, and this is the highest-risk single fact in the architecture. Bill matching assumptions, VPM API response shapes, LLM classification on real PDFs, OAuth token behavior under real usage — all are hypotheses. The Operator was right that some of these require live data to test. The Creative's suggestion to make the first run public is additive at no extra cost.</li>
+          <li><strong>Silent failure vs. operational transparency.</strong> The Skeptic raised the post-deployment failure mode (OAuth expiry, silent pipeline crash at 2am) that all other analyses underweighted, and peer review confirmed it as the most important single observation in the session. This is not a documentation or UX polish problem — it is an architecture problem that requires specific engineered solutions. A system that fails silently in a bill management context is worse than a system that doesn't run at all.</li>
+        </ul>
+      </div>
+
+      <div class="chairman-section">
+        <div class="chairman-section-title">Strongest Options</div>
+        <ol class="option-list">
+          <li class="option-item">
+            <div class="option-number">Option 1 — Prerequisite to everything else</div>
+            <div class="option-title">Run PostMule on real mail for 30-60 days before any other work</div>
+            <div class="option-body">The developer uses PostMule themselves, in production, against their actual VPM account and Gmail inbox, before any more features are built or any external users are invited. This surfaces every failure mode that 80% unit test coverage cannot: VPM API shape, LLM misclassification rate, ACH matching edge cases, token expiry behavior, Drive write failures under real latency. The Researcher confirmed this is the only path to closing issue #30, which has been open since March 2026 with no progress. The Creative's suggestion to document this publicly is additive at no extra cost — a narrated first run on GitHub Discussions or a blog generates community, surfaces user empathy, and produces proof-of-life before any marketing effort.</div>
+          </li>
+          <li class="option-item">
+            <div class="option-number">Option 2 — Required before public release</div>
+            <div class="option-title">Engineer silent failure out of the system</div>
+            <div class="option-body">The Google OAuth expiry problem is the most agreed-upon finding across the entire council, confirmed by four of five reviewers in peer review as the sharpest concrete failure mode. The current architecture runs a pipeline at 2am with no self-healing on credential expiry, no user-facing notification when the pipeline fails, and no recovery path that doesn't require running a Python script. Before any public release, three things must exist: (1) a proactive alert sent to the user when the daily pipeline does not complete — via email or the dashboard, (2) a token refresh UI accessible through the dashboard that does not require a terminal, and (3) a daily health heartbeat (the summary email on success doubles as this; the absence of it is the failure signal). This is what "operational transparency" concretely means.</div>
+          </li>
+          <li class="option-item">
+            <div class="option-number">Option 3 — Structural prerequisite for the target audience</div>
+            <div class="option-title">Make the default configuration require no Google Cloud Console setup</div>
+            <div class="option-body">The current default requires creating a Google Cloud project, enabling two APIs, and completing an OAuth consent flow before the app does anything. The provider/adapter pattern already exists to solve this. The near-term work: make local file storage the default (not Google Drive), add a local SQLite or CSV-backed spreadsheet view (not Google Sheets), and support direct IMAP/SMTP for email intake (not Gmail API). Google integrations remain available for users who want them — they are simply not the onboarding gate. This reduces the setup cliff from "requires a developer to set up" to "requires an email address and a VPM account" — which is much closer to what the target user can actually do. This also resolves the OAuth expiry problem partially, since the local default path has no OAuth dependency.</div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="chairman-section">
+        <div class="chairman-section-title">Recommendation</div>
+        <div class="recommendation-block">
+          <p><strong>Do not build any new features until the developer has completed one full production cycle on their own real mail.</strong> Run PostMule against a real VPM account, real Gmail inbox, and real bank transactions for a minimum of 30 days. Document everything that breaks. This is not optional — it is the only way to know whether the current foundational assumptions (VPM API fields, LLM classification accuracy, ACH matching edge cases, OAuth token behavior) are correct. Every issue found in this run costs a fraction of what it costs to fix after external users hit it.</p>
+          <p>After the first live run, prioritize in this order: (1) close the silent-failure gap — OAuth re-auth UI, pipeline failure alerting, heartbeat; (2) design a default configuration that requires no Google Cloud Console setup, using the existing provider/adapter pattern; (3) validate the installer on a fresh Windows 11 machine with a screen recording. Public release should follow installer validation, not precede it.</p>
+          <p><strong>On the self-hosting question:</strong> Do not abandon it. The Skeptic and Creative correctly identified onboarding friction, but self-hosting may be the entire value proposition for users who lost a managed service and want control over their financial documents. The Researcher and Creative (in peer review) confirmed this is a reasoned tradeoff, not an oversight. The answer is not to remove self-hosting — it is to make the default path dramatically simpler by changing what providers are used by default. The architecture already supports this. Exercise it.</p>
+        </div>
+      </div>
+
+      <div class="chairman-section">
+        <div class="chairman-section-title">Deal-Breakers</div>
+        <ul class="dealbreaker-list">
+          <li class="dealbreaker-item">
+            <span class="dealbreaker-icon">&#9888;</span>
+            <div><strong>Google OAuth silent expiry (Skeptic — confirmed by all five in peer review).</strong> When tokens expire, the pipeline fails silently at 2am. The user wakes up to no summary email, no indication of failure, and bills unprocessed until they notice. Recovery requires a Python script and a browser OAuth flow that a scheduled task cannot initiate. There is no self-healing. This is a product-ending event for the target audience if it reaches public release unresolved. Required before shipping: dashboard-accessible re-auth flow + pipeline failure alert sent to the user.</div>
+          </li>
+          <li class="dealbreaker-item">
+            <span class="dealbreaker-icon">&#9888;</span>
+            <div><strong>VPM API is undocumented and unvalidated (Researcher — confirmed by code inspection).</strong> The entire physical mail ingestion path depends on an API endpoint whose response shape was never confirmed against a live account — evidenced by the multiple fallback keys in production code for every field. If VPM changes or gates this endpoint, the primary intake channel breaks silently. This must become a GitHub issue with an explicit design decision: confirm the API is stable and document it, or build a fallback path. It cannot remain an open question.</div>
+          </li>
+          <li class="dealbreaker-item">
+            <span class="dealbreaker-icon">&#9888;</span>
+            <div><strong>Default setup requires Google Cloud Console (unanimous across all five members).</strong> Every council member identified the Google Cloud prerequisite chain as a hard stop for the target audience. This has the clearest architectural solution in hand: the provider/adapter pattern supports swapping Google Drive, Sheets, and Gmail for local alternatives with one config change. The default configuration must not require Google Cloud Console setup before any non-technical user can realistically self-host PostMule. This is not a polish item — it is a structural barrier to the stated mission.</div>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="footer">
+  Generated by Council This &nbsp;&middot;&nbsp; <a href="https://github.com/PostMule/app">PostMule</a> Claude Code Skill &nbsp;&middot;&nbsp; 2026-04-04
+</div>
+
+<script>
+  document.querySelectorAll('.peer-card-header').forEach(function(header) {
+    header.addEventListener('click', function() {
+      this.parentElement.classList.toggle('open');
+    });
+  });
+</script>
+
+</body>
+</html>
