@@ -7,7 +7,7 @@
 ## Last Completed
 > Maintenance: before adding a new entry, delete the previous one. One issue max. Full history is in `git log`.
 
-Session 2026-03-29 (6): Branding consistency audit — #90: added logo_face.png + favicon tags to login.html; created docs/index.html as the public GitHub Pages landing page (hero, how it works, features, install, preview CTA, footer) using brand colors and logo. All web-facing components now show the mascot logo consistently.
+Session 2026-03-29 (7): Branding/docs cleanup — README now surfaces postmule.com; decisions.md updated with logo usage rules, favicon generation process, and landing page setup. All actionable issues closed; three remain blocked (see below).
 
 ---
 
