@@ -7,19 +7,23 @@
 ## Last Completed
 > Maintenance: before adding a new entry, delete the previous one. One issue max. Full history is in `git log`.
 
-Session 2026-04-05 (3): Fixed two more installer issues — #99 (hatchling build backend, now closed) and #100 (Task Scheduler admin check, now closed). PostMule installed at C:\Users\openclaw0123\PostMule. setup.ps1 ran but died before dry-run due to Task Scheduler access denied. Config files exist but "Pattern not matched" warnings suggest values may not have been written. Owner needs to: (1) verify config.yaml and credentials.yaml have correct values, (2) run `postmule --dry-run` manually.
+Session 2026-04-05 (4): Completed live validation setup (#30 still open — no VPM mail to process yet). PostMule at C:\Users\openclaw0123\PostMule now runs clean dry-runs with Gmail + Gemini credentials loading correctly. Identified and filed #102 (first-run web wizard) as the root cause fix for the painful manual setup experience. Issue #102 fully detailed and ready to build.
 
 ---
 
 ## Next
+
 > Check `gh issue list --repo PostMule/app` for current state before starting.
 > Do not suggest or offer to work on blocked or deferred issues — only note they exist.
 
-**In progress:** Live validation (#30) — PostMule installed at C:\Users\openclaw0123\PostMule. Next step: run `powershell -ExecutionPolicy Bypass -File .\setup.ps1` to complete config wizard (alert email, VPM sender, Gemini key, master password), then `postmule --dry-run`. See memory/setup_validation.md for full config details.
+**Recommended:** Build issue #102 — first-run web wizard. This is the highest-leverage item: unblocks #96 (installer validation), eliminates the manual setup pain discovered in #30, and closes #101. Full spec is in the issue.
+
+**In progress:** Live validation (#30) — PostMule installed and running at C:\Users\openclaw0123\PostMule. Dry runs pass clean. Next step after #102: trigger a real run once a VPM scan notification email arrives.
 
 **Other open issues (blocked):**
+- #101 — setup.ps1 Gemini regex bug (will be closed when #102 is built)
 - #97 — Cloud deployment investigation (owner must decide platform/cost tradeoffs first)
-- #96 — Installer validation (requires owner to run on fresh Windows 11 machine)
+- #96 — Installer validation (unblocked once #102 is done)
 - #93 — VPM API confirmation (requires live VPM account)
 - #91 — Configure DNS for postmule.com (manual registrar step)
 - #87 — Vectorize logo (requires designer/Illustrator)
