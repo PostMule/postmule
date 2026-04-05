@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "postmule"
@@ -54,6 +54,10 @@ postmule = "postmule.cli:main"
 Homepage = "https://github.com/PostMule/postmule"
 Repository = "https://github.com/PostMule/postmule"
 Issues = "https://github.com/PostMule/postmule/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["postmule*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
