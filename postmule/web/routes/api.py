@@ -251,6 +251,7 @@ def api_settings():
             "bill_matching": {
                 "require_manual_approval": cb("finance_require_approval"),
                 "amount_tolerance_cents": intv("finance_tolerance_cents", 0),
+                "date_tolerance_days": intv("finance_tolerance_days", 7),
             },
         },
         "data_protection": {

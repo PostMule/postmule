@@ -253,6 +253,7 @@ finance:
   bill_matching:
     require_manual_approval: true # true = human approves each match in dashboard
     amount_tolerance_cents: 0     # Exact amount match required (0 = no tolerance)
+    date_tolerance_days: 7        # Max days between transaction date and bill due date
 
 # ---------------------------------------------------------------------------
 # data_protection

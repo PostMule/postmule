@@ -32,7 +32,7 @@ class BillMatchResult:
     transaction_id: str
     amount: float
     date: str
-    confidence: str  # "exact" | "amount_only"
+    confidence: str  # "exact" | "fuzzy_amount" | "fuzzy_date" | "fuzzy_both"
     approved: bool = False
 
 
@@ -40,19 +40,27 @@ def match_bills_to_transactions(
     bills: list[dict[str, Any]],
     transactions: list[BankTransaction],
     amount_tolerance: float = 0.0,
+    date_tolerance_days: int = 7,
 ) -> list[BillMatchResult]:
     """
-    Match pending bills to bank transactions by exact amount + date proximity.
+    Match pending bills to bank transactions by amount + date proximity.
 
     Matching rules (per design spec):
-      - Exact amount match required (or within tolerance)
-      - Transaction date within 7 days of bill due date
+      - Amount must match within amount_tolerance dollars (0 = exact)
+      - Transaction date within date_tolerance_days of bill due date
       - Payee name NOT used (finance apps overwrite with wrong names)
 
+    Confidence values:
+      "exact"        — amount and date both exact
+      "fuzzy_amount" — date exact, amount within tolerance
+      "fuzzy_date"   — amount exact, date within tolerance
+      "fuzzy_both"   — both amount and date within tolerance (not exact)
+
     Args:
-        bills:             List of pending bill dicts from bills_YYYY.json.
-        transactions:      List of BankTransaction from any provider.
-        amount_tolerance:  Maximum dollar difference (0 = exact match).
+        bills:              List of pending bill dicts from bills_YYYY.json.
+        transactions:       List of BankTransaction from any provider.
+        amount_tolerance:   Maximum dollar difference (0 = exact match).
+        date_tolerance_days: Maximum days between transaction date and due date.
 
     Returns:
         List of BillMatchResult candidates for human approval.
@@ -68,23 +76,36 @@ def match_bills_to_transactions(
 
         for txn in transactions:
             txn_amount = abs(txn.amount)
-            if abs(txn_amount - bill_amount) > amount_tolerance:
+            amount_diff = abs(txn_amount - bill_amount)
+            if amount_diff > amount_tolerance:
                 continue
 
             try:
                 due = date_type.fromisoformat(bill_due)
                 txn_date = date_type.fromisoformat(txn.date)
-                if abs((txn_date - due).days) > 7:
+                date_diff = abs((txn_date - due).days)
+                if date_diff > date_tolerance_days:
                     continue
             except ValueError:
                 continue
+
+            amount_exact = amount_diff == 0
+            date_exact = date_diff == 0
+            if amount_exact and date_exact:
+                confidence = "exact"
+            elif amount_exact:
+                confidence = "fuzzy_date"
+            elif date_exact:
+                confidence = "fuzzy_amount"
+            else:
+                confidence = "fuzzy_both"
 
             matches.append(BillMatchResult(
                 bill_id=bill["id"],
                 transaction_id=txn.transaction_id,
                 amount=bill_amount,
                 date=txn.date,
-                confidence="exact" if abs(txn_amount - bill_amount) == 0 else "amount_only",
+                confidence=confidence,
             ))
             break  # one match per bill
 

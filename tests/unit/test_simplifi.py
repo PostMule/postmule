@@ -170,10 +170,36 @@ class TestMatchBillsToTransactions:
         txn = self._make_txn(amount=-94.01)
         matches = match_bills_to_transactions([bill], [txn], amount_tolerance=0.05)
         assert len(matches) == 1
-        assert matches[0].confidence == "amount_only"
+        assert matches[0].confidence == "fuzzy_amount"
 
     def test_invalid_date_skipped(self):
         bill = {"id": "x", "status": "pending", "amount_due": 10.0, "due_date": "not-a-date"}
         txn = self._make_txn(amount=-10.0)
         matches = match_bills_to_transactions([bill], [txn])
         assert matches == []
+
+    def test_date_tolerance_allows_late_posting(self):
+        from datetime import timedelta
+        today = date.today()
+        bill = self._make_bill(due_date=today.isoformat())
+        txn = self._make_txn(txn_date=(today + timedelta(days=2)).isoformat())
+        matches = match_bills_to_transactions([bill], [txn], date_tolerance_days=3)
+        assert len(matches) == 1
+        assert matches[0].confidence == "fuzzy_date"
+
+    def test_date_tolerance_zero_rejects_late_posting(self):
+        from datetime import timedelta
+        today = date.today()
+        bill = self._make_bill(due_date=today.isoformat())
+        txn = self._make_txn(txn_date=(today + timedelta(days=1)).isoformat())
+        matches = match_bills_to_transactions([bill], [txn], date_tolerance_days=0)
+        assert matches == []
+
+    def test_fuzzy_both_confidence(self):
+        from datetime import timedelta
+        today = date.today()
+        bill = self._make_bill(amount=94.00, due_date=today.isoformat())
+        txn = self._make_txn(amount=-94.10, txn_date=(today + timedelta(days=1)).isoformat())
+        matches = match_bills_to_transactions([bill], [txn], amount_tolerance=0.50, date_tolerance_days=3)
+        assert len(matches) == 1
+        assert matches[0].confidence == "fuzzy_both"

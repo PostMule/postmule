@@ -2476,6 +2476,16 @@
             <span class="s-unit">cents</span>
           </div>
         </div>
+        <div class="s-row">
+          <div class="s-label">Date Tolerance
+            <div class="s-help">Maximum days between a transaction's posting date and the bill's due date. Banks commonly post 1–3 days after the due date; 7 is a safe default.</div>
+          </div>
+          <div class="s-inline-gap">
+            <input class="s-input s-input--sm" type="number" name="finance_tolerance_days" min="0" max="30"
+                   value="{{ bm.get('date_tolerance_days',7) }}">
+            <span class="s-unit">days</span>
+          </div>
+        </div>
       </div>
     </div>
 

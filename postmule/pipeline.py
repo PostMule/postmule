@@ -731,7 +731,14 @@ def _run_bill_matching(cfg: Config, credentials: dict, data_dir: Path, dry_run: 
     _cy = _d.today().year
     _all = bills_data.load_bills(data_dir, _cy) + bills_data.load_bills(data_dir, _cy - 1)
     pending_bills = [b for b in _all if b.get("status") == "pending"]
-    matches = match_bills_to_transactions(pending_bills, transactions)
+    bm_cfg = cfg.get("finance", "bill_matching") or {}
+    amount_tolerance = float(bm_cfg.get("amount_tolerance_cents", 0)) / 100.0
+    date_tolerance_days = int(bm_cfg.get("date_tolerance_days", 7))
+    matches = match_bills_to_transactions(
+        pending_bills, transactions,
+        amount_tolerance=amount_tolerance,
+        date_tolerance_days=date_tolerance_days,
+    )
     log.info(f"Bill matching: {len(matches)} potential matches (require manual approval)")
     if matches and not dry_run:
         _save_bill_matches(data_dir, matches)
