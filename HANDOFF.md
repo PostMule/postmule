@@ -7,7 +7,7 @@
 ## Last Completed
 > Maintenance: before adding a new entry, delete the previous one. One issue max. Full history is in `git log`.
 
-Session 2026-04-04 (1): Council architecture review — ran /council-this against PostMule's full architecture for non-technical self-hosters. Produced council-report.html. Created 5 issues from findings: #92 (OAuth silent expiry + re-auth UI), #93 (VPM API unconfirmed), #94 (local-first default config), #95 (bill matching ACH tolerance), #96 (installer validation on fresh Windows 11).
+Session 2026-04-04 (2): Explored cloud deployment options to simplify PostMule for non-technical users while keeping developer off user data. Top options: Docker Compose (bundle Python/Tesseract, replace Task Scheduler with container cron) and Railway/Render one-click deploy to user's own account. Created issue #97 to track investigation. No code changes this session.
 
 ---
 
@@ -24,6 +24,7 @@ Session 2026-04-04 (1): Council architecture review — ran /council-this agains
 **Backlog (actionable in code sessions):**
 - #92 — Pipeline failure alerting + OAuth re-auth UI (no live credentials needed)
 - #94 — Local-first default config: local storage + IMAP/SMTP as defaults (no live credentials needed; highest-leverage change before public release)
+- #97 — Cloud deployment investigation: Docker Compose + Railway/Render deploy button (deferred until #30 is complete)
 - #91 — Configure DNS for postmule.com (manual registrar step, not a code task)
 - #87 — Vectorize logo (manual, external tool)
 
