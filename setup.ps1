@@ -159,8 +159,10 @@ if (Test-Path $VENV) {
 # ---------------------------------------------------------------------------
 Write-Step "Installing PostMule and dependencies..."
 $pip = Join-Path $VENV "Scripts\pip.exe"
-& $pip install --upgrade pip --quiet
+& $pip install --upgrade pip setuptools wheel --quiet
+if ($LASTEXITCODE -ne 0) { Write-Fail "Failed to upgrade pip/setuptools/wheel." }
 & $pip install -e $ROOT --quiet
+if ($LASTEXITCODE -ne 0) { Write-Fail "PostMule install failed. See errors above." }
 Write-OK "postmule installed"
 
 # ---------------------------------------------------------------------------
