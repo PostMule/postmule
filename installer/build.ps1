@@ -1,4 +1,4 @@
-# PostMule — Developer Build Script
+# PostMule - Developer Build Script
 # Builds PostMuleSetup.exe from source.
 #
 # Prerequisites (install once):
@@ -46,7 +46,7 @@ $Iscc = Find-Iscc -Hint $InnoSetupPath
 Write-Host "Using ISCC: $Iscc" -ForegroundColor Cyan
 
 # ---------------------------------------------------------------------------
-# 2. PyInstaller — bundle Python + PostMule into dist\postmule\
+# 2. PyInstaller - bundle Python + PostMule into dist\postmule\
 # ---------------------------------------------------------------------------
 if (-not $SkipPyInstaller) {
     Write-Host ""
@@ -68,7 +68,7 @@ if (-not $SkipPyInstaller) {
     if (Test-Path $SpecFile) {
         pyinstaller $SpecFile --noconfirm
     } else {
-        Write-Host "No postmule.spec found — generating with auto-detect..." -ForegroundColor Yellow
+        Write-Host "No postmule.spec found - generating with auto-detect..." -ForegroundColor Yellow
         pyinstaller `
             --name postmule `
             --onedir `
@@ -92,7 +92,7 @@ if (-not $SkipPyInstaller) {
     }
 
     if (-not (Test-Path "dist\postmule\postmule.exe")) {
-        throw "PyInstaller failed — dist\postmule\postmule.exe not found."
+        throw "PyInstaller failed - dist\postmule\postmule.exe not found."
     }
 
     Write-Host "PyInstaller bundle ready: dist\postmule\" -ForegroundColor Green
@@ -104,7 +104,7 @@ if (-not $SkipPyInstaller) {
 }
 
 # ---------------------------------------------------------------------------
-# 3. Inno Setup — compile the installer
+# 3. Inno Setup - compile the installer
 # ---------------------------------------------------------------------------
 Write-Host ""
 Write-Host "=== Inno Setup: compiling installer ===" -ForegroundColor Cyan

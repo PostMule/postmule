@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    PostMule CLI setup script — interactive or fully scripted.
+    PostMule CLI setup script - interactive or fully scripted.
 
 .DESCRIPTION
     Sets up PostMule from a cloned repo. Run with no arguments for an interactive
@@ -87,7 +87,7 @@ function Set-YamlValue([string]$file, [string]$pattern, [string]$replacement) {
     $content = Get-Content $file -Raw
     $updated = $content -replace $pattern, $replacement
     if ($updated -eq $content) {
-        Write-Warn "Pattern not matched in $file — value may already be set or file format changed."
+        Write-Warn "Pattern not matched in $file - value may already be set or file format changed."
     } else {
         Set-Content -Path $file -Value $updated -NoNewline
     }
@@ -174,14 +174,14 @@ if (-not (Test-Path $configPath)) {
     Copy-Item (Join-Path $ROOT "config.example.yaml") $configPath
     Write-OK "Created config.yaml from template"
 } else {
-    Write-OK "config.yaml already exists — skipping copy"
+    Write-OK "config.yaml already exists - skipping copy"
 }
 
 if (-not (Test-Path $credentialsPath)) {
     Copy-Item (Join-Path $ROOT "credentials.example.yaml") $credentialsPath
     Write-OK "Created credentials.yaml from template"
 } else {
-    Write-OK "credentials.yaml already exists — skipping copy"
+    Write-OK "credentials.yaml already exists - skipping copy"
 }
 
 # ---------------------------------------------------------------------------
@@ -204,7 +204,7 @@ if ($AlertEmail) {
     Set-YamlValue $configPath 'alert_email: ""' "alert_email: `"$AlertEmail`""
     Write-OK "alert_email set"
 } else {
-    Write-Warn "alert_email not set — fill in config.yaml before your first real run"
+    Write-Warn "alert_email not set - fill in config.yaml before your first real run"
 }
 
 # scan notification sender
@@ -231,7 +231,7 @@ if ($GeminiApiKey) {
     Set-YamlValue $credentialsPath '(gemini:\r?\n  api_key: )""' "`${1}`"$GeminiApiKey`""
     Write-OK "Gemini API key set"
 } else {
-    Write-Warn "Gemini API key not set — fill in credentials.yaml before your first real run"
+    Write-Warn "Gemini API key not set - fill in credentials.yaml before your first real run"
 }
 
 # ---------------------------------------------------------------------------
@@ -269,9 +269,9 @@ encrypt_credentials(Path(r'$credentialsPath'), Path(r'$(Join-Path $ROOT "credent
     }
     Write-OK "Credentials encrypted to credentials.enc"
     Write-OK "Master password saved to Windows Credential Manager"
-    Write-Warn "You can now delete credentials.yaml — credentials.enc is your encrypted copy"
+    Write-Warn "You can now delete credentials.yaml - credentials.enc is your encrypted copy"
 } else {
-    Write-Warn "Skipping encryption — run 'postmule set-master-password' and 'postmule encrypt-credentials' manually"
+    Write-Warn "Skipping encryption - run 'postmule set-master-password' and 'postmule encrypt-credentials' manually"
 }
 
 # ---------------------------------------------------------------------------
@@ -281,7 +281,7 @@ if (-not $NoTaskScheduler) {
     Write-Step "Registering Windows Task Scheduler task..."
 
     if (-not (Test-Path $POSTMULE)) {
-        Write-Warn "postmule.exe not found at expected path — skipping Task Scheduler"
+        Write-Warn "postmule.exe not found at expected path - skipping Task Scheduler"
     } else {
         $action   = New-ScheduledTaskAction -Execute $POSTMULE -WorkingDirectory $ROOT
         $trigger  = New-ScheduledTaskTrigger -Daily -At $TASK_TIME
@@ -338,5 +338,5 @@ Next steps:
      postmule run
 
 The daily task runs automatically at $TASK_TIME.
-$(if ($NoTaskScheduler) { "  (Task Scheduler was skipped — run 'postmule install-task' to register it later)" })
+$(if ($NoTaskScheduler) { "  (Task Scheduler was skipped - run 'postmule install-task' to register it later)" })
 "@

@@ -172,7 +172,7 @@ Your browser should now show the PostMule setup wizard.
 Complete setup in the browser:
   1. Click "Connect Google Account"
   2. Sign in and click Allow
-  3. Done — PostMule is ready
+  3. Done - PostMule is ready
 
 The dashboard runs at: http://localhost:5000
 The daily task runs automatically at $TASK_TIME.

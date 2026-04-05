@@ -52,7 +52,7 @@ if (Get-ScheduledTask -TaskName $TASK_NAME -ErrorAction SilentlyContinue) {
     Unregister-ScheduledTask -TaskName $TASK_NAME -Confirm:$false
     Write-OK "Task removed."
 } else {
-    Write-Warn "Task '$TASK_NAME' not found — skipping."
+    Write-Warn "Task '$TASK_NAME' not found - skipping."
 }
 
 # ------------------------------------------------------------------
@@ -66,7 +66,7 @@ if ($userPath -like "*$scriptsDir*") {
     [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
     Write-OK "Removed '$scriptsDir' from user PATH."
 } else {
-    Write-Warn "PATH entry not found — skipping."
+    Write-Warn "PATH entry not found - skipping."
 }
 
 # ------------------------------------------------------------------
@@ -74,7 +74,7 @@ if ($userPath -like "*$scriptsDir*") {
 # ------------------------------------------------------------------
 Write-Step "Removing install directory..."
 if (-not (Test-Path $InstallDir)) {
-    Write-Warn "Directory '$InstallDir' not found — skipping."
+    Write-Warn "Directory '$InstallDir' not found - skipping."
 } elseif ($KeepData) {
     # Delete everything except the data folder and credentials.enc
     $dataDir = "$InstallDir\data"
