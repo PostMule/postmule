@@ -507,8 +507,11 @@ def uninstall_task() -> None:
 @click.option("--config", default=str(DEFAULT_CONFIG), help="Path to config.yaml.")
 @click.option("--port", default=5000, show_default=True, help="Dashboard port.")
 @click.option("--host", default="127.0.0.1", show_default=True, help="Host to bind to.")
-def serve(config: str, port: int, host: str) -> None:
+@click.option("--no-browser", is_flag=True, help="Do not open a browser window on startup.")
+def serve(config: str, port: int, host: str, no_browser: bool) -> None:
     """Start the PostMule web dashboard."""
+    import threading
+    import webbrowser
     from postmule.web.app import create_app
 
     cfg_path = Path(config)
@@ -518,7 +521,10 @@ def serve(config: str, port: int, host: str) -> None:
         data_dir=install_dir / "data",
         enc_path=install_dir / "credentials.enc",
     )
-    click.echo(f"PostMule dashboard → http://{host}:{port}/")
+    url = f"http://{host}:{port}/"
+    click.echo(f"PostMule dashboard → {url}")
+    if not no_browser:
+        threading.Timer(0.8, lambda: webbrowser.open(url)).start()
     flask_app.run(host=host, port=port, debug=False)
 
 

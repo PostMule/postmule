@@ -29,7 +29,7 @@ def require_auth():
         "auth.logout",
         "static",
         "connections.setup_oauth_google_callback",
-    ):
+    ) or (request.endpoint and request.endpoint.startswith("setup.")):
         return
     pw = _app._dashboard_password()
     if not pw:

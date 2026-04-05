@@ -208,10 +208,10 @@ class TestProvidersRoute:
         assert response.status_code == 301
         assert "/providers" in response.headers["Location"]
 
-    def test_setup_redirects_to_providers(self, client):
+    def test_setup_redirects_to_wizard(self, client):
         response = client.get("/setup")
         assert response.status_code == 302
-        assert "/providers" in response.headers["Location"]
+        assert "/setup/step/" in response.headers["Location"]
 
 
 class TestApiApprove:
