@@ -282,7 +282,11 @@ encrypt_credentials(Path(r'$credentialsPath'), Path(r'$(Join-Path $ROOT "credent
 if (-not $NoTaskScheduler) {
     Write-Step "Registering Windows Task Scheduler task..."
 
-    if (-not (Test-Path $POSTMULE)) {
+    $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    if (-not $isAdmin) {
+        Write-Warn "Not running as Administrator - skipping Task Scheduler registration"
+        Write-Warn "To schedule the daily task, re-run setup.ps1 as Administrator, or run: postmule install-task"
+    } elseif (-not (Test-Path $POSTMULE)) {
         Write-Warn "postmule.exe not found at expected path - skipping Task Scheduler"
     } else {
         $action   = New-ScheduledTaskAction -Execute $POSTMULE -WorkingDirectory $ROOT
