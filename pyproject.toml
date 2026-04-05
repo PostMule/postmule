@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "postmule"
@@ -55,9 +55,8 @@ Homepage = "https://github.com/PostMule/postmule"
 Repository = "https://github.com/PostMule/postmule"
 Issues = "https://github.com/PostMule/postmule/issues"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["postmule*"]
+[tool.hatch.build.targets.wheel]
+packages = ["postmule"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -161,7 +161,7 @@ Write-Step "Installing PostMule and dependencies..."
 $pip = Join-Path $VENV "Scripts\pip.exe"
 & $PYTHON_VENV -m pip install --upgrade pip setuptools wheel --quiet
 if ($LASTEXITCODE -ne 0) { Write-Fail "Failed to upgrade pip/setuptools/wheel." }
-& $pip install $ROOT --quiet
+& $pip install -e $ROOT --quiet
 if ($LASTEXITCODE -ne 0) { Write-Fail "PostMule install failed. See errors above." }
 Write-OK "postmule installed"
 
