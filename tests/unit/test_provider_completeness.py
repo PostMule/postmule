@@ -27,6 +27,7 @@ from postmule.providers.email.proton import ProtonMailProvider
 # Storage
 from postmule.providers.storage.dropbox import DropboxProvider
 from postmule.providers.storage.google_drive import DriveProvider
+from postmule.providers.storage.local import LocalStorageProvider
 from postmule.providers.storage.onedrive import OneDriveProvider
 from postmule.providers.storage.s3 import S3Provider
 
@@ -41,6 +42,7 @@ from postmule.providers.spreadsheet.airtable import AirtableProvider
 from postmule.providers.spreadsheet.excel_online import ExcelOnlineProvider
 from postmule.providers.spreadsheet.google_sheets import SheetsProvider
 from postmule.providers.spreadsheet.none import NoneSpreadsheetProvider
+from postmule.providers.spreadsheet.sqlite import SqliteSpreadsheetProvider
 
 
 def _protocol_methods(protocol) -> set[str]:
@@ -86,6 +88,7 @@ class TestEmailProviderCompleteness:
 STORAGE_PROVIDERS = [
     DriveProvider,
     DropboxProvider,
+    LocalStorageProvider,
     OneDriveProvider,
     S3Provider,
 ]
@@ -124,6 +127,7 @@ SPREADSHEET_PROVIDERS = [
     ExcelOnlineProvider,
     NoneSpreadsheetProvider,
     SheetsProvider,
+    SqliteSpreadsheetProvider,
 ]
 
 

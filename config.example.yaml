@@ -62,35 +62,52 @@ mailbox:
 #   bill_intake           — monitors a dedicated inbox for PDF bills emailed directly
 #                           by billers (e.g. ATT, utilities). Phase 23.
 # Both roles feed the same downstream pipeline once PDFs land in storage /Inbox.
+#
+# Default: IMAP — works with Gmail (app password), Outlook, or any IMAP server.
+# No Google Cloud Console or OAuth setup required.
+# Gmail users: generate an App Password at myaccount.google.com/apppasswords.
 # ---------------------------------------------------------------------------
 email:
   providers:
-    - service: gmail              # gmail | outlook_com | outlook_365 | proton | imap
+    - service: imap               # imap | gmail | outlook_com | outlook_365 | proton
       enabled: true
+      id: "main"                  # Matches credentials.yaml → accounts.main
       role: mailbox_notifications # This account receives VPM scan notification emails
       address: ""                 # e.g. YourMailManagement@gmail.com
-      label: "PostMule"           # Label applied to processed emails
+      host: imap.gmail.com        # imap.gmail.com | outlook.office365.com | your server
+      port: 993
+      use_ssl: true
 
     # Optional: dedicated inbox for biller-sent PDF attachments (Phase 23)
     # Create a separate address (e.g. bills@yourdomain.com) and give billers that address.
     # PostMule will pull PDF attachments from this inbox and process them identically to
     # physical mail scans. Enable this after Phase 23 is implemented.
-    - service: gmail
+    - service: imap
       enabled: false
+      id: "bills"                 # Matches credentials.yaml → accounts.bills
       role: bill_intake
       address: ""                 # e.g. bills@gmail.com or bills@yourdomain.com
-      label: "PostMule-Bills"
+      host: imap.gmail.com
+      port: 993
+      use_ssl: true
+
+    # Alternative: Gmail API (requires Google Cloud Console + OAuth setup)
+    # - service: gmail
+    #   enabled: false
+    #   role: mailbox_notifications
+    #   address: ""
+    #   label: "PostMule"
 
 # ---------------------------------------------------------------------------
 # storage  (file storage provider — where PDFs and JSON data are stored)
-# Cloud storage is intentional: PDFs and JSON data survive local PC failure, and
-# reinstalling PostMule on any machine immediately picks up where you left off.
+# Default: local filesystem — files stay on this machine, no cloud account required.
+# For cloud backup and multi-machine access, switch to google_drive, s3, or dropbox.
 # ---------------------------------------------------------------------------
 storage:
   providers:
-    - service: google_drive       # google_drive | s3 | dropbox | onedrive
+    - service: local              # local | google_drive | s3 | dropbox | onedrive
       enabled: true
-      root_folder: "PostMule"     # Top-level folder name in your storage provider
+      root_dir: "C:\\ProgramData\\PostMule\\files"  # Top-level folder on this machine
       # Sub-folders created automatically on first run.
       folders:
         inbox: "Inbox"
@@ -104,26 +121,37 @@ storage:
         archive: "Archive"
         system: "_System"
 
+    # Alternative: Google Drive (requires Google Cloud Console + OAuth setup)
+    # - service: google_drive
+    #   enabled: false
+    #   root_folder: "PostMule"
+    #   folders:
+    #     inbox: "Inbox"
+    #     bills: "Bills"
+    #     notices: "Notices"
+    #     forward_to_me: "ForwardToMe"
+    #     personal: "Personal"
+    #     junk: "Junk"
+    #     needs_review: "NeedsReview"
+    #     duplicates: "Duplicates"
+    #     archive: "Archive"
+    #     system: "_System"
+
 # ---------------------------------------------------------------------------
 # spreadsheet  (view layer — generated from JSON, never source of truth)
+# Default: SQLite — a local .db file, viewable with DB Browser for SQLite or any
+# SQLite client. No cloud account required.
 # ---------------------------------------------------------------------------
 spreadsheet:
   providers:
-    - service: google_sheets      # google_sheets | excel_online | airtable | none
+    - service: sqlite             # sqlite | none | google_sheets | excel_online | airtable
       enabled: true
-      workbook_name: "PostMule"
-      # Sheets are generated views — rebuilt from JSON on demand.
-      sheets:
-        - Bills
-        - Notices
-        - ForwardToMe
-        - Entities
-        - SenderDirectory
-        - BankTransactions
-        - PendingEntityMatches
-        - PendingBillMatches
-        - RunLog
-        - APIUsage
+      db_name: "postmule.db"      # Created in the PostMule data directory
+
+    # Alternative: Google Sheets (requires Google Cloud Console + OAuth setup)
+    # - service: google_sheets
+    #   enabled: false
+    #   workbook_name: "PostMule"
 
 # ---------------------------------------------------------------------------
 # llm  (AI classification provider)

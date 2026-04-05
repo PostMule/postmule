@@ -84,11 +84,17 @@ PROVIDER_REGISTRY: dict[str, list[ProviderEntry]] = {
         {
             "service": "imap",
             "display_name": "Generic IMAP",
-            "status": "stub",
+            "status": "implemented",
             "auth_type": "password",
         },
     ],
     "storage": [
+        {
+            "service": "local",
+            "display_name": "Local Filesystem",
+            "status": "implemented",
+            "auth_type": "none",
+        },
         {
             "service": "google_drive",
             "display_name": "Google Drive",
@@ -115,6 +121,12 @@ PROVIDER_REGISTRY: dict[str, list[ProviderEntry]] = {
         },
     ],
     "spreadsheet": [
+        {
+            "service": "sqlite",
+            "display_name": "SQLite (local)",
+            "status": "implemented",
+            "auth_type": "none",
+        },
         {
             "service": "google_sheets",
             "display_name": "Google Sheets",

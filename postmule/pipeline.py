@@ -389,7 +389,7 @@ def run_daily_pipeline(
 # Private helpers
 # ------------------------------------------------------------------
 
-def _instantiate_email_provider(ep_cfg: dict, credentials: dict, google_creds) -> Any:
+def _instantiate_email_provider(ep_cfg: dict, credentials: dict, get_google_creds) -> Any:
     """Instantiate an email provider from a config entry. Returns None if creds missing."""
     service = ep_cfg.get("service", "gmail")
     account_id = ep_cfg.get("id", "")
@@ -399,7 +399,7 @@ def _instantiate_email_provider(ep_cfg: dict, credentials: dict, google_creds) -
     if service == "gmail":
         from postmule.providers.email.gmail import GmailProvider
         label = ep_cfg.get("label", "PostMule")
-        return GmailProvider(google_creds, label_name=label)
+        return GmailProvider(get_google_creds(), label_name=label)
 
     if service == "imap":
         username = acct_creds.get("username", "")
@@ -461,36 +461,28 @@ def _instantiate_email_provider(ep_cfg: dict, credentials: dict, google_creds) -
 def _build_providers(cfg: Config, credentials: dict, data_dir: Path):
     """Instantiate all providers from config + credentials."""
     from postmule.core.api_safety import build_safety_agent
-    from postmule.providers.llm.gemini import GeminiProvider
-    from postmule.providers.spreadsheet.google_sheets import SheetsProvider
-    from postmule.providers.storage.google_drive import DriveProvider
-
-    from postmule.core.credentials import build_google_credentials
-    google_creds = build_google_credentials()
 
     storage_provider_cfg = (cfg.get("storage", "providers") or [{}])[0]
     spreadsheet_provider_cfg = (cfg.get("spreadsheet", "providers") or [{}])[0]
     llm_provider_cfg = (cfg.get("llm", "providers") or [{}])[0]
     llm_provider_name = llm_provider_cfg.get("service", "gemini")
-    llm_creds = credentials.get(llm_provider_name, {})
 
-    drive = DriveProvider(
-        google_creds,
-        root_folder=storage_provider_cfg.get("root_folder", "PostMule"),
-    )
-    sheets = SheetsProvider(
-        google_creds,
-        workbook_name=spreadsheet_provider_cfg.get("workbook_name", "PostMule"),
-    )
+    # Lazy Google credentials — only loaded when a Google provider is actually configured
+    _google_creds_cache: list = []
+
+    def _get_google_creds():
+        if not _google_creds_cache:
+            from postmule.core.credentials import build_google_credentials
+            _google_creds_cache.append(build_google_credentials())
+        return _google_creds_cache[0]
+
+    drive = _build_storage_provider(storage_provider_cfg, credentials, _get_google_creds)
+    sheets = _build_spreadsheet_provider(spreadsheet_provider_cfg, credentials, data_dir, _get_google_creds)
 
     safety_agent = build_safety_agent(cfg, llm_provider_name, data_dir)
-    llm = GeminiProvider(
-        llm_creds.get("api_key", ""),
-        safety_agent=safety_agent,
-        model=llm_provider_cfg.get("model", "gemini-1.5-flash"),
-    )
+    llm = _build_llm_provider(llm_provider_cfg, credentials, safety_agent)
 
-    # Ensure Drive folders exist
+    # Ensure storage folders exist
     folders_cfg = storage_provider_cfg.get("folders") or {}
     folder_ids = drive.ensure_folder_structure(folders_cfg)
 
@@ -501,7 +493,7 @@ def _build_providers(cfg: Config, credentials: dict, data_dir: Path):
         if not ep_cfg.get("enabled", True):
             continue
         role = ep_cfg.get("role", "mailbox_notifications")
-        provider = _instantiate_email_provider(ep_cfg, credentials, google_creds)
+        provider = _instantiate_email_provider(ep_cfg, credentials, _get_google_creds)
         if provider is None:
             continue
         service = ep_cfg.get("service", "gmail")
@@ -537,6 +529,118 @@ def _build_providers(cfg: Config, credentials: dict, data_dir: Path):
         mailbox_notification_providers=mailbox_notification_providers,
         bill_intake_providers=bill_intake_providers,
     )
+
+
+def _build_storage_provider(cfg_entry: dict, credentials: dict, get_google_creds):
+    """Instantiate the configured storage provider."""
+    service = cfg_entry.get("service", "local")
+
+    if service == "local":
+        from postmule.providers.storage.local import LocalStorageProvider
+        root_dir = cfg_entry.get("root_dir", "C:\\ProgramData\\PostMule\\files")
+        return LocalStorageProvider(root_dir=root_dir)
+
+    if service == "google_drive":
+        from postmule.providers.storage.google_drive import DriveProvider
+        return DriveProvider(
+            get_google_creds(),
+            root_folder=cfg_entry.get("root_folder", "PostMule"),
+        )
+
+    if service == "s3":
+        from postmule.providers.storage.s3 import S3Provider
+        creds = credentials.get("s3", {})
+        return S3Provider(
+            aws_access_key_id=creds.get("access_key_id", ""),
+            aws_secret_access_key=creds.get("secret_access_key", ""),
+            bucket_name=cfg_entry.get("bucket", ""),
+            region=cfg_entry.get("region", "us-east-1"),
+        )
+
+    if service == "dropbox":
+        from postmule.providers.storage.dropbox import DropboxProvider
+        creds = credentials.get("dropbox", {})
+        return DropboxProvider(access_token=creds.get("access_token", ""))
+
+    if service == "onedrive":
+        from postmule.providers.storage.onedrive import OneDriveProvider
+        creds = credentials.get("onedrive", {})
+        return OneDriveProvider(access_token=creds.get("access_token", ""))
+
+    raise ValueError(f"Unknown storage provider: '{service}'. Supported: local, google_drive, s3, dropbox, onedrive")
+
+
+def _build_spreadsheet_provider(cfg_entry: dict, credentials: dict, data_dir: Path, get_google_creds):
+    """Instantiate the configured spreadsheet provider."""
+    service = cfg_entry.get("service", "sqlite")
+
+    if service == "sqlite":
+        from postmule.providers.spreadsheet.sqlite import SqliteSpreadsheetProvider
+        db_name = cfg_entry.get("db_name", "postmule.db")
+        return SqliteSpreadsheetProvider(db_path=data_dir / db_name)
+
+    if service == "none":
+        from postmule.providers.spreadsheet.none import NoneSpreadsheetProvider
+        return NoneSpreadsheetProvider()
+
+    if service == "google_sheets":
+        from postmule.providers.spreadsheet.google_sheets import SheetsProvider
+        return SheetsProvider(
+            get_google_creds(),
+            workbook_name=cfg_entry.get("workbook_name", "PostMule"),
+        )
+
+    if service == "airtable":
+        from postmule.providers.spreadsheet.airtable import AirtableProvider
+        creds = credentials.get("airtable", {})
+        return AirtableProvider(
+            api_key=creds.get("api_key", ""),
+            base_id=cfg_entry.get("base_id", ""),
+        )
+
+    if service == "excel_online":
+        from postmule.providers.spreadsheet.excel_online import ExcelOnlineProvider
+        creds = credentials.get("excel_online", {})
+        return ExcelOnlineProvider(access_token=creds.get("access_token", ""))
+
+    raise ValueError(f"Unknown spreadsheet provider: '{service}'. Supported: sqlite, none, google_sheets, airtable, excel_online")
+
+
+def _build_llm_provider(cfg_entry: dict, credentials: dict, safety_agent):
+    """Instantiate the configured LLM provider."""
+    service = cfg_entry.get("service", "gemini")
+    llm_creds = credentials.get(service, {})
+
+    if service == "gemini":
+        from postmule.providers.llm.gemini import GeminiProvider
+        return GeminiProvider(
+            llm_creds.get("api_key", ""),
+            safety_agent=safety_agent,
+            model=cfg_entry.get("model", "gemini-1.5-flash"),
+        )
+
+    if service == "openai":
+        from postmule.providers.llm.openai import OpenAIProvider
+        return OpenAIProvider(
+            api_key=llm_creds.get("api_key", ""),
+            model=cfg_entry.get("model", "gpt-4o-mini"),
+        )
+
+    if service == "anthropic":
+        from postmule.providers.llm.anthropic import AnthropicProvider
+        return AnthropicProvider(
+            api_key=llm_creds.get("api_key", ""),
+            model=cfg_entry.get("model", "claude-haiku-4-5-20251001"),
+        )
+
+    if service == "ollama":
+        from postmule.providers.llm.ollama import OllamaProvider
+        return OllamaProvider(
+            host=cfg_entry.get("host", "http://localhost:11434"),
+            model=cfg_entry.get("model", "llama3.2"),
+        )
+
+    raise ValueError(f"Unknown LLM provider: '{service}'. Supported: gemini, openai, anthropic, ollama")
 
 
 def _store_processed_mail(data_dir: Path, result, drive_file_id: str, received_date: str) -> None:
