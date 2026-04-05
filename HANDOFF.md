@@ -7,7 +7,7 @@
 ## Last Completed
 > Maintenance: before adding a new entry, delete the previous one. One issue max. Full history is in `git log`.
 
-Session 2026-04-05 (2): Fixed installer failure on Python 3.12 Windows (issue #99, now closed) — root cause: local pyproject.toml had `setuptools.backends.legacy:build` as build backend, which doesn't exist in setuptools 82. Fix: switched build backend to hatchling; also improved setup.ps1 pip upgrade (use python -m pip) and added LASTEXITCODE checks. PostMule is now installed at C:\Users\openclaw0123\PostMule. Owner still needs to complete setup.ps1 config wizard (alert email, VPM sender, Gemini key, master password) then run --dry-run.
+Session 2026-04-05 (3): Fixed two more installer issues — #99 (hatchling build backend, now closed) and #100 (Task Scheduler admin check, now closed). PostMule installed at C:\Users\openclaw0123\PostMule. setup.ps1 ran but died before dry-run due to Task Scheduler access denied. Config files exist but "Pattern not matched" warnings suggest values may not have been written. Owner needs to: (1) verify config.yaml and credentials.yaml have correct values, (2) run `postmule --dry-run` manually.
 
 ---
 
