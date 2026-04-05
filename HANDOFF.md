@@ -7,7 +7,7 @@
 ## Last Completed
 > Maintenance: before adding a new entry, delete the previous one. One issue max. Full history is in `git log`.
 
-Session 2026-04-05: Fixed setup.ps1 parse errors on Windows (issue #98, now closed) — two root causes: LF line endings (.gitattributes added) and em dashes misread as curly quotes by PowerShell 5.1 CP1252. Also fixed pyproject.toml build backend. Owner is attempting live validation (#30) from a fresh install at C:\Users\openclaw0123\PostMule. setup.ps1 fixes applied to that clone directly; GitHub is up to date (commit 84d6bbf).
+Session 2026-04-05 (2): Fixed installer failure on Python 3.12 Windows (issue #99, now closed) — root cause: local pyproject.toml had `setuptools.backends.legacy:build` as build backend, which doesn't exist in setuptools 82. Fix: switched build backend to hatchling; also improved setup.ps1 pip upgrade (use python -m pip) and added LASTEXITCODE checks. PostMule is now installed at C:\Users\openclaw0123\PostMule. Owner still needs to complete setup.ps1 config wizard (alert email, VPM sender, Gemini key, master password) then run --dry-run.
 
 ---
 
@@ -15,7 +15,7 @@ Session 2026-04-05: Fixed setup.ps1 parse errors on Windows (issue #98, now clos
 > Check `gh issue list --repo PostMule/app` for current state before starting.
 > Do not suggest or offer to work on blocked or deferred issues — only note they exist.
 
-**In progress:** Live validation (#30) — owner has VPM, Gmail app password, and Gemini API key. Fresh clone at C:\Users\openclaw0123\PostMule. Next step: re-run `powershell -ExecutionPolicy Bypass -File .\setup.ps1` after em dash fix. See memory/setup_validation.md for full config details.
+**In progress:** Live validation (#30) — PostMule installed at C:\Users\openclaw0123\PostMule. Next step: run `powershell -ExecutionPolicy Bypass -File .\setup.ps1` to complete config wizard (alert email, VPM sender, Gemini key, master password), then `postmule --dry-run`. See memory/setup_validation.md for full config details.
 
 **Other open issues (blocked):**
 - #97 — Cloud deployment investigation (owner must decide platform/cost tradeoffs first)
