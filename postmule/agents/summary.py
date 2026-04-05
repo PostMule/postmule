@@ -237,6 +237,42 @@ def _build_email_context(
     }
 
 
+def send_pipeline_failure_alert(
+    smtp_config: dict[str, Any],
+    alert_email: str,
+    error_messages: list[str],
+) -> None:
+    """
+    Send an alert when the pipeline fails to initialise providers (hard failure).
+    Called from the pipeline before any providers are available.
+    """
+    today = date.today().isoformat()
+    subject = f"[PostMule] Pipeline failed — {today}"
+    errors_html = "".join(
+        f"<li style='margin-bottom:6px;color:#C62828;'>{e}</li>" for e in error_messages
+    )
+    html = f"""
+    <div style="font-family:sans-serif;max-width:600px;padding:20px;">
+      <div style="background:#C62828;color:white;padding:12px 16px;border-radius:6px;margin-bottom:16px;">
+        <b>PostMule Pipeline Failure</b>
+      </div>
+      <p style="color:#0F2044;margin-bottom:8px;">
+        The PostMule daily run failed to start. No mail was processed.
+      </p>
+      <ul style="padding-left:20px;margin-bottom:16px;">
+        {errors_html}
+      </ul>
+      <p style="color:#5A7090;font-size:12px;">
+        Check the dashboard at <a href="http://localhost:5000">localhost:5000</a>
+        or run <code>postmule --dry-run</code> to diagnose.
+      </p>
+      <p style="color:#5A7090;font-size:12px;">PostMule &mdash; {today}</p>
+    </div>
+    """
+    _send_email(smtp_config, alert_email, subject, html)
+    log.info(f"Sent pipeline failure alert to {alert_email}")
+
+
 def send_bill_due_alert(
     smtp_config: dict[str, Any],
     alert_email: str,

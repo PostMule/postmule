@@ -112,6 +112,15 @@ def run_daily_pipeline(
         stats["end_time"] = datetime.now(tz=timezone.utc).isoformat()
         if not dry_run:
             run_log.append_run(data_dir, stats)
+            try:
+                smtp_cfg = credentials.get("smtp", {})
+                recipients = cfg.alert_recipients
+                if smtp_cfg and recipients:
+                    from postmule.agents.summary import send_pipeline_failure_alert
+                    for addr in recipients:
+                        send_pipeline_failure_alert(smtp_cfg, addr, [str(exc)])
+            except Exception as alert_exc:
+                log.warning(f"Failed to send pipeline failure alert: {alert_exc}")
         return stats
 
     known_names = entity_data.get_all_known_names(data_dir)

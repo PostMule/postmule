@@ -13,6 +13,7 @@ from postmule.agents.summary import (
     _pending_bills_section,
     send_bill_due_alert,
     send_daily_summary,
+    send_pipeline_failure_alert,
     send_urgent_alert,
 )
 
@@ -324,3 +325,56 @@ class TestSendBillDueAlert:
                 dry_run=True,
             )
         mock_send.assert_not_called()
+
+
+class TestSendPipelineFailureAlert:
+    def test_calls_send_email(self):
+        with patch("postmule.agents.summary._send_email") as mock_send:
+            send_pipeline_failure_alert(
+                smtp_config={"host": "smtp.gmail.com"},
+                alert_email="alert@example.com",
+                error_messages=["Provider init failed: no credentials"],
+            )
+        mock_send.assert_called_once()
+
+    def test_subject_contains_failed(self):
+        with patch("postmule.agents.summary._send_email") as mock_send:
+            send_pipeline_failure_alert(
+                smtp_config={},
+                alert_email="alert@example.com",
+                error_messages=["some error"],
+            )
+        subject = mock_send.call_args[0][2]
+        assert "failed" in subject.lower()
+
+    def test_html_contains_error_message(self):
+        with patch("postmule.agents.summary._send_email") as mock_send:
+            send_pipeline_failure_alert(
+                smtp_config={},
+                alert_email="alert@example.com",
+                error_messages=["DriveProvider: invalid credentials"],
+            )
+        html = mock_send.call_args[0][3]
+        assert "DriveProvider: invalid credentials" in html
+
+    def test_html_contains_multiple_errors(self):
+        errors = ["Error one", "Error two"]
+        with patch("postmule.agents.summary._send_email") as mock_send:
+            send_pipeline_failure_alert(
+                smtp_config={},
+                alert_email="alert@example.com",
+                error_messages=errors,
+            )
+        html = mock_send.call_args[0][3]
+        assert "Error one" in html
+        assert "Error two" in html
+
+    def test_recipient_passed_correctly(self):
+        with patch("postmule.agents.summary._send_email") as mock_send:
+            send_pipeline_failure_alert(
+                smtp_config={"host": "smtp.gmail.com"},
+                alert_email="dest@example.com",
+                error_messages=["err"],
+            )
+        to_addr = mock_send.call_args[0][1]
+        assert to_addr == "dest@example.com"

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timezone, timedelta
 from pathlib import Path
 
 from flask import Blueprint, redirect, render_template, request, url_for
@@ -51,6 +51,32 @@ def mail():
     pending_ftm_count = len([f for f in all_ftm if f.get("forwarding_status") == "pending"])
     pending_bills_count = len([b for b in all_bills if b.get("status") == "pending"])
 
+    # Alert: last run ended more than 26 hours ago (missed a scheduled run)
+    run_is_stale = False
+    if last_run:
+        end_str = last_run.get("end_time", "")
+        if end_str:
+            try:
+                end_dt = datetime.fromisoformat(end_str)
+                if end_dt.tzinfo is None:
+                    end_dt = end_dt.replace(tzinfo=timezone.utc)
+                run_is_stale = (datetime.now(tz=timezone.utc) - end_dt) > timedelta(hours=26)
+            except ValueError:
+                pass
+
+    # Alert: Google credentials expired (only relevant when a Google provider is configured)
+    cfg_raw = _app._config_raw
+    _google_services = {"google_drive", "google_sheets", "gmail"}
+    _uses_google = (
+        any(p.get("service") in _google_services for p in cfg_raw.get("storage", {}).get("providers", []))
+        or any(p.get("service") in _google_services for p in cfg_raw.get("spreadsheet", {}).get("providers", []))
+        or any(p.get("service") in _google_services for p in cfg_raw.get("email", {}).get("providers", []))
+    )
+    needs_google_reauth = False
+    if _uses_google:
+        from postmule.core.credentials import google_credentials_available
+        needs_google_reauth = not google_credentials_available()
+
     all_pending_matches = entity_data.load_pending_matches(_app._data_dir)
     pending_matches = [m for m in all_pending_matches if m.get("status") == "pending"]
     pending_by_sender = {m.get("proposed_name", "").lower(): m for m in pending_matches}
@@ -80,6 +106,8 @@ def mail():
         pending_by_sender=pending_by_sender,
         initial_tab=initial_tab,
         today=date.today().isoformat(),
+        run_is_stale=run_is_stale,
+        needs_google_reauth=needs_google_reauth,
     )
 
 

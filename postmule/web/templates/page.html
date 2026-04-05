@@ -201,6 +201,22 @@
     </div>
 
     {% elif page == 'mail' %}
+
+    {# ── Alert banners ───────────────────────────────────────────── #}
+    {% if needs_google_reauth %}
+    <div class="banner-error" style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <span><b>Google credentials expired.</b> PostMule cannot access Google Drive or Sheets until you reconnect.</span>
+      <a href="/setup/oauth/google" class="btn btn-sm" style="white-space:nowrap;background:#C62828;color:white;border:none;">Reconnect Google &rarr;</a>
+    </div>
+    {% endif %}
+
+    {% if run_is_stale %}
+    <div class="banner-warning" style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <span><b>Last run was more than 26 hours ago.</b> The scheduled task may not be running.</span>
+      <a href="/logs" class="btn btn-sm" style="white-space:nowrap;">View Logs &rarr;</a>
+    </div>
+    {% endif %}
+
     <div x-data="mailHub('{{ initial_tab }}')">
 
     {# ── Status widget ──────────────────────────────────────────── #}
