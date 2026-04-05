@@ -86,3 +86,16 @@ PostMule/
 ## Dev
 - Venv: `.venv\` | Tests: `.venv\Scripts\pytest tests\unit\ -v`
 - Issues: `gh issue list --repo PostMule/app`
+
+## Skills (invoke with `/skill-name` or by keyword)
+| Skill | Keywords | What it does |
+|---|---|---|
+| `/resume` | resume, pick up, continue, handoff | Read HANDOFF.md and resume last session |
+| `/council-this` | council, multi-perspective, decision, debate, review | 5-agent council (Researcher/Skeptic/Strategist/Operator/Creative) → HTML dashboard |
+| `/distill` | distill, extract, methodology, framework, transcript | Extract hidden methodology from expert content |
+| `/grill-me` | grill, stress-test, interview, challenge my plan | Relentless Socratic interview to pressure-test a design |
+| `/improve-codebase-architecture` | architecture, refactor, testable, shallow modules | Find architectural improvements and refactoring opportunities |
+| `/lyra` | prompt, write a prompt, generate a prompt, draft a prompt | Prompt engineering via Deconstruct → Diagnose → Develop → Deliver |
+| `/prd-to-issues` | prd to issues, break down prd, create tickets, slice | Convert a PRD into GitHub issues as vertical tracer-bullet slices |
+| `/tdd` | tdd, test-driven, red-green-refactor, integration tests | Build features test-first with red→green→refactor loop |
+| `/write-a-prd` | write a prd, product requirements, plan a feature | Interview → explore codebase → draft PRD → submit as GitHub issue |

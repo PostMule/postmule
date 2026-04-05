@@ -1,0 +1,37 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import os; open(os.path.expanduser('~/.claude/pm-doc-session.txt'),'w').close()\" 2>/dev/null || true",
+            "statusMessage": "Clearing doc-tracking file..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import sys,json,os; d=json.load(sys.stdin); fp=d.get('tool_input',{}).get('file_path','') or d.get('tool_response',{}).get('filePath',''); fp and open(os.path.expanduser('~/.claude/pm-doc-session.txt'),'a').write(fp+chr(10))\" 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "TRACKING=$(python -c \"import os; print(open(os.path.expanduser('~/.claude/pm-doc-session.txt')).read())\" 2>/dev/null || true); CHANGED=$(echo \"$TRACKING\" | tr '\\\\' '/' | sort -u); echo \"$CHANGED\" | grep -qi 'CLAUDE\\.md' && CLAUDE_OK=1 || CLAUDE_OK=0; echo \"$CHANGED\" | grep -qi 'mockup_dashboard\\.html' && MOCKUP_OK=1 || MOCKUP_OK=0; PY_CODE=$(echo \"$CHANGED\" | grep -iE '\\.py$' | grep -ivE '(/tests/|_test\\.py|__init__\\.py|conftest)' || true); PAGE_HTML=$(echo \"$CHANGED\" | grep -iE '/page\\.html$' || true); WARNINGS=''; [ -n \"$PY_CODE\" ] && [ \"$CLAUDE_OK\" -eq 0 ] && WARNINGS=\"${WARNINGS}CLAUDE.md may need updating (.py files changed). \"; [ -n \"$PAGE_HTML\" ] && [ \"$MOCKUP_OK\" -eq 0 ] && WARNINGS=\"${WARNINGS}mockup_dashboard.html may need updating (page.html changed). \"; [ -n \"$WARNINGS\" ] && python -c \"import json,sys; print(json.dumps({'systemMessage': 'Doc reminder: ' + sys.argv[1]}))\" \"$WARNINGS\" || true",
+            "statusMessage": "Checking documentation coverage..."
+          }
+        ]
+      }
+    ]
+  }
+}
