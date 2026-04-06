@@ -210,7 +210,7 @@
     {% elif step == 2 %}
       <p class="setup-title">Connect your Gmail account</p>
       <p class="setup-subtitle">PostMule checks your Gmail for mail scan notifications from your virtual mailbox and for bill attachments from billers.</p>
-      <form method="post" action="/setup/step/2">
+      <form method="post" action="/setup/step/2" id="step2-form">
         <label class="setup-label" for="gmail_address">Gmail address</label>
         <input class="setup-input" type="email" id="gmail_address" name="gmail_address"
                placeholder="you@gmail.com" autofocus
@@ -231,15 +231,60 @@
             <li>Paste it into the App Password field above</li>
           </ol>
         </div>
-        <button class="setup-btn" type="submit">Next &rarr;</button>
+        <div id="gmail-status" style="display:none; margin-bottom:16px; padding:10px 14px; border-radius:6px; font-size:0.82rem;"></div>
+        <button class="setup-btn" type="button" id="gmail-next-btn" onclick="gmailNext()">Test &amp; continue &rarr;</button>
       </form>
       <a class="setup-back" href="/setup/step/1">&larr; Back</a>
+      <script>
+        var _gmailOk = false;
+        function gmailNext() {
+          if (_gmailOk) { document.getElementById('step2-form').submit(); return; }
+          var btn = document.getElementById('gmail-next-btn');
+          var status = document.getElementById('gmail-status');
+          var addr = document.getElementById('gmail_address').value.trim();
+          var pass = document.getElementById('app_password').value.trim();
+          if (!addr || !pass) {
+            _showStatus(status, false, 'Please fill in both fields first.');
+            return;
+          }
+          btn.disabled = true;
+          btn.textContent = 'Testing\u2026';
+          fetch('/setup/api/test-gmail', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({gmail_address: addr, app_password: pass})
+          }).then(function(r){ return r.json(); }).then(function(d){
+            if (d.ok) {
+              _gmailOk = true;
+              _showStatus(status, true, '\u2713 Gmail connected — advancing\u2026');
+              btn.textContent = 'Test \u0026 continue \u2192';
+              btn.disabled = false;
+              document.getElementById('step2-form').submit();
+            } else {
+              _showStatus(status, false, d.error || 'Connection failed.');
+              btn.textContent = 'Test \u0026 continue \u2192';
+              btn.disabled = false;
+            }
+          }).catch(function(){
+            _showStatus(status, false, 'Request failed \u2014 is PostMule running?');
+            btn.textContent = 'Test \u0026 continue \u2192';
+            btn.disabled = false;
+          });
+        }
+        function _showStatus(el, ok, msg) {
+          el.style.display = 'block';
+          el.style.background = ok ? '#F0FDF4' : '#FEF2F2';
+          el.style.border = ok ? '1px solid #86EFAC' : '1px solid #FCA5A5';
+          el.style.color = ok ? '#166534' : '#C62828';
+          el.textContent = msg;
+        }
+      </script>
 
     <!-- ── Step 3: Gemini API key ────────────────────────────────── -->
     {% elif step == 3 %}
       <p class="setup-title">Add your Gemini AI key</p>
       <p class="setup-subtitle">PostMule uses Google's free Gemini AI to read and classify your mail. No credit card required for the free tier.</p>
-      <form method="post" action="/setup/step/3">
+      <form method="post" action="/setup/step/3" id="step3-form">
         <label class="setup-label" for="gemini_key">Gemini API key</label>
         <input class="setup-input" type="password" id="gemini_key" name="gemini_key"
                placeholder="AIza..." autofocus
@@ -255,9 +300,53 @@
             <li>Paste it into the field above</li>
           </ol>
         </div>
-        <button class="setup-btn" type="submit">Next &rarr;</button>
+        <div id="gemini-status" style="display:none; margin-bottom:16px; padding:10px 14px; border-radius:6px; font-size:0.82rem;"></div>
+        <button class="setup-btn" type="button" id="gemini-next-btn" onclick="geminiNext()">Test &amp; continue &rarr;</button>
       </form>
       <a class="setup-back" href="/setup/step/2">&larr; Back</a>
+      <script>
+        var _geminiOk = false;
+        function geminiNext() {
+          if (_geminiOk) { document.getElementById('step3-form').submit(); return; }
+          var btn = document.getElementById('gemini-next-btn');
+          var status = document.getElementById('gemini-status');
+          var key = document.getElementById('gemini_key').value.trim();
+          if (!key) {
+            _showGeminiStatus(status, false, 'Please enter your Gemini API key first.');
+            return;
+          }
+          btn.disabled = true;
+          btn.textContent = 'Testing\u2026';
+          fetch('/setup/api/test-gemini', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({gemini_key: key})
+          }).then(function(r){ return r.json(); }).then(function(d){
+            if (d.ok) {
+              _geminiOk = true;
+              _showGeminiStatus(status, true, '\u2713 Gemini connected — advancing\u2026');
+              btn.textContent = 'Test \u0026 continue \u2192';
+              btn.disabled = false;
+              document.getElementById('step3-form').submit();
+            } else {
+              _showGeminiStatus(status, false, d.error || 'Connection failed.');
+              btn.textContent = 'Test \u0026 continue \u2192';
+              btn.disabled = false;
+            }
+          }).catch(function(){
+            _showGeminiStatus(status, false, 'Request failed \u2014 is PostMule running?');
+            btn.textContent = 'Test \u0026 continue \u2192';
+            btn.disabled = false;
+          });
+        }
+        function _showGeminiStatus(el, ok, msg) {
+          el.style.display = 'block';
+          el.style.background = ok ? '#F0FDF4' : '#FEF2F2';
+          el.style.border = ok ? '1px solid #86EFAC' : '1px solid #FCA5A5';
+          el.style.color = ok ? '#166534' : '#C62828';
+          el.textContent = msg;
+        }
+      </script>
 
     <!-- ── Step 4: Master password ───────────────────────────────── -->
     {% elif step == 4 %}

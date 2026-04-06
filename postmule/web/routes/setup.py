@@ -2,12 +2,14 @@
 Setup wizard blueprint — first-run configuration flow.
 
 Routes:
-  GET  /setup          Step landing — redirects to current step
-  GET  /setup/step/1   Alert email
-  GET  /setup/step/2   Gmail App Password + IMAP test
-  GET  /setup/step/3   Gemini API key + API test
-  GET  /setup/step/4   Master password + encrypt credentials
-  POST /setup/step/<n> Submit a step
+  GET  /setup                   Step landing — redirects to current step
+  GET  /setup/step/1            Alert email
+  GET  /setup/step/2            Gmail App Password + IMAP test
+  GET  /setup/step/3            Gemini API key + API test
+  GET  /setup/step/4            Master password + encrypt credentials
+  POST /setup/step/<n>          Submit a step
+  POST /setup/api/test-gmail    IMAP login test — returns JSON {ok, error}
+  POST /setup/api/test-gemini   Gemini API key test — returns JSON {ok, error}
 """
 
 from __future__ import annotations
@@ -115,6 +117,75 @@ def step_post(step: int):
         return redirect(url_for("setup.finish"))
 
     return redirect(url_for("setup.step_get", step=step))
+
+
+@setup_bp.route("/setup/api/test-gmail", methods=["POST"])
+def test_gmail():
+    """IMAP login test for a Gmail App Password. Returns JSON {ok, error}."""
+    import imaplib
+    import socket
+
+    from flask import jsonify
+
+    body = request.get_json(silent=True) or {}
+    address = (body.get("gmail_address") or "").strip()
+    password = (body.get("app_password") or "").strip()
+
+    if not address or not password:
+        return jsonify({"ok": False, "error": "Gmail address and App Password are required."})
+
+    try:
+        conn = imaplib.IMAP4_SSL("imap.gmail.com", 993, timeout=10)
+        conn.login(address, password)
+        conn.logout()
+        return jsonify({"ok": True, "error": None})
+    except imaplib.IMAP4.error as exc:
+        msg = str(exc)
+        if b"AUTHENTICATIONFAILED" in exc.args[0] if exc.args else False:
+            msg = "Authentication failed."
+        return jsonify({
+            "ok": False,
+            "error": "Login failed — check your Gmail address and App Password. "
+                     "Make sure 2-Step Verification is on and you created the App Password for 'Other (PostMule)'.",
+        })
+    except (OSError, socket.timeout, TimeoutError):
+        return jsonify({
+            "ok": False,
+            "error": "Could not reach imap.gmail.com. Check your internet connection.",
+        })
+    except Exception as exc:
+        return jsonify({"ok": False, "error": f"Unexpected error: {exc}"})
+
+
+def _probe_gemini_key(api_key: str) -> tuple[bool, str | None]:
+    """Try to list Gemini models with api_key. Returns (ok, error_message)."""
+    try:
+        import google.generativeai as genai  # type: ignore[import]
+        genai.configure(api_key=api_key)
+        list(genai.list_models())
+        return True, None
+    except ImportError:
+        return False, "google-generativeai is not installed. Run: pip install google-generativeai"
+    except Exception as exc:
+        msg = str(exc)
+        if "API_KEY_INVALID" in msg or "api key" in msg.lower() or "invalid" in msg.lower():
+            return False, "Invalid API key — double-check what you copied from Google AI Studio."
+        return False, f"Gemini connection failed: {exc}"
+
+
+@setup_bp.route("/setup/api/test-gemini", methods=["POST"])
+def test_gemini():
+    """Gemini API key test. Returns JSON {ok, error}."""
+    from flask import jsonify
+
+    body = request.get_json(silent=True) or {}
+    api_key = (body.get("gemini_key") or "").strip()
+
+    if not api_key:
+        return jsonify({"ok": False, "error": "Gemini API key is required."})
+
+    ok, error = _probe_gemini_key(api_key)
+    return jsonify({"ok": ok, "error": error})
 
 
 @setup_bp.route("/setup/finish", methods=["POST", "GET"])
