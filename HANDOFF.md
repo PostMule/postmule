@@ -7,7 +7,7 @@
 ## Last Completed
 > Maintenance: before adding a new entry, delete the previous one. One issue max. Full history is in `git log`.
 
-Session 2026-04-05 (5): Built #102 chunk 1 — setup wizard skeleton. `postmule serve` now auto-opens browser. First-run detection via `_setup_required()`. New `setup_bp` blueprint with `/setup/step/1-4` + `/setup/finish`. Full 4-step wizard HTML (`setup.html`). Auth guard bypasses setup routes. Finish route writes config.yaml via PyYAML and encrypts credentials.enc. Tests green (1077 pass). Filed #103 (pre-existing logs test failure). Filed #104 (Expert Directory bootstrapping). Pushed commit `422f097`.
+Session 2026-04-05 (6): Built #102 chunk 2 — connection testers. Added `POST /setup/api/test-gmail` (IMAP4_SSL login to imap.gmail.com:993) and `POST /setup/api/test-gemini` (via `_probe_gemini_key()` helper, patchable for tests). Steps 2 and 3 now intercept "Next" with inline JS, POST to the tester, show green/red status, and auto-advance on success. 13 new tests (1090 total passing). Pushed commit `3adc680`.
 
 ---
 
@@ -16,7 +16,7 @@ Session 2026-04-05 (5): Built #102 chunk 1 — setup wizard skeleton. `postmule 
 > Check `gh issue list --repo PostMule/app` for current state before starting.
 > Do not suggest or offer to work on blocked or deferred issues — only note they exist.
 
-**Recommended:** Continue #102 chunk 2 — connection testers. Add `POST /setup/api/test-gmail` (IMAP login test) and `POST /setup/api/test-gemini` (minimal Gemini API call), both returning JSON `{ok, error}`. Add inline JS to steps 2 and 3 that calls the tester before allowing Next, showing green checkmark or red error with plain-English message.
+**Recommended:** Continue #102 chunk 3 — polish and close. Remaining work: (a) test the wizard end-to-end against a real Gmail + Gemini account to confirm no edge cases, (b) close #101 (setup.ps1 Gemini regex bug — superseded by the wizard), (c) close #102 if wizard is feature-complete. Also check if step 4 (master password) needs a tester or if it's fine as-is (no external service to test).
 
 **After #102:** Build #104 — Expert Directory. Run the bootstrapping session using `.claude/skills/Expert-framework-prompt.md`. Start with `frontend_developer` and `ux_designer`. Produces `.claude/experts/EXPERT_DIRECTORY.md`.
 
