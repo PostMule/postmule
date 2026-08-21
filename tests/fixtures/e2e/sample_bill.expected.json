@@ -1,0 +1,29 @@
+{
+  "_comment": [
+    "What sample_bill.pdf SAYS, recorded by reading the document -- not by running the",
+    "pipeline and writing down what it produced. This file is the gate's independent",
+    "source of truth (app #113): the gate compares the pipeline's extraction against",
+    "these values, so an extraction that silently stops reading the document fails.",
+    "",
+    "If you change sample_bill.pdf, open it, read it, and update this file by hand.",
+    "Never regenerate it from pipeline output -- that restores the tautology this",
+    "file exists to break."
+  ],
+
+  "document_markers": [
+    "Acme Utilities",
+    "Statement Date",
+    "Account Number",
+    "Amount Due",
+    "Due Date"
+  ],
+
+  "sender": "Acme Utilities",
+  "recipients": ["Alice Example"],
+  "statement_date": "2026-06-01",
+  "account_number": "9988776655",
+  "amount_due": 84.5,
+  "due_date": "2026-07-15",
+
+  "expected_category": "Bill"
+}
