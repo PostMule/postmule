@@ -86,3 +86,9 @@ what the automated bar proves, but does not replace that run.
 > Maintained in `docs/decisions.md` (product) and `PostMule-ops/decisions.md` (harness/process).
 > Both gained 2026-08-22 entries; read those before touching bill matching, `_graph.py`, the E2E gate,
 > or the harness classifier/signature/pause path.
+
+**Deployment model is unchanged: client install, Windows-only for v0.1.0 (#122, #105).** A
+hosted-execution option was investigated on 2026-08-22 and deliberately NOT adopted; the research note
+is `PostMule-ops/proposals/hosted-execution-option.md` and the standing decision is restated in
+`PostMule-ops/decisions.md`. It is not a work item, not approved, and not a route to Linux/macOS
+support — do not queue it or cite it as a reason to reopen #122.
