@@ -4,6 +4,81 @@ Non-obvious decisions that would surprise a new contributor or be hard to infer 
 
 ---
 
+## The E2E ship gate must be able to fail (2026-08-22)
+
+**The gate now derives every asserted value from the document and runs the real Drive path.** The
+previous gate could not fail. `FixtureLLMProvider.classify()` never read its `ocr_text` argument — it
+returned module constants — and the gate then asserted the stored bill equalled those same constants.
+It also filed through `LocalStorageProvider`, whose file id is a filesystem path and which has no
+checksum concept, so the execute → MD5-verify path in the architecture invariants was never exercised
+by the one test that certifies a release.
+
+This was measured, not inferred: running the previous gate with `extract_text` monkeypatched to return
+`""` produces **E2E_PASS**, including its check named "one PDF was OCR'd and classified".
+
+Three changes make it falsifiable. `DocumentReadingLLM` has no canned answers — every field is parsed
+out of the OCR text at call time and confidence is computed from how much of the document was legible,
+so broken OCR collapses it. `tests/fixtures/e2e/sample_bill.expected.json` records what the document
+SAYS, authored by reading the PDF; the extractor and the expectations have no shared source, so
+agreement is evidence. And the gate runs the real `DriveProvider` over `scripts/fake_drive.py`, a
+transport double storing real bytes and real MD5s, so the provider's upload, checksum read-back, move
+and rename all execute — only the network is replaced.
+
+Six negative controls in `tests/integration/test_e2e_fixture_gate.py` assert the gate goes red when OCR
+returns nothing, reads a different document, or reads part of one; when Drive reports a mismatched
+checksum; and when the expectations and the document disagree. **If one of those has to be deleted to
+make the suite pass, the gate has regressed into a tautology — fix the gate, not the test.** Checks
+went 10 → 21. See #113.
+
+**Gap found and deliberately not papered over:** the invariant "All Drive writes: execute → MD5 verify
+→ audit log" is only half implemented. MD5 verification exists (`upload_pdf(verify=True)`) and is now
+covered. There is no audit log anywhere in `postmule/` — `grep -rn "audit" postmule/` returns nothing
+outside the web layer. The gate asserts the halves that exist and invents nothing. The invariant
+describes a control that was never built; it needs either an implementation or an honest amendment.
+
+## Bill matching is amount-exact, date-tolerant, human-approved (owner ruling 2026-08-22)
+
+**Owner ruling on #118 / ops owner-64: reconcile the documentation to the code, not the reverse.** The
+rule is: amount exact (`amount_tolerance_cents` defaults to 0), date within a configurable tolerance
+(`date_tolerance_days` defaults to 7), and every match surfaced as a ranked candidate requiring manual
+approval before anything is applied.
+
+`CLAUDE.md:28` currently states the opposite ("Exact amount + exact date required"). The code has
+always done tolerance matching — `match_bills_to_transactions` emits `exact` / `fuzzy_date` /
+`fuzzy_amount` / `fuzzy_both` tiers and writes to `pending/bill_matches.json` for review. The ruling
+resolves the contradiction in favour of the shipped behaviour: nothing auto-applies, so a permissive
+window costs a reviewer a glance, while a strict filter silently hides real payments.
+
+Also to fix under the same task, and independent of the ruling: `_run_bill_matching`
+(`pipeline.py:897`) selects `bills_YYYY.json` using the **local** year (`_d.today().year`) while the
+rest of the pipeline stamps year in **UTC**. Around the New-Year boundary the two disagree and a valid
+match is missed. The clock needs injecting so a test can pin the boundary.
+
+**Status: ruled, NOT yet implemented.** `CLAUDE.md:28`, `config.example.yaml`, `docs/configuration.md`
+and the web settings copy still describe the old rule.
+
+## Outlook / Microsoft Graph is cut from v0.1.0 (owner ruling 2026-08-22)
+
+**Owner ruling on #119 / ops owner-65: stub `_graph.py` and add it to the coverage omit list.** This
+applies a cut that #105 effectively already made — `outlook_365.py` and `outlook_com.py`, its only
+consumers, were stubbed then, and both are already in `[tool.coverage.run] omit`. `_graph.py` is the
+one provider implementation at 0% coverage that is *not* omitted, so its 104 uncovered statements drag
+the core coverage denominator for code nothing runs.
+
+It also carries an unescaped OData filter (`_build_graph_filter` interpolates `processed_category`,
+`sender` and `subject` into single-quoted OData literals without doubling embedded quotes). Currently
+unreachable — no live caller constructs `GraphEmailProvider` — so stubbing retires the defect with the
+code. If Outlook is ever un-cut, the escaping must be fixed before it is wired to anything.
+
+**Status: ruled, NOT yet implemented.**
+
+## Gemini's SDK is end-of-life (2026-08-22)
+
+`google-generativeai` (pinned 0.8.6, `requirements.txt`/`requirements-lock.txt`) emits a hard
+deprecation notice on import: all support has ended, migrate to `google-genai`. It still works, and the
+suite passes with it, but it is the default LLM path for the product and it is unmaintained. Needs a
+migration issue before v0.1.0 ships.
+
 ## Crash recovery across the Drive↔JSON boundary (2026-06-26)
 
 **The pipeline brackets each file's Drive move and JSON store with a write-ahead journal, and reconciles on the next run.** A crash between moving a file on Drive and writing its JSON record used to leave the file in a destination folder with no record (or a double-move on re-run). `postmule/data/journal.py` writes an entry (the intended destination, filename, category, and the exact record dict) atomically before the Drive move and removes it after the store commits. `postmule/agents/reconcile.py` runs at pipeline start and replays any leftover entry idempotently — using the stable Drive file id as the join key — without re-running OCR/LLM: it writes the missing record if the file already moved, redoes the move if not, and flags divergence (never deletes) if the file has vanished from Drive. The JSON store (`add_bill`/`add_notice`/`add_item`) is idempotent by a non-empty `drive_file_id`, so a replay or a double run cannot create a second record.
@@ -17,7 +92,12 @@ Alternatives rejected: a stateless Drive-vs-JSON sweep (needs re-OCR/LLM to rebu
 ## Bill Matching
 
 **Company name is not used for matching.**
-Finance providers (YNAB, Simplifi, Plaid) overwrite the merchant name on transactions with their own normalized strings. These rarely match the biller name extracted from the PDF. Matching uses exact amount + exact statement date only. See #27 for the planned addition of ACH descriptor and statement date fields, which will make matching more reliable.
+Finance providers (YNAB, Simplifi, Plaid) overwrite the merchant name on transactions with their own normalized strings. These rarely match the biller name extracted from the PDF. See #27 for the planned addition of ACH descriptor and statement date fields, which will make matching more reliable.
+
+> **Superseded in part (2026-08-22).** The clause "matching uses exact amount + exact statement date
+> only" was never true of the code and is overruled by the owner ruling above — amount exact, date
+> within a configurable tolerance (default 7 days), every match human-approved. The company-name point
+> stands. See #118.
 
 ---
 
